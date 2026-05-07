@@ -1,0 +1,13 @@
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:16:13:vibration_config_defaults	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:35:6:VibrationModule_ValidateConfig	22
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:87:6:VibrationModule_Init	6
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:108:6:VibrationModule_GetConfig	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:115:6:VibrationModule_UpdateConfig	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:133:6:VibrationModule_ProcessNewSample	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:152:6:VibrationModule_GetRecord	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:159:6:VibrationModule_GetBaseline	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:166:6:VibrationModule_UpdateBaseline	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:177:6:VibrationModule_ResetBaseline	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:184:6:VibrationModule_GetTachState	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:191:6:VibrationModule_UpdateTachState	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Modules/Vibration/vibration_module.c:201:6:VibrationModule_ProcessSnapshot	8

@@ -1,0 +1,14 @@
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:34:13:wait_forever_with_delay	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:41:13:sensor_delay_ms	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:46:10:os_time_us	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:61:13:write_u64_to_regs	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:69:15:scale_to_u16	3
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:83:15:bool_to_reg	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:88:15:speed_state_to_reg	5
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:106:15:aging_factor_to_reg	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:116:14:deg_to_rad	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:121:14:shaft_freq_from_config_hz	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:130:13:refresh_bearing_frequency_from_config	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:141:13:eventHandlerTask	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:162:20:processVibration	9
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:272:6:main_TaskVibration	4

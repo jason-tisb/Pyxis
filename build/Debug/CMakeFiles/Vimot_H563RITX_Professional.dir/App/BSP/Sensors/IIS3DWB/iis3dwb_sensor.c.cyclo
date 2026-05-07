@@ -1,0 +1,10 @@
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Ports/sensor_bus_port.h:64:23:SensorBus_WriteReg	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Ports/sensor_bus_port.h:72:23:SensorBus_ReadReg	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Ports/sensor_bus_port.h:80:20:SensorBus_DelayMs	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:10:16:iis3dwb_bus_write	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:16:16:iis3dwb_bus_read	1
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:22:13:iis3dwb_bus_delay	2
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:29:6:IIS3DWB_Sensor_Create	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:46:6:IIS3DWB_Sensor_Init	18
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:111:6:IIS3DWB_Sensor_FetchSamples	20
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:180:6:IIS3DWB_Sensor_ReadTemperatureX10	6

@@ -1,0 +1,4 @@
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Middleware/FreeModbus/port/user_mb_app.c:58:14:eMBRegInputCB	4
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Middleware/FreeModbus/port/user_mb_app.c:105:14:eMBRegHoldingCB	8
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Middleware/FreeModbus/port/user_mb_app.c:183:14:eMBRegCoilsCB	8
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Middleware/FreeModbus/port/user_mb_app.c:260:14:eMBRegDiscreteCB	4
