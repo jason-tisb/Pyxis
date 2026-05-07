@@ -12,11 +12,10 @@ It is based on the active code in:
 ## Important Current Behavior
 
 - The firmware allocates `300` slave input registers and `300` slave holding registers.
-- In the current implementation, **holding registers and input registers share the same buffer**:
-  - `usSRegHoldBuf = usSRegInBuf`
-- This means:
-  - function code `03` and `04` can currently see the same data image for overlapping addresses
-  - configuration and telemetry are not yet fully separated in memory
+- Holding registers and input registers use **separate buffers**:
+  - holding: `usSRegHoldBuf[]`
+  - input: `usSRegInBuf[]`
+- Function code `03` reads holding (`4xxxx`) and `04` reads input (`3xxxx`) as separate data images.
 - Internally, register index `0` maps to Modbus address `1`.
 
 Recommended interpretation for documentation:

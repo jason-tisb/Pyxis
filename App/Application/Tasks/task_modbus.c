@@ -16,6 +16,7 @@
 #include "vibration_module.h"
 
 extern USHORT usSRegInBuf[S_REG_INPUT_NREGS];
+extern USHORT usSRegHoldBuf[S_REG_HOLDING_NREGS];
 extern UART_HandleTypeDef huart3;
 
 static ModbusConfig_t cfg;
@@ -152,9 +153,9 @@ void main_TaskModbus(void *argument)
     VibrationModule_Init();
     VibrationModule_GetConfig(&vib_cfg);
 
-    modbus_ctx.holding_regs = usSRegInBuf;
+    modbus_ctx.holding_regs = usSRegHoldBuf;
     modbus_ctx.reg_count = S_REG_HOLDING_NREGS;
-    vibration_ctx.holding_regs = usSRegInBuf;
+    vibration_ctx.holding_regs = usSRegHoldBuf;
     vibration_ctx.reg_count = S_REG_HOLDING_NREGS;
 
     ModbusAdapter_InitMap(&modbus_ctx, &cfg);
@@ -184,9 +185,14 @@ void main_TaskModbus(void *argument)
 
     if (status == MB_ENOERR) {
         //when eMBInit no Error and after run eMBEnable no error also
-        usSRegInBuf[MB_REG_SLAVE_ID] = slave_addr;
-        usSRegInBuf[MB_REG_BAUDRATE] = ModbusAdapter_BaudToCode(cfg.baud_rate);
-        usSRegInBuf[MB_REG_PARITY] = ModbusAdapter_ParityToCode(cfg.parity);
+        usSRegHoldBuf[MB_REG_SLAVE_ID] = slave_addr;
+        usSRegHoldBuf[MB_REG_BAUDRATE] = ModbusAdapter_BaudToCode(cfg.baud_rate);
+        usSRegHoldBuf[MB_REG_PARITY] = ModbusAdapter_ParityToCode(cfg.parity);
+
+        /* Optional: keep basic comm mirror visible via input registers. */
+        usSRegInBuf[MB_REG_SLAVE_ID] = usSRegHoldBuf[MB_REG_SLAVE_ID];
+        usSRegInBuf[MB_REG_BAUDRATE] = usSRegHoldBuf[MB_REG_BAUDRATE];
+        usSRegInBuf[MB_REG_PARITY] = usSRegHoldBuf[MB_REG_PARITY];
     }
 
     for (;;) {

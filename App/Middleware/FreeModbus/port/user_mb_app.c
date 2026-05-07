@@ -41,11 +41,7 @@ USHORT   usSRegInStart                                = S_REG_INPUT_START;
 USHORT   usSRegInBuf[S_REG_INPUT_NREGS]               ;
 //Slave mode:HoldingRegister variables
 USHORT   usSRegHoldStart                              = S_REG_HOLDING_START;
-#if 0
 USHORT   usSRegHoldBuf[S_REG_HOLDING_NREGS]           ;
-#else
-USHORT   *usSRegHoldBuf = usSRegInBuf                 ;		// make the two buffer the same
-#endif
 /**
  * Modbus slave input register callback function.
  *

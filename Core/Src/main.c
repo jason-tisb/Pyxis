@@ -27,6 +27,7 @@
 #include <task_modbus.h>
 #include <task_vibration.h>
 #include "NonVolatileData.h"
+#include "sys_storage_partition.h"
 
 /* USER CODE END Includes */
 
@@ -133,6 +134,9 @@ int main(void)
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
 
+  if (!SysStorage_InitPartitions()) {
+    Error_Handler();
+  }
 
 
   /* USER CODE END 2 */
