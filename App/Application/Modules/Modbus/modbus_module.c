@@ -12,8 +12,8 @@ static bool s_stats_need_save = false;
 void ModbusModule_Init(void)
 {
     if (!Storage_Read(KV_KEY_MODBUS_CFG, &s_mb_cfg, sizeof(s_mb_cfg))) {
-        s_mb_cfg.slave_id = 1U;
-        s_mb_cfg.baud_rate = 115200U;
+        s_mb_cfg.slave_id = 3U;
+        s_mb_cfg.baud_rate = 9600U;
         s_mb_cfg.parity = 2U;
     }
 
