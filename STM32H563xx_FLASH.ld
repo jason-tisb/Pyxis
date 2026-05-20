@@ -40,7 +40,7 @@ ENTRY(Reset_Handler)
 MEMORY
 {
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 640K
-  FLASH    (rx)    : ORIGIN = 0x08000000,   LENGTH = 1968K /* New: 2048K - 80K(Eeprom_emul) = 1968K */
+  FLASH    (rx)    : ORIGIN = 0x08000000,   LENGTH = 896K /* New: 2048K - 80K(Eeprom_emul) = 1968K */
 }
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */

@@ -8,7 +8,7 @@ C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Sy
 C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:106:15:aging_factor_to_reg	16	static
 C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:116:14:deg_to_rad	16	static
 C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:121:14:shaft_freq_from_config_hz	16	static
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:130:13:refresh_bearing_frequency_from_config	40	static
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:141:13:eventHandlerTask	72	static
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:162:20:processVibration	1184	static
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:272:6:main_TaskVibration	80	static
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:131:13:refresh_bearing_frequency_from_config	40	static
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:142:13:eventHandlerTask	72	static
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:163:20:processVibration	1184	static
+C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/App/Application/Tasks/task_vibration.c:281:6:main_TaskVibration	80	static

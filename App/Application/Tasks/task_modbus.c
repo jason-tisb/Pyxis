@@ -189,10 +189,13 @@ void main_TaskModbus(void *argument)
         usSRegHoldBuf[MB_REG_BAUDRATE] = ModbusAdapter_BaudToCode(cfg.baud_rate);
         usSRegHoldBuf[MB_REG_PARITY] = ModbusAdapter_ParityToCode(cfg.parity);
 
-        /* Optional: keep basic comm mirror visible via input registers. */
-        usSRegInBuf[MB_REG_SLAVE_ID] = usSRegHoldBuf[MB_REG_SLAVE_ID];
-        usSRegInBuf[MB_REG_BAUDRATE] = usSRegHoldBuf[MB_REG_BAUDRATE];
-        usSRegInBuf[MB_REG_PARITY] = usSRegHoldBuf[MB_REG_PARITY];
+        /* 3xxxx identity block (30001..30006). */
+        usSRegInBuf[MB_IN_DEVICE_CODE] = MB_DEVICE_CODE_DEFAULT;
+        usSRegInBuf[MB_IN_HARDWARE_VERSION] = MB_HARDWARE_VERSION_DEFAULT;
+        usSRegInBuf[MB_IN_FIRMWARE_VERSION] = MB_FIRMWARE_VERSION_DEFAULT;
+        usSRegInBuf[MB_IN_MANUFACTURING_DATE] = MB_MANUFACTURING_DATE_DEFAULT;
+        usSRegInBuf[MB_IN_SERIAL_NUMBER_UPPER_W0] = MB_SERIAL_NUMBER_UPPER_W0_DEFAULT;
+        usSRegInBuf[MB_IN_SERIAL_NUMBER_UPPER_W1] = MB_SERIAL_NUMBER_UPPER_W1_DEFAULT;
     }
 
     for (;;) {

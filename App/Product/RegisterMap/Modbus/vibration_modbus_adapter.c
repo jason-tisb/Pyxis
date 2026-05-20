@@ -46,22 +46,24 @@ bool VibrationAdapter_IsValidRawConfigValue(uint16_t reg_addr, uint16_t value)
         case MB_REG_MACHINE_PROFILE:
             return VibrationAdapter_IsValidMachineProfile(value);
         case MB_REG_GEAR_RATIO:
-            return value > 0U;
+            return (value >= 1U) && (value <= 5000U);
         case MB_REG_GEAR_TEETH_NUMBER:
             return (value > 0U) && (value <= 1024U);
-        case MB_REG_MOTOR_SPEED:
-            return value > 0U;
+        case MB_REG_BASE_FREQ_HZ:
+            return (value >= 1U) && (value <= 65535U);
         case MB_REG_BEARING_BALL_COUNT:
             return (value >= 3U) && (value <= 32U);
         case MB_REG_BEARING_BALL_SIZE:
-            return value > 0U;
+            return (value >= 1U) && (value <= 5000U);
         case MB_REG_BEARING_DIAMETER:
-            return value > 0U;
+            return (value >= 1U) && (value <= 7200U);
         case MB_REG_BEARING_ALPHA_ANGLE:
             return value <= 900U;
         case MB_REG_FILTER_HIGH_PASS:
         case MB_REG_FILTER_LOW_PASS:
-            return true;
+            return (value >= 1U) && (value <= 8000U);
+        case MB_REG_REFRESH:
+            return value <= 1U;
         case MB_REG_BASELINE_COMMAND:
             return VibrationAdapter_IsValidCommand(value);
         default:
@@ -78,7 +80,7 @@ void VibrationAdapter_InitMap(const VibrationAdapterContext_t *ctx, const VibCon
     ctx->holding_regs[MB_REG_MACHINE_PROFILE] = (USHORT)current_cfg->machine_profile;
     ctx->holding_regs[MB_REG_GEAR_RATIO] = encode_ratio_x100(current_cfg->gear_ratio);
     ctx->holding_regs[MB_REG_GEAR_TEETH_NUMBER] = (USHORT)current_cfg->gear_teeth_number;
-    ctx->holding_regs[MB_REG_MOTOR_SPEED] = current_cfg->motor_speed_rpm;
+    ctx->holding_regs[MB_REG_BASE_FREQ_HZ] = current_cfg->motor_speed_rpm;
     ctx->holding_regs[MB_REG_BEARING_BALL_COUNT] = current_cfg->bearing_ball_count;
     ctx->holding_regs[MB_REG_BEARING_BALL_SIZE] = encode_mm_x100(current_cfg->bearing_ball_size_mm);
     ctx->holding_regs[MB_REG_BEARING_DIAMETER] = encode_mm_x100(current_cfg->bearing_pitch_diameter_mm);
@@ -113,7 +115,7 @@ bool VibrationAdapter_CheckConfigUpdate(const VibrationAdapterContext_t *ctx,
     req_machine_profile = ctx->holding_regs[MB_REG_MACHINE_PROFILE];
     req_gear_ratio = ctx->holding_regs[MB_REG_GEAR_RATIO];
     req_gear_teeth = ctx->holding_regs[MB_REG_GEAR_TEETH_NUMBER];
-    req_motor_speed = ctx->holding_regs[MB_REG_MOTOR_SPEED];
+    req_motor_speed = ctx->holding_regs[MB_REG_BASE_FREQ_HZ];
     req_ball_count = ctx->holding_regs[MB_REG_BEARING_BALL_COUNT];
     req_ball_size = ctx->holding_regs[MB_REG_BEARING_BALL_SIZE];
     req_bearing_diameter = ctx->holding_regs[MB_REG_BEARING_DIAMETER];

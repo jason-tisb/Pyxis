@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include "storage_kv.h"
+#include "mb.h"
 
 #include <string.h>
 
@@ -29,9 +30,49 @@ void ModbusModule_GetConfig(ModbusConfig_t* out_cfg)
     }
 }
 
+static bool is_allowed_baud_rate(uint32_t baud_rate)
+{
+    /* 0 = auto-baud (supported by firmware). */
+    switch (baud_rate) {
+        case 0U:
+        case 9600U:
+        case 19200U:
+        case 38400U:
+        case 115200U:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool ModbusModule_ValidateConfig(const ModbusConfig_t* candidate_cfg)
+{
+    if (candidate_cfg == NULL) {
+        return false;
+    }
+
+    if (candidate_cfg->slave_id == 0U || candidate_cfg->slave_id > MB_ADDRESS_MAX) {
+        return false;
+    }
+
+    if (!is_allowed_baud_rate(candidate_cfg->baud_rate)) {
+        return false;
+    }
+
+    if (candidate_cfg->parity > 3U) {
+        return false;
+    }
+
+    return true;
+}
+
 bool ModbusModule_UpdateConfig(const ModbusConfig_t* new_cfg)
 {
     if (new_cfg == NULL) {
+        return false;
+    }
+
+    if (!ModbusModule_ValidateConfig(new_cfg)) {
         return false;
     }
 

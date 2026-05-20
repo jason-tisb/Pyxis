@@ -17,6 +17,20 @@ uint16_t ModbusAdapter_BaudToCode(uint32_t baud_rate)
     }
 }
 
+static bool ModbusAdapter_IsValidCommValue(uint16_t reg_addr, uint16_t value)
+{
+    switch (reg_addr) {
+        case MB_REG_SLAVE_ID:
+            return (value > 0U) && (value <= MB_ADDRESS_MAX);
+        case MB_REG_BAUDRATE:
+            return ModbusAdapter_CodeToBaud(value, NULL);
+        case MB_REG_PARITY:
+            return value <= 3U;
+        default:
+            return true;
+    }
+}
+
 bool ModbusAdapter_CodeToBaud(uint16_t baud_code, uint32_t *baud_rate)
 {
     switch (baud_code) {
@@ -51,17 +65,17 @@ bool ModbusAdapter_CodeToBaud(uint16_t baud_code, uint32_t *baud_rate)
 
 bool ModbusAdapter_IsValidBaudCode(uint16_t baud_code)
 {
-    return ModbusAdapter_CodeToBaud(baud_code, NULL);
+    return ModbusAdapter_IsValidCommValue(MB_REG_BAUDRATE, baud_code);
 }
 
 bool ModbusAdapter_IsValidSlaveId(uint16_t value)
 {
-    return (value > 0U) && (value <= MB_ADDRESS_MAX);
+    return ModbusAdapter_IsValidCommValue(MB_REG_SLAVE_ID, value);
 }
 
 bool ModbusAdapter_IsValidParityCode(uint16_t value)
 {
-    return value <= 3U;
+    return ModbusAdapter_IsValidCommValue(MB_REG_PARITY, value);
 }
 
 eMBParity ModbusAdapter_ParityFromCode(uint16_t parity_code)

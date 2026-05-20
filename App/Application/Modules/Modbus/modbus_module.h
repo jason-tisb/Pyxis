@@ -17,6 +17,7 @@ typedef struct {
 
 void ModbusModule_Init(void);
 void ModbusModule_GetConfig(ModbusConfig_t* out_cfg);
+bool ModbusModule_ValidateConfig(const ModbusConfig_t* candidate_cfg);
 bool ModbusModule_UpdateConfig(const ModbusConfig_t* new_cfg);
 void ModbusModule_RecordRxOk(void);
 void ModbusModule_RecordCrcError(void);

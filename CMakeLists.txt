@@ -186,3 +186,15 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
 # Linker specs and core flags are already provided by STM32Cube/toolchain settings.
 # Avoid re-adding nano.specs here, which causes duplicate spec registration on GCC 14.
+
+# Generate additional firmware images next to the .elf (e.g. .bin for flashing tools).
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O ihex
+        $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+        $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/$<TARGET_FILE_BASE_NAME:${CMAKE_PROJECT_NAME}>.hex
+    COMMAND ${CMAKE_OBJCOPY} -O binary
+        $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+        $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/$<TARGET_FILE_BASE_NAME:${CMAKE_PROJECT_NAME}>.bin
+    COMMAND ${CMAKE_SIZE} --format=berkeley $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+    VERBATIM
+)

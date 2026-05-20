@@ -11,7 +11,7 @@ It is based on the active code in:
 
 ## Important Current Behavior
 
-- The firmware allocates `300` slave input registers and `300` slave holding registers.
+- The firmware allocates `11600` slave input registers and `11600` slave holding registers.
 - Holding registers and input registers use **separate buffers**:
   - holding: `usSRegHoldBuf[]`
   - input: `usSRegInBuf[]`
@@ -20,14 +20,15 @@ It is based on the active code in:
 
 Recommended interpretation for documentation:
 
-- `4xxxx` = intended configuration / command usage
-- `3xxxx` = intended runtime telemetry usage
+- holding (`4xxxx` / `5xxxx`) = intended configuration / command usage
+- input (`3xxxx`) = intended runtime telemetry usage
 
 ## Addressing Convention
 
 - Internal index `0` = `40001` or `30001`
 - Internal index `9` = `40010` or `30010`
-- Internal index `50` = `40051` or `30051`
+- Internal index `1600` = `31601`
+- Internal index `1616` = `31617`
 
 ## 1. Holding Register Map
 
@@ -39,21 +40,22 @@ These are the registers currently used as writable configuration fields.
 | `1` | `40002` | Baud Rate | `UINT16` | Active | `0=Auto, 1=9600, 2=19200, 3=38400, 4=115200` |
 | `2` | `40003` | Parity / Stop Bit | `UINT16` | Active | `0=Even/1sb, 1=Odd/1sb, 2=None/2sb, 3=None/1sb` |
 | `3` | `40004` | Response Delay | `UINT16` | Reserved | Planned communication timing control |
-| `4` | `40005` | Machine Profile | `UINT16` | Reserved | Planned machine profile selection |
-| `5` | `40006` | Baseline Command | `UINT16` | Reserved | Planned baseline capture/reset command |
-| `6` | `40007` | Tach Enable | `UINT16` | Reserved | Planned tach enable/disable |
+| `4` | `40005` | Watchdog | `UINT16` | Declared | Implemented as `MB_REG_MACHINE_PROFILE` in firmware today |
+| `5` | `40006` | System Command | `UINT16` | Declared | Implemented as `MB_REG_BASELINE_COMMAND` in firmware today |
+| `6` | `40007` | Analog Data Format | `UINT16` | Reserved | Implemented as `MB_REG_TACH_ENABLE` in firmware today |
 | `7` | `40008` | Tach Source | `UINT16` | Reserved | Planned timer/capture source select |
 | `8` | `40009` | Reserved | `UINT16` | Unused | Spare |
-| `9` | `40010` | Gear Ratio | `UINT16` | Declared | Validation exists but value rule is incorrect today |
-| `10` | `40011` | Motor Speed | `UINT16` | Declared | Intended for running speed / RPM-related config |
-| `11` | `40012` | Number of Bearing Balls | `UINT16` | Declared | Bearing geometry input |
-| `12` | `40013` | Size of Bearing Ball | `UINT16` | Declared | Bearing geometry input |
-| `13` | `40014` | Pitch Diameter of Bearing | `UINT16` | Declared | Bearing geometry input |
-| `14` | `40015` | Alpha Angle of Bearing | `UINT16` | Declared | Bearing geometry input |
-| `15` | `40016` | High Pass Filter Cutoff | `UINT16` | Declared | Filter config |
-| `16` | `40017` | Low Pass Filter Cutoff | `UINT16` | Declared | Filter config |
-| `17` | `40018` | Refresh / Command | `UINT16` | Declared | Generic command trigger |
-| `18` | `40019` | Gear Teeth Number | `UINT16` | Declared | Used for gear mesh fault detection |
+| `11520` | `51521` | Gear Ratio (x100) | `UINT16` | Declared | Default `0`; Range `1..5000` (0.01..50.00) |
+| `11521` | `51522` | Base Frequency (Hz x100) | `UINT16` | Declared | Default `5000`; Range `1..65535` (0.01..655.35 Hz); stored as shaft base frequency in Hz x100 |
+| `11522` | `51523` | Bearing Ball Count | `UINT16` | Declared | Default `0`; Range `3..32` |
+| `11523` | `51524` | Bearing Ball Diameter (mm x100) | `UINT16` | Declared | Default `0`; Range `1..5000` (0.01..50.00 mm) |
+| `11524` | `51525` | Bearing Pitch Diameter (mm x100) | `UINT16` | Declared | Default `0`; Range `1..7200` (0.01..72.00 mm); must be > ball diameter |
+| `11525` | `51526` | Bearing Contact Angle (deg x10) | `UINT16` | Declared | Default `0`; Range `0..900` (0.0..90.0°) |
+| `11526` | `51527` | High Pass Filter Cutoff (Hz) | `UINT16` | Declared | Default `0`; Range `1..8000` (firmware also enforces `high_pass < low_pass`) |
+| `11527` | `51528` | Low Pass Filter Cutoff (Hz) | `UINT16` | Declared | Default `0`; Range `1..8000` (firmware also enforces `low_pass <= sample_rate/2`) |
+| `11528` | `51529` | Refresh / Apply Command | `UINT16` | Declared | Default `0`; Range `0..1` (currently not used by firmware logic) |
+| `11529` | `51530` | Gear Teeth Number | `UINT16` | Declared | Default `0`; Range `1..1024`; used for gear-mesh analysis |
+| `11648` - `11772` | `51649` - `51773` | Remapping Address Table | `UINT16[125]` | Declared | 125-word table starting at `MB_REG_REMAPPING_ADDR` |
 | `19` - `29` | `40020` - `40030` | Reserved | `UINT16` | Unused | Available for future config |
 
 ## 2. Current Runtime Input Register Map
@@ -64,34 +66,26 @@ These are the telemetry values currently written by the vibration and Modbus tas
 
 | Internal Index | Modbus Address | Name | Type | Source |
 | :--- | :--- | :--- | :--- | :--- |
-| `0` | `30001` | Slave ID Mirror | `UINT16` | `task_modbus.c` |
-| `1` | `30002` | Baud Rate Code | `UINT16` | `task_modbus.c` |
-| `2` | `30003` | Parity Code | `UINT16` | `task_modbus.c` |
-| `30` | `30031` | Temperature x10 | `INT16/UINT16` | `task_vibration.c` |
+| `0` | `30001` | Device Code | `UINT16` | `task_modbus.c` |
+| `1` | `30002` | Hardware Version | `UINT16` | `task_modbus.c` |
+| `2` | `30003` | Firmware Version | `UINT16` | `task_modbus.c` |
+| `3` | `30004` | Manufacturing Date | `UINT16` | `task_modbus.c` |
+| `4` | `30005` | Serial Number (Upper) W0 | `UINT16` | `task_modbus.c` |
+| `5` | `30006` | Serial Number (Upper) W1 | `UINT16` | `task_modbus.c` |
+| `1600` | `31601` | Sensor Temperature x10 | `INT16/UINT16` | `task_vibration.c` |
 
 Notes:
 
-- `30031` stores temperature in `x10` scale.
+- `31601` stores temperature in `x10` scale.
 - Example: `253` means `25.3 C`.
-- Baud code map:
-  - `0=Auto`
-  - `1=9600`
-  - `2=19200`
-  - `3=38400`
-  - `4=115200`
-- Parity code map:
-  - `0=Even/1sb`
-  - `1=Odd/1sb`
-  - `2=None/2sb`
-  - `3=None/1sb`
 
 ### 2.2 Vibration Analytics Result Blocks
 
-The vibration task writes `3 x 50` words starting at internal index `50`.
+The vibration task writes `3 x 50` words into three separate 50-word blocks:
 
-- X-axis block: internal `50` to `99` -> `30051` to `30100`
-- Y-axis block: internal `100` to `149` -> `30101` to `30150`
-- Z-axis block: internal `150` to `199` -> `30151` to `30200`
+- X-axis block: internal `1616` to `1665` -> `31617` to `31666`
+- Y-axis block: internal `1712` to `1761` -> `31713` to `31762`
+- Z-axis block: internal `1808` to `1857` -> `31809` to `31858`
 
 Each axis block uses the same layout.
 
@@ -99,7 +93,7 @@ Each axis block uses the same layout.
 
 | Offset In Axis Block | Address Example (X-Axis) | Name | Current Meaning |
 | :--- | :--- | :--- | :--- |
-| `0` | `30051` | Acc RMS | `acc_rms_g * 1000` |
+| `0` | `31617` | Acc RMS | `acc_rms_g * 1000` |
 | `1` | `30052` | Acc Peak | `acc_peak_g * 1000` |
 | `2` | `30053` | Acc Peak-to-Peak | `acc_p2p_g * 1000` |
 | `3` | `30054` | Crest Factor | `crest_factor * 1000` |
@@ -116,9 +110,9 @@ Each axis block uses the same layout.
 
 | Axis | Internal Index Range | Modbus Address Range |
 | :--- | :--- | :--- |
-| X | `50` - `99` | `30051` - `30100` |
-| Y | `100` - `149` | `30101` - `30150` |
-| Z | `150` - `199` | `30151` - `30200` |
+| X | `1616` - `1665` | `31617` - `31666` |
+| Y | `1712` - `1761` | `31713` - `31762` |
+| Z | `1808` - `1857` | `31809` - `31858` |
 
 ### 2.3 Timestamp / Sampling Timing Block
 
@@ -245,9 +239,11 @@ Recommended future discrete input map:
 
 Your **current real Modbus image** is:
 
-- `40001` to `40018` for configuration-related fields
-- `30031` for temperature
-- `30051` to `30200` for the three axis vibration result blocks
+- `40001` to `40008` for communication/basic control fields
+- `51521` to `51530` for vibration configuration fields
+- `51649` to `51773` for remapping address table
+- `31601` for temperature
+- `31617` to `31858` for the three axis vibration result blocks
 - `30201` to `30212` for processing timestamps
 
 Your **best next expansion area** is:

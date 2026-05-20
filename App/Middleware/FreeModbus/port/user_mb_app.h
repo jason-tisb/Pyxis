@@ -17,9 +17,11 @@
 #define S_COIL_START                  	0
 #define S_COIL_NCOILS                 	64
 #define S_REG_INPUT_START             	0
-#define S_REG_INPUT_NREGS             	300
+/* NOTE: input register map uses high offsets (e.g. 31601 -> index 1600). */
+#define S_REG_INPUT_NREGS             	11600
+/* NOTE: holding register map uses high offsets (e.g. 51649 -> index 11648). */
 #define S_REG_HOLDING_START           	0
-#define S_REG_HOLDING_NREGS           	300
+#define S_REG_HOLDING_NREGS           	11800
 /* salve mode: holding register's all address */
 #define S_HD_RESERVE                  	0
 #define S_HD_CPU_USAGE_MAJOR          	1

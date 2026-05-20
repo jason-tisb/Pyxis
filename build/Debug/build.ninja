@@ -453,7 +453,7 @@ build Vimot_H563RITX_Professional.elf: C_EXECUTABLE_LINKER__Vimot_H563RITX_Profe
   LINK_FLAGS = -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -T "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/STM32H563xx_FLASH.ld" --specs=nano.specs -Wl,-Map=Vimot_H563RITX_Professional.map -Wl,--gc-sections -Wl,--print-memory-usage
   LINK_LIBRARIES = -lm
   OBJECT_DIR = CMakeFiles\Vimot_H563RITX_Professional.dir
-  POST_BUILD = cd .
+  POST_BUILD = C:\Windows\system32\cmd.exe /C "cd /D "C:\Users\PC YH\STM32CubeIDE\workspace_2.1.0\Vimot_H563RITX_Professional_Cmake_Systemize_202604151400\build\Debug" && arm-none-eabi-objcopy -O ihex "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/Vimot_H563RITX_Professional.elf" "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/Vimot_H563RITX_Professional.hex" && arm-none-eabi-objcopy -O binary "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/Vimot_H563RITX_Professional.elf" "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/Vimot_H563RITX_Professional.bin" && arm-none-eabi-size --format=berkeley "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/Vimot_H563RITX_Professional.elf""
   PRE_LINK = cd .
   TARGET_FILE = Vimot_H563RITX_Professional.elf
   TARGET_PDB = Vimot_H563RITX_Professional.elf.dbg

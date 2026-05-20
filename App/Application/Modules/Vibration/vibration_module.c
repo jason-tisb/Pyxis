@@ -16,10 +16,12 @@ static VibrationTachState_t s_vib_tach;
 static void vibration_config_defaults(VibConfig_t *cfg)
 {
     cfg->alarm_threshold_g = 5.0f;
-    cfg->sample_rate_hz = 8000U;
+    /* Keep sample rate consistent with the vibration pipeline (FS). */
+    cfg->sample_rate_hz = (uint16_t)FS;
     cfg->machine_profile = VIB_MACHINE_PROFILE_GENERIC;
     cfg->auto_baseline_enabled = 1U;
-    cfg->motor_speed_rpm = (uint16_t)(FREQ_BASE * 60.0f);
+    /* Stored as shaft base frequency (Hz x100). */
+    cfg->motor_speed_rpm = (uint16_t)(FREQ_BASE * 100.0f);
     cfg->gear_ratio = 1.0f;
     cfg->gear_teeth_number = (uint16_t)GEAR_TEETH_NUMBER;
     cfg->bearing_ball_count = (uint16_t)BEARING_NUMBER_OF_ROLLING_ELEMENTS;
@@ -27,7 +29,7 @@ static void vibration_config_defaults(VibConfig_t *cfg)
     cfg->bearing_pitch_diameter_mm = BEARING_PITCH_DIAMETER * 1000.0f;
     cfg->bearing_alpha_angle_deg = BEARING_CONTACT_ANGLE * (180.0f / 3.14159265358979f);
     cfg->filter_high_pass_hz = 10U;
-    cfg->filter_low_pass_hz = (uint16_t)(FS / 2.0f);
+    cfg->filter_low_pass_hz = (uint16_t)(cfg->sample_rate_hz / 2U);
     cfg->baseline_learning_rate = 0.01f;
     cfg->tach_quality_threshold = 0.55f;
 }
@@ -88,6 +90,11 @@ void VibrationModule_Init(void)
 {
     if (!Storage_Read(KV_KEY_VIBRATION_CFG, &s_vib_cfg, sizeof(s_vib_cfg))) {
         vibration_config_defaults(&s_vib_cfg);
+        (void)Storage_Write(KV_KEY_VIBRATION_CFG, &s_vib_cfg, sizeof(VibConfig_t));
+    } else if (!VibrationModule_ValidateConfig(&s_vib_cfg)) {
+        /* Migrate/repair invalid stored configs so Modbus updates can apply. */
+        vibration_config_defaults(&s_vib_cfg);
+        (void)Storage_Write(KV_KEY_VIBRATION_CFG, &s_vib_cfg, sizeof(VibConfig_t));
     }
 
     if (!Storage_Read(KV_KEY_VIB_RECORD, &s_vib_record, sizeof(s_vib_record))) {

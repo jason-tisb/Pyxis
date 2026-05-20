@@ -1,27 +1,27 @@
 # ninja log v7
 315	1268	7989666177066790	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/sysmem.c.obj	34f2fc24d40d7ebf
 432	1254	7989666178231962	CMakeFiles/Vimot_H563RITX_Professional.dir/startup_stm32h563xx.s.obj	7467f4e72a0ba349
-62	1086	7998295772817680	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/app_freertos.c.obj	bdd00cc7425d001d
-50	840	7998316510927317	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/main.c.obj	b022d05bd8e532ea
+241	1721	8008137137985018	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/app_freertos.c.obj	bdd00cc7425d001d
+6	468	8008913461848002	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/main.c.obj	b022d05bd8e532ea
 367	1464	7989666177581942	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/syscalls.c.obj	2be93ac90960b796
 136	1474	7989666175276446	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/stm32h5xx_it.c.obj	3de292e459a02be4
 192	1553	7989666175831685	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/stm32h5xx_hal_msp.c.obj	4948ff7914650a58
 254	1585	7989666176451711	CMakeFiles/Vimot_H563RITX_Professional.dir/Core/Src/stm32h5xx_hal_timebase_tim.c.obj	922f46ec56daf80
 857	1694	7989666182483014	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Services/Vibration/bearing_freq_calculation.c.obj	a2fdc0994f633953
-68	373	8004585192789418	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Modules/Modbus/modbus_module.c.obj	f4e67d4ea823e201
-72	1188	7998310710169702	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Tasks/task_modbus.c.obj	c56c3caba24ce921
+291	1753	8008137138475005	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Modules/Modbus/modbus_module.c.obj	f4e67d4ea823e201
+267	1748	8008137138234959	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Tasks/task_modbus.c.obj	c56c3caba24ce921
 632	1808	7989666180232466	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Ports/sensor_bus_port.c.obj	bbc57d0fe02bf12e
-92	1288	7998295773114583	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Services/Vibration/vibration_algorithm.c.obj	d27d32b8d2ea0422
+278	1758	8008137138345014	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Services/Vibration/vibration_algorithm.c.obj	d27d32b8d2ea0422
 167	921	7989666367143194	CMakeFiles/Vimot_H563RITX_Professional.dir/App/BSP/Storage/sys_storage_partition.c.obj	6e755952e629079c
-73	1194	7998295772924519	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Tasks/task_vibration.c.obj	5abf9df9762c1a58
+254	1717	8008137138104990	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Tasks/task_vibration.c.obj	5abf9df9762c1a58
 660	1842	7989666372070910	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/functions/mbfuncdiag.c.obj	9d934c901f18d1e8
-102	1134	7998295773219763	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Modules/Vibration/vibration_module.c.obj	a0735df130937058
+304	1753	8008137138604982	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Application/Modules/Vibration/vibration_module.c.obj	a0735df130937058
 120	1940	7989666366669068	CMakeFiles/Vimot_H563RITX_Professional.dir/App/BSP/Storage/storage_kv.c.obj	535357a23dd3d829
 427	1740	7989666369747513	CMakeFiles/Vimot_H563RITX_Professional.dir/Drivers/IIS3DWB/iis3dwb_reg.c.obj	67b85f26a50db2d4
-113	1121	7998295773319753	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Product/RegisterMap/Modbus/modbus_app_adapter.c.obj	cf481faa930ea213
+312	1751	8008137138684969	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Product/RegisterMap/Modbus/modbus_app_adapter.c.obj	cf481faa930ea213
 213	2115	7989666367598975	CMakeFiles/Vimot_H563RITX_Professional.dir/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c.obj	37515fa779e45372
-124	1148	7998295773429740	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Product/RegisterMap/Modbus/vibration_modbus_adapter.c.obj	997e325276b3930d
-133	1129	7998295773519762	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Product/Validation/system_validator.c.obj	46a8b41ca6d91e8
+320	1711	8008137138764951	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Product/RegisterMap/Modbus/vibration_modbus_adapter.c.obj	997e325276b3930d
+337	1737	8008137138934991	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Product/Validation/system_validator.c.obj	46a8b41ca6d91e8
 579	2390	7989666371258483	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/functions/mbfunccoils.c.obj	8ab0dd85d12f033
 492	2486	7989666370386139	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/mb.c.obj	75ab1a4667dfb00f
 747	2615	7989666372933500	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/functions/mbfuncdisc.c.obj	e90f5f4045518b54
@@ -29,10 +29,10 @@
 922	2796	7989666374684239	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/functions/mbfuncinput.c.obj	bb40b58c01feb535
 1842	3543	7989666383886825	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/rtu/mbcrc.c.obj	6604b764cd7770d8
 1740	3456	7989666382873386	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/rtu/mbrtu.c.obj	ce49118d17d9916b
-1663	3359	7989666382100947	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/functions/mbutils.c.obj	c76dfe6d78c5d917
+354	1687	8008137139104991	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/functions/mbutils.c.obj	c76dfe6d78c5d917
 1528	3290	7989666380752572	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/modbus/functions/mbfuncother.c.obj	6a43bfe94b45d4e
 2028	3620	7989666385752874	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/port/cmsis_rtos2/portcritical.c.obj	63ed2ff6ce797f5
-276	1193	7998310712210164	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/port/user_mb_app.c.obj	b60dd85eb5ab4b35
+372	1744	8008137139279617	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/port/user_mb_app.c.obj	b60dd85eb5ab4b35
 2115	3839	7989666386620769	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/port/cmsis_rtos2/portevent.c.obj	1fb3a115fc7a2798
 2187	4175	7989666387342769	CMakeFiles/Vimot_H563RITX_Professional.dir/App/Middleware/FreeModbus/port/cmsis_rtos2/portserial.c.obj	1af9263c536d228d
 2615	4318	7989666391614833	cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Core/Src/system_stm32h5xx.c.obj	3773e4ce13f3159f
@@ -81,4 +81,7 @@
 7578	8432	7989666441254586	cmake/stm32cubemx/CMakeFiles/CMSIS-DSP.dir/__/__/App/Libraries/DSP/StatisticsFunctions/StatisticsFunctions.c.obj	f9e0edd17ef68021
 7444	8893	7989666439909178	cmake/stm32cubemx/CMakeFiles/CMSIS-DSP.dir/__/__/App/Libraries/DSP/CommonTables/CommonTables.c.obj	6a00461786ba3efd
 7651	8762	7989666441979791	cmake/stm32cubemx/CMakeFiles/CMSIS-DSP.dir/__/__/App/Libraries/DSP/TransformFunctions/TransformFunctions.c.obj	5740baca349147c5
-374	1438	8004585195845172	Vimot_H563RITX_Professional.elf	57109bb0c62bfec9
+24	1850	8008914556900400	Vimot_H563RITX_Professional.elf	62550eab72abdb3f
+50	414	8009673983811126	build.ninja	2432ce1c001f3b62
+50	414	8009673983309165	C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/cmake_install.cmake	2432ce1c001f3b62
+50	414	8009673983678087	C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/cmake/stm32cubemx/cmake_install.cmake	2432ce1c001f3b62

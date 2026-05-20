@@ -1,9 +1,17 @@
 #ifndef APP_PRODUCT_REGISTERMAP_MODBUS_REGISTER_MAP_H_
 #define APP_PRODUCT_REGISTERMAP_MODBUS_REGISTER_MAP_H_
 
-/* Shared image registers: currently used by both holding and input callbacks. */
+/*
+ * Register index definitions.
+ *
+ * IMPORTANT:
+ * - Holding registers (4xxxx/5xxxx): writable config/commands (usSRegHoldBuf[]).
+ * - Input registers (3xxxx): read-only telemetry/outputs (usSRegInBuf[]).
+ */
 
-/* System and communication */
+/* ========================= Holding Registers (4xxxx/5xxxx) ========================= */
+
+/* System and communication (40001..) */
 #define MB_REG_SLAVE_ID                    0U
 #define MB_REG_BAUDRATE                   1U
 #define MB_REG_PARITY                     2U
@@ -13,179 +21,209 @@
 #define MB_REG_TACH_ENABLE                6U
 #define MB_REG_TACH_SOURCE                7U
 
+/* Holding-register aliases (4xxxx) to match external documentation. */
+#define MB_REG_WATCHDOG                   MB_REG_MACHINE_PROFILE
+#define MB_REG_SYSTEM_COMMAND             MB_REG_BASELINE_COMMAND
+#define MB_REG_ANALOG_DATA_FORMAT         MB_REG_TACH_ENABLE
+
 /* Kinematic and bearing configuration */
-#define MB_REG_GEAR_RATIO                 9U
-#define MB_REG_MOTOR_SPEED                10U
-#define MB_REG_BEARING_BALL_COUNT         11U
-#define MB_REG_BEARING_BALL_SIZE          12U
-#define MB_REG_BEARING_DIAMETER           13U
-#define MB_REG_BEARING_ALPHA_ANGLE        14U
+/* NOTE: mapped to external holding addresses 51521..51530 (40001-based index). */
+#define MB_REG_GEAR_RATIO                 11520U  /* 51521 */
+#define MB_REG_BASE_FREQ_HZ               11521U  /* 51522 */
+#define MB_REG_BEARING_BALL_COUNT         11522U  /* 51523 */
+#define MB_REG_BEARING_BALL_SIZE          11523U  /* 51524 */
+#define MB_REG_BEARING_DIAMETER           11524U  /* 51525 */
+#define MB_REG_BEARING_ALPHA_ANGLE        11525U  /* 51526 */
 /* Optional: gear mesh analysis input */
-#define MB_REG_GEAR_TEETH_NUMBER          18U
+#define MB_REG_GEAR_TEETH_NUMBER          11529U  /* 51530 */
 
 /* Signal processing configuration */
-#define MB_REG_FILTER_HIGH_PASS           15U
-#define MB_REG_FILTER_LOW_PASS            16U
-#define MB_REG_REFRESH                    17U
+#define MB_REG_FILTER_HIGH_PASS           11526U  /* 51527 */
+#define MB_REG_FILTER_LOW_PASS            11527U  /* 51528 */
+#define MB_REG_REFRESH                    11528U  /* 51529 */
+
+/* Remapping address table (Holding): 51649..51773 (125 words). */
+#define MB_REG_REMAPPING_ADDR_START       11648U  /* 51649 */
+#define MB_REG_REMAPPING_ADDR_COUNT       125U
+#define MB_REG_REMAPPING_ADDR_END         (MB_REG_REMAPPING_ADDR_START + MB_REG_REMAPPING_ADDR_COUNT - 1U) /* 51773 */
+#define MB_REG_REMAPPING_ADDR             MB_REG_REMAPPING_ADDR_START
+
+/* ============================= Input Registers (3xxxx) ============================= */
+
+/* Identity block (30001..) */
+#define MB_IN_DEVICE_CODE                0U
+#define MB_IN_HARDWARE_VERSION           1U
+#define MB_IN_FIRMWARE_VERSION           2U
+#define MB_IN_MANUFACTURING_DATE         3U
+#define MB_IN_SERIAL_NUMBER_UPPER_W0     4U
+#define MB_IN_SERIAL_NUMBER_UPPER_W1     5U
+
+#define MB_DEVICE_CODE_DEFAULT            0U
+#define MB_HARDWARE_VERSION_DEFAULT       0U
+#define MB_FIRMWARE_VERSION_DEFAULT       0U
+#define MB_MANUFACTURING_DATE_DEFAULT     0U
+#define MB_SERIAL_NUMBER_UPPER_W0_DEFAULT 0U
+#define MB_SERIAL_NUMBER_UPPER_W1_DEFAULT 0U
 
 /* Basic runtime telemetry */
-#define MB_REG_TEMPERATURE                30U
+#define MB_REG_TEMPERATURE                1600U
+#define MB_REG_MOTOR_TEMPERATURE          1601U
 
 /* X-axis vibration result block */
-#define MB_REG_X_ACC_RMS                  50U
-#define MB_REG_X_ACC_PEAK                 51U
-#define MB_REG_X_ACC_P2P                  52U
-#define MB_REG_X_CREST_FACTOR             53U
-#define MB_REG_X_VEL_RMS                  54U
-#define MB_REG_X_VEL_PEAK                 55U
-#define MB_REG_X_DISP_P2P                 56U
-#define MB_REG_X_ENV_KURTOSIS             57U
-#define MB_REG_X_ISO_CLASS                58U
-#define MB_REG_X_FAULT_FLAGS              59U
-#define MB_REG_X_PEAK_FREQ_01             60U
-#define MB_REG_X_PEAK_FREQ_02             61U
-#define MB_REG_X_PEAK_FREQ_03             62U
-#define MB_REG_X_PEAK_FREQ_04             63U
-#define MB_REG_X_PEAK_FREQ_05             64U
-#define MB_REG_X_PEAK_FREQ_06             65U
-#define MB_REG_X_PEAK_FREQ_07             66U
-#define MB_REG_X_PEAK_FREQ_08             67U
-#define MB_REG_X_PEAK_FREQ_09             68U
-#define MB_REG_X_PEAK_FREQ_10             69U
-#define MB_REG_X_PEAK_FREQ_11             70U
-#define MB_REG_X_PEAK_FREQ_12             71U
-#define MB_REG_X_PEAK_FREQ_13             72U
-#define MB_REG_X_PEAK_FREQ_14             73U
-#define MB_REG_X_PEAK_FREQ_15             74U
-#define MB_REG_X_PEAK_FREQ_16             75U
-#define MB_REG_X_PEAK_FREQ_17             76U
-#define MB_REG_X_PEAK_FREQ_18             77U
-#define MB_REG_X_PEAK_FREQ_19             78U
-#define MB_REG_X_PEAK_FREQ_20             79U
-#define MB_REG_X_PEAK_MAG_01              80U
-#define MB_REG_X_PEAK_MAG_02              81U
-#define MB_REG_X_PEAK_MAG_03              82U
-#define MB_REG_X_PEAK_MAG_04              83U
-#define MB_REG_X_PEAK_MAG_05              84U
-#define MB_REG_X_PEAK_MAG_06              85U
-#define MB_REG_X_PEAK_MAG_07              86U
-#define MB_REG_X_PEAK_MAG_08              87U
-#define MB_REG_X_PEAK_MAG_09              88U
-#define MB_REG_X_PEAK_MAG_10              89U
-#define MB_REG_X_PEAK_MAG_11              90U
-#define MB_REG_X_PEAK_MAG_12              91U
-#define MB_REG_X_PEAK_MAG_13              92U
-#define MB_REG_X_PEAK_MAG_14              93U
-#define MB_REG_X_PEAK_MAG_15              94U
-#define MB_REG_X_PEAK_MAG_16              95U
-#define MB_REG_X_PEAK_MAG_17              96U
-#define MB_REG_X_PEAK_MAG_18              97U
-#define MB_REG_X_PEAK_MAG_19              98U
-#define MB_REG_X_PEAK_MAG_20              99U
+#define MB_REG_X_ACC_RMS                  1616U
+#define MB_REG_X_ACC_PEAK                 1617U
+#define MB_REG_X_ACC_P2P                  1618U
+#define MB_REG_X_CREST_FACTOR             1619U
+#define MB_REG_X_VEL_RMS                  1620U
+#define MB_REG_X_VEL_PEAK                 1621U
+#define MB_REG_X_DISP_P2P                 1622U
+#define MB_REG_X_ENV_KURTOSIS             1623U
+#define MB_REG_X_ISO_CLASS                1624U
+#define MB_REG_X_FAULT_FLAGS              1625U
+#define MB_REG_X_PEAK_FREQ_01             1626U
+#define MB_REG_X_PEAK_FREQ_02             1627U
+#define MB_REG_X_PEAK_FREQ_03             1628U
+#define MB_REG_X_PEAK_FREQ_04             1629U
+#define MB_REG_X_PEAK_FREQ_05             1630U
+#define MB_REG_X_PEAK_FREQ_06             1631U
+#define MB_REG_X_PEAK_FREQ_07             1632U
+#define MB_REG_X_PEAK_FREQ_08             1633U
+#define MB_REG_X_PEAK_FREQ_09             1634U
+#define MB_REG_X_PEAK_FREQ_10             1635U
+#define MB_REG_X_PEAK_FREQ_11             1636U
+#define MB_REG_X_PEAK_FREQ_12             1637U
+#define MB_REG_X_PEAK_FREQ_13             1638U
+#define MB_REG_X_PEAK_FREQ_14             1639U
+#define MB_REG_X_PEAK_FREQ_15             1640U
+#define MB_REG_X_PEAK_FREQ_16             1641U
+#define MB_REG_X_PEAK_FREQ_17             1642U
+#define MB_REG_X_PEAK_FREQ_18             1643U
+#define MB_REG_X_PEAK_FREQ_19             1644U
+#define MB_REG_X_PEAK_FREQ_20             1645U
+#define MB_REG_X_PEAK_MAG_01              1646U
+#define MB_REG_X_PEAK_MAG_02              1647U
+#define MB_REG_X_PEAK_MAG_03              1648U
+#define MB_REG_X_PEAK_MAG_04              1649U
+#define MB_REG_X_PEAK_MAG_05              1650U
+#define MB_REG_X_PEAK_MAG_06              1651U
+#define MB_REG_X_PEAK_MAG_07              1652U
+#define MB_REG_X_PEAK_MAG_08              1653U
+#define MB_REG_X_PEAK_MAG_09              1654U
+#define MB_REG_X_PEAK_MAG_10              1655U
+#define MB_REG_X_PEAK_MAG_11              1656U
+#define MB_REG_X_PEAK_MAG_12              1657U
+#define MB_REG_X_PEAK_MAG_13              1658U
+#define MB_REG_X_PEAK_MAG_14              1659U
+#define MB_REG_X_PEAK_MAG_15              1660U
+#define MB_REG_X_PEAK_MAG_16              1661U
+#define MB_REG_X_PEAK_MAG_17              1662U
+#define MB_REG_X_PEAK_MAG_18              1663U
+#define MB_REG_X_PEAK_MAG_19              1664U
+#define MB_REG_X_PEAK_MAG_20              1665U
 
 /* Y-axis vibration result block */
-#define MB_REG_Y_ACC_RMS                  100U
-#define MB_REG_Y_ACC_PEAK                 101U
-#define MB_REG_Y_ACC_P2P                  102U
-#define MB_REG_Y_CREST_FACTOR             103U
-#define MB_REG_Y_VEL_RMS                  104U
-#define MB_REG_Y_VEL_PEAK                 105U
-#define MB_REG_Y_DISP_P2P                 106U
-#define MB_REG_Y_ENV_KURTOSIS             107U
-#define MB_REG_Y_ISO_CLASS                108U
-#define MB_REG_Y_FAULT_FLAGS              109U
-#define MB_REG_Y_PEAK_FREQ_01             110U
-#define MB_REG_Y_PEAK_FREQ_02             111U
-#define MB_REG_Y_PEAK_FREQ_03             112U
-#define MB_REG_Y_PEAK_FREQ_04             113U
-#define MB_REG_Y_PEAK_FREQ_05             114U
-#define MB_REG_Y_PEAK_FREQ_06             115U
-#define MB_REG_Y_PEAK_FREQ_07             116U
-#define MB_REG_Y_PEAK_FREQ_08             117U
-#define MB_REG_Y_PEAK_FREQ_09             118U
-#define MB_REG_Y_PEAK_FREQ_10             119U
-#define MB_REG_Y_PEAK_FREQ_11             120U
-#define MB_REG_Y_PEAK_FREQ_12             121U
-#define MB_REG_Y_PEAK_FREQ_13             122U
-#define MB_REG_Y_PEAK_FREQ_14             123U
-#define MB_REG_Y_PEAK_FREQ_15             124U
-#define MB_REG_Y_PEAK_FREQ_16             125U
-#define MB_REG_Y_PEAK_FREQ_17             126U
-#define MB_REG_Y_PEAK_FREQ_18             127U
-#define MB_REG_Y_PEAK_FREQ_19             128U
-#define MB_REG_Y_PEAK_FREQ_20             129U
-#define MB_REG_Y_PEAK_MAG_01              130U
-#define MB_REG_Y_PEAK_MAG_02              131U
-#define MB_REG_Y_PEAK_MAG_03              132U
-#define MB_REG_Y_PEAK_MAG_04              133U
-#define MB_REG_Y_PEAK_MAG_05              134U
-#define MB_REG_Y_PEAK_MAG_06              135U
-#define MB_REG_Y_PEAK_MAG_07              136U
-#define MB_REG_Y_PEAK_MAG_08              137U
-#define MB_REG_Y_PEAK_MAG_09              138U
-#define MB_REG_Y_PEAK_MAG_10              139U
-#define MB_REG_Y_PEAK_MAG_11              140U
-#define MB_REG_Y_PEAK_MAG_12              141U
-#define MB_REG_Y_PEAK_MAG_13              142U
-#define MB_REG_Y_PEAK_MAG_14              143U
-#define MB_REG_Y_PEAK_MAG_15              144U
-#define MB_REG_Y_PEAK_MAG_16              145U
-#define MB_REG_Y_PEAK_MAG_17              146U
-#define MB_REG_Y_PEAK_MAG_18              147U
-#define MB_REG_Y_PEAK_MAG_19              148U
-#define MB_REG_Y_PEAK_MAG_20              149U
+#define MB_REG_Y_ACC_RMS                  1712U
+#define MB_REG_Y_ACC_PEAK                 1713U
+#define MB_REG_Y_ACC_P2P                  1714U
+#define MB_REG_Y_CREST_FACTOR             1715U
+#define MB_REG_Y_VEL_RMS                  1716U
+#define MB_REG_Y_VEL_PEAK                 1717U
+#define MB_REG_Y_DISP_P2P                 1718U
+#define MB_REG_Y_ENV_KURTOSIS             1719U
+#define MB_REG_Y_ISO_CLASS                1720U
+#define MB_REG_Y_FAULT_FLAGS              1721U
+#define MB_REG_Y_PEAK_FREQ_01             1722U
+#define MB_REG_Y_PEAK_FREQ_02             1723U
+#define MB_REG_Y_PEAK_FREQ_03             1724U
+#define MB_REG_Y_PEAK_FREQ_04             1725U
+#define MB_REG_Y_PEAK_FREQ_05             1726U
+#define MB_REG_Y_PEAK_FREQ_06             1727U
+#define MB_REG_Y_PEAK_FREQ_07             1728U
+#define MB_REG_Y_PEAK_FREQ_08             1729U
+#define MB_REG_Y_PEAK_FREQ_09             1730U
+#define MB_REG_Y_PEAK_FREQ_10             1731U
+#define MB_REG_Y_PEAK_FREQ_11             1732U
+#define MB_REG_Y_PEAK_FREQ_12             1733U
+#define MB_REG_Y_PEAK_FREQ_13             1734U
+#define MB_REG_Y_PEAK_FREQ_14             1735U
+#define MB_REG_Y_PEAK_FREQ_15             1736U
+#define MB_REG_Y_PEAK_FREQ_16             1737U
+#define MB_REG_Y_PEAK_FREQ_17             1738U
+#define MB_REG_Y_PEAK_FREQ_18             1739U
+#define MB_REG_Y_PEAK_FREQ_19             1740U
+#define MB_REG_Y_PEAK_FREQ_20             1741U
+#define MB_REG_Y_PEAK_MAG_01              1742U
+#define MB_REG_Y_PEAK_MAG_02              1743U
+#define MB_REG_Y_PEAK_MAG_03              1744U
+#define MB_REG_Y_PEAK_MAG_04              1745U
+#define MB_REG_Y_PEAK_MAG_05              1746U
+#define MB_REG_Y_PEAK_MAG_06              1747U
+#define MB_REG_Y_PEAK_MAG_07              1748U
+#define MB_REG_Y_PEAK_MAG_08              1749U
+#define MB_REG_Y_PEAK_MAG_09              1750U
+#define MB_REG_Y_PEAK_MAG_10              1751U
+#define MB_REG_Y_PEAK_MAG_11              1752U
+#define MB_REG_Y_PEAK_MAG_12              1753U
+#define MB_REG_Y_PEAK_MAG_13              1754U
+#define MB_REG_Y_PEAK_MAG_14              1755U
+#define MB_REG_Y_PEAK_MAG_15              1756U
+#define MB_REG_Y_PEAK_MAG_16              1757U
+#define MB_REG_Y_PEAK_MAG_17              1758U
+#define MB_REG_Y_PEAK_MAG_18              1759U
+#define MB_REG_Y_PEAK_MAG_19              1760U
+#define MB_REG_Y_PEAK_MAG_20              1761U
 
 /* Z-axis vibration result block */
-#define MB_REG_Z_ACC_RMS                  150U
-#define MB_REG_Z_ACC_PEAK                 151U
-#define MB_REG_Z_ACC_P2P                  152U
-#define MB_REG_Z_CREST_FACTOR             153U
-#define MB_REG_Z_VEL_RMS                  154U
-#define MB_REG_Z_VEL_PEAK                 155U
-#define MB_REG_Z_DISP_P2P                 156U
-#define MB_REG_Z_ENV_KURTOSIS             157U
-#define MB_REG_Z_ISO_CLASS                158U
-#define MB_REG_Z_FAULT_FLAGS              159U
-#define MB_REG_Z_PEAK_FREQ_01             160U
-#define MB_REG_Z_PEAK_FREQ_02             161U
-#define MB_REG_Z_PEAK_FREQ_03             162U
-#define MB_REG_Z_PEAK_FREQ_04             163U
-#define MB_REG_Z_PEAK_FREQ_05             164U
-#define MB_REG_Z_PEAK_FREQ_06             165U
-#define MB_REG_Z_PEAK_FREQ_07             166U
-#define MB_REG_Z_PEAK_FREQ_08             167U
-#define MB_REG_Z_PEAK_FREQ_09             168U
-#define MB_REG_Z_PEAK_FREQ_10             169U
-#define MB_REG_Z_PEAK_FREQ_11             170U
-#define MB_REG_Z_PEAK_FREQ_12             171U
-#define MB_REG_Z_PEAK_FREQ_13             172U
-#define MB_REG_Z_PEAK_FREQ_14             173U
-#define MB_REG_Z_PEAK_FREQ_15             174U
-#define MB_REG_Z_PEAK_FREQ_16             175U
-#define MB_REG_Z_PEAK_FREQ_17             176U
-#define MB_REG_Z_PEAK_FREQ_18             177U
-#define MB_REG_Z_PEAK_FREQ_19             178U
-#define MB_REG_Z_PEAK_FREQ_20             179U
-#define MB_REG_Z_PEAK_MAG_01              180U
-#define MB_REG_Z_PEAK_MAG_02              181U
-#define MB_REG_Z_PEAK_MAG_03              182U
-#define MB_REG_Z_PEAK_MAG_04              183U
-#define MB_REG_Z_PEAK_MAG_05              184U
-#define MB_REG_Z_PEAK_MAG_06              185U
-#define MB_REG_Z_PEAK_MAG_07              186U
-#define MB_REG_Z_PEAK_MAG_08              187U
-#define MB_REG_Z_PEAK_MAG_09              188U
-#define MB_REG_Z_PEAK_MAG_10              189U
-#define MB_REG_Z_PEAK_MAG_11              190U
-#define MB_REG_Z_PEAK_MAG_12              191U
-#define MB_REG_Z_PEAK_MAG_13              192U
-#define MB_REG_Z_PEAK_MAG_14              193U
-#define MB_REG_Z_PEAK_MAG_15              194U
-#define MB_REG_Z_PEAK_MAG_16              195U
-#define MB_REG_Z_PEAK_MAG_17              196U
-#define MB_REG_Z_PEAK_MAG_18              197U
-#define MB_REG_Z_PEAK_MAG_19              198U
-#define MB_REG_Z_PEAK_MAG_20              199U
+#define MB_REG_Z_ACC_RMS                  1808U
+#define MB_REG_Z_ACC_PEAK                 1809U
+#define MB_REG_Z_ACC_P2P                  1810U
+#define MB_REG_Z_CREST_FACTOR             1811U
+#define MB_REG_Z_VEL_RMS                  1812U
+#define MB_REG_Z_VEL_PEAK                 1813U
+#define MB_REG_Z_DISP_P2P                 1814U
+#define MB_REG_Z_ENV_KURTOSIS             1815U
+#define MB_REG_Z_ISO_CLASS                1816U
+#define MB_REG_Z_FAULT_FLAGS              1817U
+#define MB_REG_Z_PEAK_FREQ_01             1818U
+#define MB_REG_Z_PEAK_FREQ_02             1819U
+#define MB_REG_Z_PEAK_FREQ_03             1820U
+#define MB_REG_Z_PEAK_FREQ_04             1821U
+#define MB_REG_Z_PEAK_FREQ_05             1822U
+#define MB_REG_Z_PEAK_FREQ_06             1823U
+#define MB_REG_Z_PEAK_FREQ_07             1824U
+#define MB_REG_Z_PEAK_FREQ_08             1825U
+#define MB_REG_Z_PEAK_FREQ_09             1826U
+#define MB_REG_Z_PEAK_FREQ_10             1827U
+#define MB_REG_Z_PEAK_FREQ_11             1828U
+#define MB_REG_Z_PEAK_FREQ_12             1829U
+#define MB_REG_Z_PEAK_FREQ_13             1830U
+#define MB_REG_Z_PEAK_FREQ_14             1831U
+#define MB_REG_Z_PEAK_FREQ_15             1832U
+#define MB_REG_Z_PEAK_FREQ_16             1833U
+#define MB_REG_Z_PEAK_FREQ_17             1834U
+#define MB_REG_Z_PEAK_FREQ_18             1835U
+#define MB_REG_Z_PEAK_FREQ_19             1836U
+#define MB_REG_Z_PEAK_FREQ_20             1837U
+#define MB_REG_Z_PEAK_MAG_01              1838U
+#define MB_REG_Z_PEAK_MAG_02              1839U
+#define MB_REG_Z_PEAK_MAG_03              1840U
+#define MB_REG_Z_PEAK_MAG_04              1841U
+#define MB_REG_Z_PEAK_MAG_05              1842U
+#define MB_REG_Z_PEAK_MAG_06              1843U
+#define MB_REG_Z_PEAK_MAG_07              1844U
+#define MB_REG_Z_PEAK_MAG_08              1845U
+#define MB_REG_Z_PEAK_MAG_09              1846U
+#define MB_REG_Z_PEAK_MAG_10              1847U
+#define MB_REG_Z_PEAK_MAG_11              1848U
+#define MB_REG_Z_PEAK_MAG_12              1849U
+#define MB_REG_Z_PEAK_MAG_13              1850U
+#define MB_REG_Z_PEAK_MAG_14              1851U
+#define MB_REG_Z_PEAK_MAG_15              1852U
+#define MB_REG_Z_PEAK_MAG_16              1853U
+#define MB_REG_Z_PEAK_MAG_17              1854U
+#define MB_REG_Z_PEAK_MAG_18              1855U
+#define MB_REG_Z_PEAK_MAG_19              1856U
+#define MB_REG_Z_PEAK_MAG_20              1857U
 
 /* Timing registers */
 #define MB_REG_TIME_PREV_W0               200U

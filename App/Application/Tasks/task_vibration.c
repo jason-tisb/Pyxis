@@ -124,7 +124,8 @@ static float shaft_freq_from_config_hz(const VibConfig_t *cfg)
         return FREQ_BASE;
     }
 
-    return ((float)cfg->motor_speed_rpm * cfg->gear_ratio) / 60.0f;
+    /* Interpret motor_speed_rpm field as shaft base frequency (Hz x100). */
+    return ((float)cfg->motor_speed_rpm) / 100.0f;
 }
 
 static void refresh_bearing_frequency_from_config(const VibConfig_t *cfg)
@@ -246,7 +247,15 @@ static inline void processVibration(void)
     write_u64_to_regs(usSRegInBuf, MB_REG_TIME_PREV_W0, time_prev - time_diff);
     write_u64_to_regs(usSRegInBuf, MB_REG_TIME_NOW_W0, time_now);
     write_u64_to_regs(usSRegInBuf, MB_REG_TIME_DIFF_W0, time_diff);
-    memcpy(&usSRegInBuf[MB_REG_X_ACC_RMS], shadow, sizeof(shadow));
+    memcpy(&usSRegInBuf[MB_REG_X_ACC_RMS],
+           &shadow[0 * RESULT_DATA_PER_AXIS],
+           RESULT_DATA_PER_AXIS * sizeof(uint16_t));
+    memcpy(&usSRegInBuf[MB_REG_Y_ACC_RMS],
+           &shadow[1 * RESULT_DATA_PER_AXIS],
+           RESULT_DATA_PER_AXIS * sizeof(uint16_t));
+    memcpy(&usSRegInBuf[MB_REG_Z_ACC_RMS],
+           &shadow[2 * RESULT_DATA_PER_AXIS],
+           RESULT_DATA_PER_AXIS * sizeof(uint16_t));
 
     usSRegInBuf[MB_REG_CURRENT_RPM] = scale_to_u16(tach_state.rpm_filtered, 1.0f, 0.0f, 65535.0f);
     usSRegInBuf[MB_REG_TACH_QUALITY] = scale_to_u16(dominant_result->tach_quality, 100.0f, 0.0f, 100.0f);
