@@ -15,6 +15,8 @@ typedef struct {
     stmdev_ctx_t io_ctx;
     SensorBusPort_t bus_port;
     float32_t full_scale_g;
+    uint16_t fifo_watermark;
+    volatile uint32_t init_stage;
 } IIS3DWB_Sensor_t;
 
 bool IIS3DWB_Sensor_Create(IIS3DWB_Sensor_t *sensor, const SensorBusPort_t *bus_port, float32_t full_scale_g);

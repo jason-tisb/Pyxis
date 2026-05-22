@@ -7,6 +7,7 @@ enum {
 };
 
 static SensorBusSpiContext_t *g_spi_contexts[SENSOR_BUS_SPI_MAX_CONTEXTS];
+static SensorBusSpiDmaDebug_t g_spi_dma_debug;
 
 static SensorBusSpiContext_t *sensor_bus_spi_find_context(SPI_HandleTypeDef *hspi)
 {
@@ -38,12 +39,20 @@ static void sensor_bus_spi_register_context(SensorBusSpiContext_t *spi_ctx)
 
 static bool sensor_bus_spi_dma_ready(const SensorBusSpiContext_t *spi_ctx, uint16_t transfer_len)
 {
+    uint16_t min_transfer_len;
+
+    if (spi_ctx == NULL || spi_ctx->dma == NULL) {
+        return false;
+    }
+
+    min_transfer_len = (spi_ctx->dma->min_transfer_len == 0U) ? 1U : spi_ctx->dma->min_transfer_len;
+
     return (spi_ctx != NULL) &&
-           (spi_ctx->dma != NULL) &&
            (spi_ctx->dma->done_sem != NULL) &&
            (spi_ctx->dma->bus_lock != NULL) &&
            (spi_ctx->dma->tx_buf != NULL) &&
            (spi_ctx->dma->rx_buf != NULL) &&
+           (transfer_len >= min_transfer_len) &&
            (spi_ctx->dma->buffer_size >= transfer_len);
 }
 
@@ -51,6 +60,13 @@ static void sensor_bus_spi_complete(SensorBusSpiContext_t *spi_ctx, SensorBusTra
 {
     if (spi_ctx == NULL) {
         return;
+    }
+
+    g_spi_dma_debug.last_completion_state = state;
+    if (state == SENSOR_BUS_XFER_DONE) {
+        ++g_spi_dma_debug.dma_complete_done_count;
+    } else if (state == SENSOR_BUS_XFER_ERROR) {
+        ++g_spi_dma_debug.dma_complete_error_count;
     }
 
     spi_ctx->transfer_state = state;
@@ -71,11 +87,13 @@ static int32_t sensor_bus_spi_wait_dma(SensorBusSpiContext_t *spi_ctx)
     timeout_ms = (spi_ctx->dma->timeout_ms == 0U) ? 1000U : spi_ctx->dma->timeout_ms;
     if (osSemaphoreAcquire(spi_ctx->dma->done_sem, timeout_ms) != osOK ||
         spi_ctx->transfer_state != SENSOR_BUS_XFER_DONE) {
+        ++g_spi_dma_debug.dma_wait_timeout_or_error_count;
         (void)HAL_SPI_Abort(spi_ctx->spi);
         sensor_bus_spi_complete(spi_ctx, SENSOR_BUS_XFER_ERROR);
         return -1;
     }
 
+    ++g_spi_dma_debug.dma_wait_ok_count;
     return 0;
 }
 
@@ -111,6 +129,8 @@ static int32_t sensor_bus_spi_write_reg(void *user_ctx, uint8_t reg, const uint8
         spi_ctx->transfer_state = SENSOR_BUS_XFER_BUSY;
         spi_ctx->transfer_owns_cs = true;
         HAL_GPIO_WritePin(spi_ctx->cs_port, spi_ctx->cs_pin, GPIO_PIN_RESET);
+        ++g_spi_dma_debug.tx_dma_start_count;
+        g_spi_dma_debug.last_transfer_len = transfer_len;
 
         if (HAL_SPI_Transmit_DMA(spi_ctx->spi, spi_ctx->dma->tx_buf, transfer_len) != HAL_OK) {
             sensor_bus_spi_complete(spi_ctx, SENSOR_BUS_XFER_ERROR);
@@ -170,6 +190,8 @@ static int32_t sensor_bus_spi_read_reg(void *user_ctx, uint8_t reg, uint8_t *buf
         spi_ctx->transfer_state = SENSOR_BUS_XFER_BUSY;
         spi_ctx->transfer_owns_cs = true;
         HAL_GPIO_WritePin(spi_ctx->cs_port, spi_ctx->cs_pin, GPIO_PIN_RESET);
+        ++g_spi_dma_debug.txrx_dma_start_count;
+        g_spi_dma_debug.last_transfer_len = transfer_len;
 
         if (HAL_SPI_TransmitReceive_DMA(spi_ctx->spi,
                                         spi_ctx->dma->tx_buf,
@@ -269,10 +291,22 @@ void SensorBusSpi_DisableDma(SensorBusSpiContext_t *spi_ctx)
     spi_ctx->dma = NULL;
 }
 
+const SensorBusSpiDmaDebug_t *SensorBusSpi_GetDmaDebug(void)
+{
+    return &g_spi_dma_debug;
+}
+
+void SensorBusSpi_ResetDmaDebug(void)
+{
+    (void)memset(&g_spi_dma_debug, 0, sizeof(g_spi_dma_debug));
+    g_spi_dma_debug.last_completion_state = SENSOR_BUS_XFER_IDLE;
+}
+
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     SensorBusSpiContext_t *spi_ctx;
 
+    ++g_spi_dma_debug.tx_cplt_cb_count;
     spi_ctx = sensor_bus_spi_find_context(hspi);
     if (spi_ctx != NULL) {
         sensor_bus_spi_complete(spi_ctx, SENSOR_BUS_XFER_DONE);
@@ -283,6 +317,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     SensorBusSpiContext_t *spi_ctx;
 
+    ++g_spi_dma_debug.txrx_cplt_cb_count;
     spi_ctx = sensor_bus_spi_find_context(hspi);
     if (spi_ctx != NULL) {
         sensor_bus_spi_complete(spi_ctx, SENSOR_BUS_XFER_DONE);
@@ -293,6 +328,7 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 {
     SensorBusSpiContext_t *spi_ctx;
 
+    ++g_spi_dma_debug.error_cb_count;
     spi_ctx = sensor_bus_spi_find_context(hspi);
     if (spi_ctx != NULL) {
         sensor_bus_spi_complete(spi_ctx, SENSOR_BUS_XFER_ERROR);

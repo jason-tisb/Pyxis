@@ -1,7 +1,7 @@
 #include "iis3dwb_sensor.h"
 #include "vibration_product_config.h"
 
-#define IIS3DWB_FIFO_OVERFLOW_LEVEL 500U
+#define IIS3DWB_FIFO_OVERFLOW_LEVEL 1000U
 #define IIS3DWB_FIFO_READ_CHUNK     512U
 
 /* ST driver delay callback doesn't pass handle; keep one active sensor context. */
@@ -34,6 +34,8 @@ bool IIS3DWB_Sensor_Create(IIS3DWB_Sensor_t *sensor, const SensorBusPort_t *bus_
 
     sensor->bus_port = *bus_port;
     sensor->full_scale_g = full_scale_g;
+    sensor->fifo_watermark = 0U;
+    sensor->init_stage = 0U;
     g_iis3dwb_active_sensor = sensor;
     sensor->io_ctx.write_reg = iis3dwb_bus_write;
     sensor->io_ctx.read_reg = iis3dwb_bus_read;
@@ -48,25 +50,35 @@ bool IIS3DWB_Sensor_Init(IIS3DWB_Sensor_t *sensor, uint16_t fifo_watermark, uint
     uint8_t whoamI = 0U;
     uint8_t rst = 0U;
     uint32_t guard = 0U;
+    iis3dwb_pin_int2_route_t int2_route;
 
     if (sensor == 0) {
         return false;
     }
 
+    sensor->init_stage = 10U;
+    sensor->fifo_watermark = fifo_watermark;
     SensorBus_DelayMs(&sensor->bus_port, BOOT_TIME);
 
+    sensor->init_stage = 20U;
     if (iis3dwb_device_id_get(&sensor->io_ctx, &whoamI) != 0) {
+        sensor->init_stage = 1020U;
         return false;
     }
     if (whoamI != IIS3DWB_ID) {
+        sensor->init_stage = 1021U;
         return false;
     }
 
+    sensor->init_stage = 30U;
     if (iis3dwb_reset_set(&sensor->io_ctx, PROPERTY_ENABLE) != 0) {
+        sensor->init_stage = 1030U;
         return false;
     }
+    sensor->init_stage = 31U;
     do {
         if (iis3dwb_reset_get(&sensor->io_ctx, &rst) != 0) {
+            sensor->init_stage = 1031U;
             return false;
         }
         SensorBus_DelayMs(&sensor->bus_port, 1U);
@@ -74,37 +86,64 @@ bool IIS3DWB_Sensor_Init(IIS3DWB_Sensor_t *sensor, uint16_t fifo_watermark, uint
     } while ((rst != 0U) && (guard < 100U));
 
     if (rst != 0U) {
+        sensor->init_stage = 1032U;
         return false;
     }
 
+    sensor->init_stage = 40U;
     if (iis3dwb_auto_increment_set(&sensor->io_ctx, PROPERTY_ENABLE) != 0) {
+        sensor->init_stage = 1040U;
         return false;
     }
+    sensor->init_stage = 41U;
     if (iis3dwb_block_data_update_set(&sensor->io_ctx, PROPERTY_ENABLE) != 0) {
+        sensor->init_stage = 1041U;
         return false;
     }
+    sensor->init_stage = 42U;
     if (iis3dwb_xl_full_scale_set(&sensor->io_ctx, fs_mode) != 0) {
+        sensor->init_stage = 1042U;
         return false;
     }
+    sensor->init_stage = 43U;
     if (iis3dwb_fifo_watermark_set(&sensor->io_ctx, fifo_watermark) != 0) {
+        sensor->init_stage = 1043U;
         return false;
     }
+    sensor->init_stage = 44U;
     if (iis3dwb_fifo_xl_batch_set(&sensor->io_ctx, IIS3DWB_XL_BATCHED_AT_26k7Hz) != 0) {
+        sensor->init_stage = 1044U;
         return false;
     }
+    sensor->init_stage = 45U;
     if (iis3dwb_fifo_mode_set(&sensor->io_ctx, IIS3DWB_STREAM_MODE) != 0) {
+        sensor->init_stage = 1045U;
         return false;
     }
+    sensor->init_stage = 46U;
+    memset(&int2_route, 0, sizeof(int2_route));
+    int2_route.fifo_th = 1U;
+    if (iis3dwb_pin_int2_route_set(&sensor->io_ctx, &int2_route) != 0) {
+        sensor->init_stage = 1046U;
+        return false;
+    }
+    sensor->init_stage = 47U;
     if (iis3dwb_xl_data_rate_set(&sensor->io_ctx, IIS3DWB_XL_ODR_26k7Hz) != 0) {
+        sensor->init_stage = 1047U;
         return false;
     }
+    sensor->init_stage = 48U;
     if (iis3dwb_fifo_timestamp_batch_set(&sensor->io_ctx, IIS3DWB_DEC_32) != 0) {
+        sensor->init_stage = 1048U;
         return false;
     }
+    sensor->init_stage = 49U;
     if (iis3dwb_timestamp_set(&sensor->io_ctx, PROPERTY_ENABLE) != 0) {
+        sensor->init_stage = 1049U;
         return false;
     }
 
+    sensor->init_stage = 100U;
     return true;
 }
 
@@ -118,6 +157,8 @@ bool IIS3DWB_Sensor_FetchSamples(IIS3DWB_Sensor_t *sensor,
 {
     iis3dwb_fifo_status_t fifo_status;
     uint16_t write_index = sample_offset;
+    uint16_t last_fifo_level = 0xFFFFU;
+    uint16_t loop_guard = 0U;
 
     if (sensor == 0 || raw_x == 0 || raw_y == 0 || raw_z == 0 || out_count == 0 || sample_offset >= max_samples) {
         return false;
@@ -132,19 +173,29 @@ bool IIS3DWB_Sensor_FetchSamples(IIS3DWB_Sensor_t *sensor,
         return true;
     }
 
-    if (fifo_status.fifo_level >= IIS3DWB_FIFO_OVERFLOW_LEVEL) {
+    if ((fifo_status.fifo_ovr != 0U) || (fifo_status.fifo_level >= IIS3DWB_FIFO_OVERFLOW_LEVEL)) {
         if (iis3dwb_fifo_mode_set(&sensor->io_ctx, IIS3DWB_BYPASS_MODE) != 0) {
             return false;
         }
         if (iis3dwb_fifo_mode_set(&sensor->io_ctx, IIS3DWB_STREAM_MODE) != 0) {
             return false;
         }
-        return true;
+        if (iis3dwb_fifo_status_get(&sensor->io_ctx, &fifo_status) != 0) {
+            return false;
+        }
+        if (fifo_status.fifo_level == 0U) {
+            return true;
+        }
     }
 
     while ((fifo_status.fifo_level > 0U) && (write_index < max_samples)) {
         uint16_t chunk = fifo_status.fifo_level;
+        uint16_t write_index_before = write_index;
         static iis3dwb_fifo_out_raw_t fifo_data[IIS3DWB_FIFO_READ_CHUNK];
+
+        if (loop_guard++ > 32U) {
+            break;
+        }
 
         if (chunk > IIS3DWB_FIFO_READ_CHUNK) {
             chunk = IIS3DWB_FIFO_READ_CHUNK;
@@ -171,6 +222,11 @@ bool IIS3DWB_Sensor_FetchSamples(IIS3DWB_Sensor_t *sensor,
         if (iis3dwb_fifo_status_get(&sensor->io_ctx, &fifo_status) != 0) {
             return false;
         }
+
+        if ((write_index == write_index_before) && (fifo_status.fifo_level == last_fifo_level)) {
+            break;
+        }
+        last_fifo_level = fifo_status.fifo_level;
     }
 
     *out_count = (uint16_t)(write_index - sample_offset);

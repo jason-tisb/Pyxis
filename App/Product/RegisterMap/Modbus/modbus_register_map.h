@@ -226,37 +226,37 @@
 #define MB_REG_Z_PEAK_MAG_20              1857U
 
 /* Timing registers */
-#define MB_REG_TIME_PREV_W0               200U
-#define MB_REG_TIME_PREV_W1               201U
-#define MB_REG_TIME_PREV_W2               202U
-#define MB_REG_TIME_PREV_W3               203U
-#define MB_REG_TIME_NOW_W0                204U
-#define MB_REG_TIME_NOW_W1                205U
-#define MB_REG_TIME_NOW_W2                206U
-#define MB_REG_TIME_NOW_W3                207U
-#define MB_REG_TIME_DIFF_W0               208U
-#define MB_REG_TIME_DIFF_W1               209U
-#define MB_REG_TIME_DIFF_W2               210U
-#define MB_REG_TIME_DIFF_W3               211U
+#define MB_REG_TIME_PREV_W0               1904U
+#define MB_REG_TIME_PREV_W1               1905U
+#define MB_REG_TIME_PREV_W2               1906U
+#define MB_REG_TIME_PREV_W3               1907U
+#define MB_REG_TIME_NOW_W0                1908U
+#define MB_REG_TIME_NOW_W1                1909U
+#define MB_REG_TIME_NOW_W2                1910U
+#define MB_REG_TIME_NOW_W3                1911U
+#define MB_REG_TIME_DIFF_W0               1912U
+#define MB_REG_TIME_DIFF_W1               1913U
+#define MB_REG_TIME_DIFF_W2               1914U
+#define MB_REG_TIME_DIFF_W3               1915U
 
 /* Advanced analytics block */
-#define MB_REG_CURRENT_RPM                220U
-#define MB_REG_TACH_QUALITY               221U
-#define MB_REG_SPEED_STATE                222U
-#define MB_REG_ORDER_1X                   223U
-#define MB_REG_ADV_ENV_KURTOSIS           224U
-#define MB_REG_SIDEBAND_DENSITY           225U
-#define MB_REG_HARMONIC_CONSISTENCY       226U
-#define MB_REG_CEPSTRUM_GEAR_INDEX        227U
-#define MB_REG_SPECTRAL_KURTOSIS          228U
-#define MB_REG_CYCLOSTATIONARY_INDEX      229U
-#define MB_REG_RUL_DAYS                   230U
-#define MB_REG_FAILURE_PROBABILITY        231U
-#define MB_REG_DEGRADATION_INDEX          232U
-#define MB_REG_TIME_TO_MAINTENANCE        233U
-#define MB_REG_BASELINE_UPDATE_COUNT      234U
-#define MB_REG_BASELINE_ACTIVE            235U
-#define MB_REG_ACTIVE_MACHINE_PROFILE     236U
-#define MB_REG_AGING_FACTOR               237U
+#define MB_REG_CURRENT_RPM                1916U
+#define MB_REG_TACH_QUALITY               1917U
+#define MB_REG_SPEED_STATE                1918U
+#define MB_REG_ORDER_1X                   1919U
+#define MB_REG_ADV_ENV_KURTOSIS           1920U
+#define MB_REG_SIDEBAND_DENSITY           1921U
+#define MB_REG_HARMONIC_CONSISTENCY       1922U
+#define MB_REG_CEPSTRUM_GEAR_INDEX        1923U
+#define MB_REG_SPECTRAL_KURTOSIS          1924U
+#define MB_REG_CYCLOSTATIONARY_INDEX      1925U
+#define MB_REG_RUL_DAYS                   1926U
+#define MB_REG_FAILURE_PROBABILITY        1927U
+#define MB_REG_DEGRADATION_INDEX          1928U
+#define MB_REG_TIME_TO_MAINTENANCE        1929U
+#define MB_REG_BASELINE_UPDATE_COUNT      1930U
+#define MB_REG_BASELINE_ACTIVE            1931U
+#define MB_REG_ACTIVE_MACHINE_PROFILE     1932U
+#define MB_REG_AGING_FACTOR               1933U
 
 #endif

@@ -50,7 +50,7 @@
 osThreadId_t vTaskVibrationHandle;
 const osThreadAttr_t vTaskVibration_attributes = {
   .name = "vTaskVibration",
-  .priority = (osPriority_t) osPriorityAboveNormal2,
+  .priority = (osPriority_t) osPriorityNormal1,
   .stack_size = 30000 * 4
 };
 /* Definitions for vTaskModbus */
@@ -95,6 +95,11 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* Create events before tasks that consume them to avoid NULL-handle races. */
+	xSettingsEventGroup = xEventGroupCreate();
+  /* USER CODE END RTOS_EVENTS */
+
   /* creation of vTaskVibration */
   vTaskVibrationHandle = osThreadNew(main_TaskVibration, NULL, &vTaskVibration_attributes);
 
@@ -104,11 +109,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
-
-  /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
-	xSettingsEventGroup = xEventGroupCreate();
-  /* USER CODE END RTOS_EVENTS */
 
 }
 /* USER CODE BEGIN Header_main_TaskVibration */

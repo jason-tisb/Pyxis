@@ -62,6 +62,7 @@ extern osSemaphoreId_t  kv_erase_sem;
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_spi1_rx;
 extern DMA_HandleTypeDef hdma_spi1_tx;
+extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
 
@@ -168,6 +169,14 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line 5 interrupt.
+  */
+void EXTI5_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(VBS_INT_Pin);
+}
+
+/**
   * @brief This function handles GPDMA1 Channel 0 global interrupt.
   */
 void GPDMA1_Channel0_IRQHandler(void)
@@ -181,6 +190,14 @@ void GPDMA1_Channel0_IRQHandler(void)
 void GPDMA1_Channel1_IRQHandler(void)
 {
   HAL_DMA_IRQHandler(&hdma_spi1_tx);
+}
+
+/**
+  * @brief This function handles SPI1 global interrupt.
+  */
+void SPI1_IRQHandler(void)
+{
+  HAL_SPI_IRQHandler(&hspi1);
 }
 
 /**

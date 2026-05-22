@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebSerial Modbus RTU</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <div class="title">WebSerial Modbus RTU</div>
+        <div class="subtitle">Holding settings / Input table</div>
+      </div>
+      <button id="btnShowDevice" class="btnSmall">Show Device</button>
+    </header>
+
+    <main class="layout">
+      <div class="mainCol">
+        <section class="panel">
+          <div class="panelHeader">
+            <h2>Settings (Holding Registers)</h2>
+            <div class="toolbar">
+              <button id="btnReadHolding" class="btnSmall" disabled>Read</button>
+              <button id="btnSaveHolding" class="btnSmall primary" disabled>Save</button>
+              <input id="holdFilter" class="filter" placeholder="filter..." />
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table id="holdingTable">
+              <thead>
+                <tr><th>Addr</th><th>Name</th><th>Value</th><th>Dirty</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panelHeader">
+            <h2>Input Registers</h2>
+            <div class="toolbar">
+              <button id="btnPollToggle" class="btnSmall" disabled>Start Poll</button>
+              <input id="inFilter" class="filter" placeholder="filter..." />
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table id="inputTable">
+              <thead>
+                <tr><th>Addr</th><th>Name</th><th>Value</th><th>Updated</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside class="sideCol">
+        <section class="panel logPanel">
+          <div class="panelHeader">
+            <h2>TX/RX Log</h2>
+            <div class="toolbar">
+              <label class="checkLabel" title="Show raw serial chunks">
+                <input id="verboseRaw" type="checkbox" />
+                RAW
+              </label>
+              <button id="btnClearLog" class="btnSmall">Clear</button>
+            </div>
+          </div>
+          <pre id="serialLog" class="serialLog"></pre>
+        </section>
+      </aside>
+    </main>
+
+    <dialog id="deviceDialog" class="dlg">
+      <form method="dialog" class="dlgBody">
+        <div class="dlgHeader">
+          <h2>Device</h2>
+          <div class="toolbar">
+            <span id="connStatus" class="pill">Disconnected</span>
+            <button id="btnConnect" class="btnSmall primary" type="button">Connect</button>
+            <button id="btnDisconnect" class="btnSmall danger" type="button" disabled>Disconnect</button>
+            <button class="btnSmall" value="cancel">Close</button>
+          </div>
+        </div>
+
+        <div class="deviceGrid">
+          <label class="field span2">
+            <span>Port</span>
+            <div class="inline">
+              <select id="portSelect"></select>
+              <button id="btnRefreshPorts" class="btnSmall" type="button">Refresh</button>
+              <button id="btnAddPort" class="btnSmall" type="button">Add</button>
+            </div>
+          </label>
+          <label class="field">
+            <span>Baudrate</span>
+            <select id="baudrate">
+              <option value="9600">9600</option>
+              <option value="19200" selected>19200</option>
+              <option value="38400">38400</option>
+              <option value="57600">57600</option>
+              <option value="115200">115200</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Data bits</span>
+            <select id="dataBits"><option value="8" selected>8 Bits</option><option value="7">7 Bits</option></select>
+          </label>
+          <label class="field">
+            <span>Slave ID</span>
+            <input id="slaveId" type="number" value="254" min="1" max="254" />
+          </label>
+          <label class="field">
+            <span>Parity</span>
+            <select id="parity"><option value="none" selected>None</option><option value="even">Even</option><option value="odd">Odd</option></select>
+          </label>
+          <label class="field">
+            <span>Stop bits</span>
+            <select id="stopBits"><option value="1">1</option><option value="2" selected>2</option></select>
+          </label>
+          <label class="field">
+            <span>Addressing</span>
+            <select id="addrBase"><option value="0" selected>0-based protocol</option><option value="1">1-based display</option></select>
+          </label>
+          <label class="field">
+            <span>Timeout (ms)</span>
+            <input id="timeoutMs" type="number" value="10000" min="50" step="50" />
+          </label>
+          <label class="field">
+            <span>Retries</span>
+            <input id="retryCount" type="number" value="2" min="0" max="10" />
+          </label>
+          <label class="field">
+            <span>Poll interval (ms)</span>
+            <input id="pollMs" type="number" value="800" min="200" step="100" />
+          </label>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

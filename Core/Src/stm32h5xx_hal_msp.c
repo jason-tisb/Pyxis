@@ -365,6 +365,8 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     HAL_NVIC_EnableIRQ(GPDMA1_Channel0_IRQn);
     HAL_NVIC_SetPriority(GPDMA1_Channel1_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(GPDMA1_Channel1_IRQn);
+    HAL_NVIC_SetPriority(SPI1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(SPI1_IRQn);
 
     /* USER CODE BEGIN SPI1_MspInit 1 */
 
@@ -401,6 +403,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     HAL_DMA_DeInit(hspi->hdmatx);
     HAL_NVIC_DisableIRQ(GPDMA1_Channel0_IRQn);
     HAL_NVIC_DisableIRQ(GPDMA1_Channel1_IRQn);
+    HAL_NVIC_DisableIRQ(SPI1_IRQn);
 
     /* USER CODE BEGIN SPI1_MspDeInit 1 */
 

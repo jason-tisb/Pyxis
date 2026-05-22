@@ -104,7 +104,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	  SCB->VTOR = 0x08010000;
+	  // SCB->VTOR = 0x08010000;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -556,7 +556,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, LED_PWR_Pin|LED_STAT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, VBS_CS_Pin|TMP_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, VBS_CS_Pin|TMP_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : LED_PWR_Pin LED_STAT_Pin */
   GPIO_InitStruct.Pin = LED_PWR_Pin|LED_STAT_Pin;
@@ -574,7 +574,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : VBS_INT_Pin */
   GPIO_InitStruct.Pin = VBS_INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(VBS_INT_GPIO_Port, &GPIO_InitStruct);
 
@@ -585,6 +585,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(TMP_Alert_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  HAL_NVIC_SetPriority(EXTI5_IRQn, 6, 0);
+  HAL_NVIC_EnableIRQ(EXTI5_IRQn);
 
   /* USER CODE END MX_GPIO_Init_2 */
 }

@@ -39,6 +39,7 @@ typedef struct SensorBusSpiDmaConfig {
     uint8_t *tx_buf;
     uint8_t *rx_buf;
     uint16_t buffer_size;
+    uint16_t min_transfer_len;
     uint32_t timeout_ms;
 } SensorBusSpiDmaConfig_t;
 
@@ -52,6 +53,20 @@ typedef struct SensorBusSpiContext {
     volatile bool transfer_owns_cs;
 } SensorBusSpiContext_t;
 
+typedef struct {
+    uint32_t txrx_dma_start_count;
+    uint32_t tx_dma_start_count;
+    uint32_t dma_wait_ok_count;
+    uint32_t dma_wait_timeout_or_error_count;
+    uint32_t dma_complete_done_count;
+    uint32_t dma_complete_error_count;
+    uint32_t tx_cplt_cb_count;
+    uint32_t txrx_cplt_cb_count;
+    uint32_t error_cb_count;
+    uint32_t last_transfer_len;
+    SensorBusTransferState_t last_completion_state;
+} SensorBusSpiDmaDebug_t;
+
 void SensorBusSpi_Init(SensorBusPort_t *port,
                        SensorBusSpiContext_t *spi_ctx,
                        SPI_HandleTypeDef *spi,
@@ -60,6 +75,8 @@ void SensorBusSpi_Init(SensorBusPort_t *port,
                        void (*delay_ms)(uint32_t ms));
 void SensorBusSpi_EnableDma(SensorBusSpiContext_t *spi_ctx, const SensorBusSpiDmaConfig_t *dma_cfg);
 void SensorBusSpi_DisableDma(SensorBusSpiContext_t *spi_ctx);
+const SensorBusSpiDmaDebug_t *SensorBusSpi_GetDmaDebug(void);
+void SensorBusSpi_ResetDmaDebug(void);
 
 static inline int32_t SensorBus_WriteReg(const SensorBusPort_t *port, uint8_t reg, const uint8_t *buf, uint16_t len)
 {

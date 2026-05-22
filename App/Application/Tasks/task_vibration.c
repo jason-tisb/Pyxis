@@ -17,7 +17,8 @@ extern const osMutexAttr_t regbuf_mtx_attr;
 
 enum {
     SENSOR_SPI_DMA_FIFO_CHUNK = 512U,
-    SENSOR_SPI_DMA_BUFFER_SIZE = (SENSOR_SPI_DMA_FIFO_CHUNK * sizeof(iis3dwb_fifo_out_raw_t)) + 1U
+    SENSOR_SPI_DMA_BUFFER_SIZE = (SENSOR_SPI_DMA_FIFO_CHUNK * sizeof(iis3dwb_fifo_out_raw_t)) + 1U,
+    SENSOR_SPI_DMA_MIN_TRANSFER_SIZE = 64U
 };
 
 static float32_t raw_x[FFT_LENGTH];
@@ -28,8 +29,11 @@ static osThreadId_t modbusEventHandle;
 static IIS3DWB_Sensor_t g_sensor;
 static SensorBusSpiContext_t g_spi_sensor_ctx;
 static SensorBusSpiDmaConfig_t g_spi_sensor_dma_cfg;
+static osSemaphoreId_t g_fifo_wm_sem;
+static bool g_use_event_helper_task = false;
 static uint8_t g_spi_sensor_dma_tx_buf[SENSOR_SPI_DMA_BUFFER_SIZE];
 static uint8_t g_spi_sensor_dma_rx_buf[SENSOR_SPI_DMA_BUFFER_SIZE];
+static void refresh_bearing_frequency_if_events_pending(void);
 
 static void wait_forever_with_delay(uint32_t delay_ms)
 {
@@ -41,6 +45,13 @@ static void wait_forever_with_delay(uint32_t delay_ms)
 static void sensor_delay_ms(uint32_t ms)
 {
     osDelay(ms);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if ((GPIO_Pin == VBS_INT_Pin) && (g_fifo_wm_sem != NULL)) {
+        (void)osSemaphoreRelease(g_fifo_wm_sem);
+    }
 }
 
 uint64_t os_time_us(void)
@@ -293,12 +304,15 @@ void main_TaskVibration(void *argument)
 
     SensorBusSpi_Init(&bus_port, &g_spi_sensor_ctx, &SENSOR_BUS, CS_up_GPIO_Port, CS_up_Pin, sensor_delay_ms);
 
-    #if 0
+    /* Enable SPI DMA for sensor bursts (FIFO block reads). */
+    #if 1
+    SensorBusSpi_ResetDmaDebug();
     g_spi_sensor_dma_cfg.done_sem = osSemaphoreNew(1U, 0U, NULL);
     g_spi_sensor_dma_cfg.bus_lock = osMutexNew(NULL);
     g_spi_sensor_dma_cfg.tx_buf = g_spi_sensor_dma_tx_buf;
     g_spi_sensor_dma_cfg.rx_buf = g_spi_sensor_dma_rx_buf;
     g_spi_sensor_dma_cfg.buffer_size = (uint16_t)sizeof(g_spi_sensor_dma_tx_buf);
+    g_spi_sensor_dma_cfg.min_transfer_len = SENSOR_SPI_DMA_MIN_TRANSFER_SIZE;
     g_spi_sensor_dma_cfg.timeout_ms = 1000U;
 
     if (g_spi_sensor_dma_cfg.done_sem != NULL && g_spi_sensor_dma_cfg.bus_lock != NULL) {
@@ -316,12 +330,40 @@ void main_TaskVibration(void *argument)
     }
 
     modbusEventHandle = osThreadNew(eventHandlerTask, NULL, NULL);
-    if (modbusEventHandle == NULL) {
+    g_use_event_helper_task = (modbusEventHandle != NULL);
+
+    g_fifo_wm_sem = osSemaphoreNew(32U, 0U, NULL);
+    if (g_fifo_wm_sem == NULL) {
         wait_forever_with_delay(1000U);
     }
 
     for (;;) {
-        processVibration();
-        osDelay(2);
+        if (!g_use_event_helper_task) {
+            refresh_bearing_frequency_if_events_pending();
+        }
+        if (osSemaphoreAcquire(g_fifo_wm_sem, 50U) == osOK) {
+            processVibration();
+        } else {
+            /* Fallback path: keep accumulating samples even if INT edge is missed. */
+            processVibration();
+            osDelay(1U);
+        }
+    }
+}
+
+static void refresh_bearing_frequency_if_events_pending(void)
+{
+    EventBits_t bits = xEventGroupWaitBits(xSettingsEventGroup,
+                                           EVT_GEAR_RATIO_CHANGED | EVT_MOTOR_SPEED_CHANGED | EVT_BEARING_BALL_COUNT_CHANGED |
+                                           EVT_BEARING_BALL_SIZE_CHANGED | EVT_BEARING_DIAMETER_CHANGED | EVT_BEARING_ALPHA_ANGLE_CHANGED |
+                                           EVT_FILTER_HIGH_PASS_CHANGED | EVT_FILTER_LOW_PASS_CHANGED,
+                                           pdTRUE,
+                                           pdFALSE,
+                                           0U);
+
+    if (bits != 0U) {
+        VibConfig_t vib_cfg;
+        VibrationModule_GetConfig(&vib_cfg);
+        refresh_bearing_frequency_from_config(&vib_cfg);
     }
 }
