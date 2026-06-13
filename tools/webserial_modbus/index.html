@@ -3,44 +3,29 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>WebSerial Modbus RTU</title>
+    <title>TISB Pyxis Configuration</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
     <header class="topbar">
       <div>
-        <div class="title">WebSerial Modbus RTU</div>
-        <div class="subtitle">Holding settings / Input table</div>
+        <div class="title">TISB Pyxis Configuration</div>
+        <div class="subtitle">Input table / FFT peaks</div>
       </div>
-      <button id="btnShowDevice" class="btnSmall">Show Device</button>
+      <div class="topbarActions">
+        <button id="btnPollToggle" class="btnSmall" disabled>Start Poll</button>
+        <button id="btnShowLog" class="btnSmall logBtn" title="Open TX/RX log">Log</button>
+        <button id="btnShowConfig" class="btnSmall configBtn" title="Open holding register settings">&#9881; Config</button>
+        <button id="btnShowDevice" class="btnSmall">Show Device</button>
+      </div>
     </header>
 
     <main class="layout">
       <div class="mainCol">
         <section class="panel">
           <div class="panelHeader">
-            <h2>Settings (Holding Registers)</h2>
-            <div class="toolbar">
-              <button id="btnReadHolding" class="btnSmall" disabled>Read</button>
-              <button id="btnSaveHolding" class="btnSmall primary" disabled>Save</button>
-              <input id="holdFilter" class="filter" placeholder="filter..." />
-            </div>
-          </div>
-          <div class="tableWrap">
-            <table id="holdingTable">
-              <thead>
-                <tr><th>Addr</th><th>Name</th><th>Value</th><th>Dirty</th></tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panelHeader">
             <h2>Input Registers</h2>
             <div class="toolbar">
-              <button id="btnPollToggle" class="btnSmall" disabled>Start Poll</button>
               <input id="inFilter" class="filter" placeholder="filter..." />
             </div>
           </div>
@@ -53,24 +38,68 @@
             </table>
           </div>
         </section>
-      </div>
 
-      <aside class="sideCol">
-        <section class="panel logPanel">
+        <section class="panel">
           <div class="panelHeader">
-            <h2>TX/RX Log</h2>
-            <div class="toolbar">
-              <label class="checkLabel" title="Show raw serial chunks">
-                <input id="verboseRaw" type="checkbox" />
-                RAW
-              </label>
-              <button id="btnClearLog" class="btnSmall">Clear</button>
+            <h2>FFT Peaks</h2>
+            <div class="mutedSmall">Top 20 amplitude peaks from current input register poll</div>
+          </div>
+          <div id="fftCharts" class="fftGrid">
+            <div class="fftCard" data-axis="X">
+              <div class="fftTitle"><span>X Axis</span><span class="mono" data-role="max">-</span></div>
+              <div class="fftPlot" data-role="plot"></div>
+            </div>
+            <div class="fftCard" data-axis="Y">
+              <div class="fftTitle"><span>Y Axis</span><span class="mono" data-role="max">-</span></div>
+              <div class="fftPlot" data-role="plot"></div>
+            </div>
+            <div class="fftCard" data-axis="Z">
+              <div class="fftTitle"><span>Z Axis</span><span class="mono" data-role="max">-</span></div>
+              <div class="fftPlot" data-role="plot"></div>
             </div>
           </div>
-          <pre id="serialLog" class="serialLog"></pre>
         </section>
-      </aside>
+      </div>
     </main>
+
+    <dialog id="logDialog" class="dlg logDlg">
+      <div class="dlgBody logDlgBody">
+        <div class="dlgHeader">
+          <h2>TX/RX Log</h2>
+          <div class="toolbar">
+            <label class="checkLabel" title="Show raw serial chunks">
+              <input id="verboseRaw" type="checkbox" />
+              RAW
+            </label>
+            <button id="btnClearLog" class="btnSmall">Clear</button>
+            <button id="btnCloseLog" class="btnSmall" type="button">Close</button>
+          </div>
+        </div>
+        <pre id="serialLog" class="serialLog"></pre>
+      </div>
+    </dialog>
+
+    <dialog id="configDialog" class="dlg configDlg">
+      <div class="dlgBody configDlgBody">
+        <div class="dlgHeader">
+          <h2>Settings (Holding Registers)</h2>
+          <div class="toolbar">
+            <button id="btnReadHolding" class="btnSmall" type="button" disabled>Read</button>
+            <button id="btnSaveHolding" class="btnSmall primary" type="button" disabled>Save</button>
+            <input id="holdFilter" class="filter" placeholder="filter..." />
+            <button id="btnCloseConfig" class="btnSmall" type="button">Close</button>
+          </div>
+        </div>
+        <div class="tableWrap settingsTableWrap">
+          <table id="holdingTable">
+            <thead>
+              <tr><th>Addr</th><th>Name</th><th>Value</th><th>Dirty</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </dialog>
 
     <dialog id="deviceDialog" class="dlg">
       <form method="dialog" class="dlgBody">

@@ -1,0 +1,2461 @@
+{
+    "device": {
+        "vendor": "TISB",
+        "product_name": "Pyxis",
+        "model": "v1",
+        "order_number": "PYXIS-V1",
+        "product_serial": "222001",
+        "hardware_version": "v1",
+        "firmware_version": "v1",
+        "eds_version": "v1",
+        "protocol": "Modbus RTU",
+        "supported_function_codes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            15,
+            16
+        ],
+        "supports_exception_response": true
+    },
+    "slave_id": {
+        "registerType": "holding_register",
+        "name": "Slave ID",
+        "address": 0,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Modbus slave address of the device.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 247
+        },
+        "unit": "address"
+    },
+    "baud_rate": {
+        "registerType": "holding_register",
+        "name": "Baud Rate",
+        "address": 1,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Baud rate selection code: 0=auto, 1=9600, 2=19200, 3=38400, 4=115200.",
+        "validation": {
+            "type": "specific_number",
+            "number": [
+                {
+                    "value": 0,
+                    "name": "Auto Baud Rate Detection"
+                },
+                {
+                    "value": 1,
+                    "name": "9600 bps"
+                },
+                {
+                    "value": 2,
+                    "name": "19200 bps"
+                },
+                {
+                    "value": 3,
+                    "name": "38400 bps"
+                },
+                {
+                    "value": 4,
+                    "name": "115200 bps"
+                }
+            ]
+        },
+        "unit": "code"
+    },
+    "parity": {
+        "registerType": "holding_register",
+        "name": "Parity / Stop Bit",
+        "address": 2,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Parity and stop-bit selection code: 0=even/1 stop, 1=odd/1 stop, 2=none/2 stop, 3=none/1 stop.",
+        "validation": {
+            "type": "specific_number",
+            "number": [
+                {
+                    "value": 0,
+                    "name": "Even / 1 Stop Bit"
+                },
+                {
+                    "value": 1,
+                    "name": "Odd / 1 Stop Bit"
+                },
+                {
+                    "value": 2,
+                    "name": "None / 2 Stop Bits"
+                },
+                {
+                    "value": 3,
+                    "name": "None / 1 Stop Bit"
+                }
+            ]
+        },
+        "unit": "code"
+    },
+    "response_delay": {
+        "registerType": "holding_register",
+        "name": "Response Delay",
+        "address": 3,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Reserved communication response delay register.",
+        "validation": null,
+        "unit": "ms"
+    },
+    "machine_profile": {
+        "registerType": "holding_register",
+        "name": "Machine Profile",
+        "address": 4,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Machine profile code: 0=generic, 1=motor, 2=pump, 3=fan, 4=compressor, 5=gearbox.",
+        "validation": {
+            "type": "specific_number",
+            "number": [
+                {
+                    "value": 0,
+                    "name": "Generic"
+                },
+                {
+                    "value": 1,
+                    "name": "Motor"
+                },
+                {
+                    "value": 2,
+                    "name": "Pump"
+                },
+                {
+                    "value": 3,
+                    "name": "Fan"
+                },
+                {
+                    "value": 4,
+                    "name": "Compressor"
+                },
+                {
+                    "value": 5,
+                    "name": "Gearbox"
+                }
+            ]
+        },
+        "unit": "code"
+    },
+    "baseline_command": {
+        "registerType": "holding_register",
+        "name": "Baseline Command",
+        "address": 5,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Baseline command code: 0=none, 1=capture baseline, 2=reset baseline.",
+        "validation": {
+            "type": "specific_number",
+            "number": [
+                {
+                    "value": 0,
+                    "name": "None"
+                },
+                {
+                    "value": 1,
+                    "name": "Capture Baseline"
+                },
+                {
+                    "value": 2,
+                    "name": "Reset Baseline"
+                }
+            ]
+        },
+        "unit": "code"
+    },
+    "tach_enable": {
+        "registerType": "holding_register",
+        "name": "Tach Enable",
+        "address": 6,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Reserved tachometer enable register.",
+        "validation": null,
+        "unit": "flag"
+    },
+    "tach_source": {
+        "registerType": "holding_register",
+        "name": "Tach Source",
+        "address": 7,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Reserved tachometer source selection register.",
+        "validation": null,
+        "unit": "code"
+    },
+    "gear_ratio": {
+        "registerType": "holding_register",
+        "name": "Gear Ratio",
+        "address": 11520,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Gear ratio in x100 format. Example: 125 means 1.25.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 5000
+        },
+        "unit": "ratio"
+    },
+    "base_freq_hz": {
+        "registerType": "holding_register",
+        "name": "Base Frequency",
+        "address": 11521,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Base shaft frequency in Hz x100. Example: 5000 means 50.00 Hz.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 65535
+        },
+        "unit": "Hz"
+    },
+    "bearing_ball_count": {
+        "registerType": "holding_register",
+        "name": "Bearing Ball Count",
+        "address": 11522,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Number of rolling elements in the bearing.",
+        "validation": {
+            "type": "minmax",
+            "min": 3,
+            "max": 32
+        },
+        "unit": "count"
+    },
+    "bearing_ball_size": {
+        "registerType": "holding_register",
+        "name": "Bearing Ball Diameter",
+        "address": 11523,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Bearing ball diameter in mm x100. Example: 794 means 7.94 mm.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 5000
+        },
+        "unit": "mm"
+    },
+    "bearing_diameter": {
+        "registerType": "holding_register",
+        "name": "Bearing Pitch Diameter",
+        "address": 11524,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Bearing pitch diameter in mm x100. Value must be larger than bearing ball diameter.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 7200
+        },
+        "unit": "mm"
+    },
+    "bearing_alpha_angle": {
+        "registerType": "holding_register",
+        "name": "Bearing Contact Angle",
+        "address": 11525,
+        "offset": 0,
+        "multiply": 10,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Bearing contact angle in degree x10. Example: 315 means 31.5 degrees.",
+        "validation": {
+            "type": "minmax",
+            "min": 0,
+            "max": 900
+        },
+        "unit": "deg"
+    },
+    "filter_high_pass": {
+        "registerType": "holding_register",
+        "name": "High Pass Filter",
+        "address": 11526,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "High-pass filter cutoff frequency in Hz. Must be lower than low-pass cutoff.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 8000
+        },
+        "unit": "Hz"
+    },
+    "filter_low_pass": {
+        "registerType": "holding_register",
+        "name": "Low Pass Filter",
+        "address": 11527,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Low-pass filter cutoff frequency in Hz. Firmware also requires it to be greater than high-pass and not exceed half the sample rate.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 8000
+        },
+        "unit": "Hz"
+    },
+    "refresh": {
+        "registerType": "holding_register",
+        "name": "Refresh / Apply Command",
+        "address": 11528,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Refresh or apply command flag.",
+        "validation": {
+            "type": "specific_number",
+            "number": [
+                {
+                    "value": 0,
+                    "name": "No Action"
+                },
+                {
+                    "value": 1,
+                    "name": "Refresh / Apply"
+                }
+            ]
+        },
+        "unit": "flag"
+    },
+    "gear_teeth_number": {
+        "registerType": "holding_register",
+        "name": "Gear Teeth Number",
+        "address": 11529,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Number of gear teeth used for gear-mesh analysis.",
+        "validation": {
+            "type": "minmax",
+            "min": 1,
+            "max": 1024
+        },
+        "unit": "count"
+    },
+    "remapping_address_table": {
+        "registerType": "holding_register",
+        "name": "Remapping Address Table",
+        "address": 11648,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "count": 125,
+        "description": "Start address of the 125-word holding-register remapping table.",
+        "validation": null,
+        "unit": "address"
+    },
+    "device_code": {
+        "registerType": "input_register",
+        "name": "Device Code",
+        "address": 0,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Device code reported by firmware.",
+        "unit": "code"
+    },
+    "hardware_version": {
+        "registerType": "input_register",
+        "name": "Hardware Version",
+        "address": 1,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Hardware version reported by firmware.",
+        "unit": "code"
+    },
+    "firmware_version": {
+        "registerType": "input_register",
+        "name": "Firmware Version",
+        "address": 2,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Firmware version reported by firmware.",
+        "unit": "code"
+    },
+    "manufacturing_date": {
+        "registerType": "input_register",
+        "name": "Manufacturing Date",
+        "address": 3,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Manufacturing date code reported by firmware.",
+        "unit": "code"
+    },
+    "serial_number_upper_w0": {
+        "registerType": "input_register",
+        "name": "Serial Number Upper W0",
+        "address": 4,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Upper serial-number word 0.",
+        "unit": "word"
+    },
+    "serial_number_upper_w1": {
+        "registerType": "input_register",
+        "name": "Serial Number Upper W1",
+        "address": 5,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Upper serial-number word 1.",
+        "unit": "word"
+    },
+    "temperature": {
+        "registerType": "input_register",
+        "name": "Sensor Temperature",
+        "address": 1600,
+        "offset": 0,
+        "multiply": 10,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Sensor temperature in x10 scale. Example: 253 means 25.3 C.",
+        "unit": "C"
+    },
+    "motor_temperature": {
+        "registerType": "input_register",
+        "name": "Motor Temperature",
+        "address": 1601,
+        "offset": 0,
+        "multiply": 10,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Motor temperature register in x10 scale if used by firmware.",
+        "unit": "C"
+    },
+    "x_acc_rms": {
+        "registerType": "input_register",
+        "name": "X Acc RMS",
+        "address": 1616,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis acceleration RMS in g x1000.",
+        "unit": "g"
+    },
+    "x_acc_peak": {
+        "registerType": "input_register",
+        "name": "X Acc Peak",
+        "address": 1617,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis acceleration peak in g x1000.",
+        "unit": "g"
+    },
+    "x_acc_p2p": {
+        "registerType": "input_register",
+        "name": "X Acc Peak-to-Peak",
+        "address": 1618,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis acceleration peak-to-peak in g x1000.",
+        "unit": "g"
+    },
+    "x_crest_factor": {
+        "registerType": "input_register",
+        "name": "X Crest Factor",
+        "address": 1619,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis crest factor x1000.",
+        "unit": "ratio"
+    },
+    "x_vel_rms": {
+        "registerType": "input_register",
+        "name": "X Vel RMS",
+        "address": 1620,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis velocity RMS raw register value.",
+        "unit": "mm/s"
+    },
+    "x_vel_peak": {
+        "registerType": "input_register",
+        "name": "X Vel Peak",
+        "address": 1621,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis velocity peak raw register value.",
+        "unit": "mm/s"
+    },
+    "x_disp_p2p": {
+        "registerType": "input_register",
+        "name": "X Disp Peak-to-Peak",
+        "address": 1622,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis displacement peak-to-peak raw register value.",
+        "unit": "mm"
+    },
+    "x_env_kurtosis": {
+        "registerType": "input_register",
+        "name": "X Envelope Kurtosis",
+        "address": 1623,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis envelope kurtosis x100.",
+        "unit": "ratio"
+    },
+    "x_iso_class": {
+        "registerType": "input_register",
+        "name": "X ISO Class",
+        "address": 1624,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis ISO severity class.",
+        "unit": "class"
+    },
+    "x_fault_flags": {
+        "registerType": "input_register",
+        "name": "X Fault Flags",
+        "address": 1625,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis fault bitmask.",
+        "unit": "bitmask"
+    },
+    "x_peak_freq_01": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 01",
+        "address": 1626,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 01.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_02": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 02",
+        "address": 1627,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 02.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_03": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 03",
+        "address": 1628,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 03.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_04": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 04",
+        "address": 1629,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 04.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_05": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 05",
+        "address": 1630,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 05.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_06": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 06",
+        "address": 1631,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 06.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_07": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 07",
+        "address": 1632,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 07.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_08": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 08",
+        "address": 1633,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 08.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_09": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 09",
+        "address": 1634,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 09.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_10": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 10",
+        "address": 1635,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 10.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_11": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 11",
+        "address": 1636,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 11.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_12": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 12",
+        "address": 1637,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 12.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_13": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 13",
+        "address": 1638,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 13.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_14": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 14",
+        "address": 1639,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 14.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_15": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 15",
+        "address": 1640,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 15.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_16": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 16",
+        "address": 1641,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 16.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_17": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 17",
+        "address": 1642,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 17.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_18": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 18",
+        "address": 1643,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 18.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_19": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 19",
+        "address": 1644,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 19.",
+        "unit": "Hz"
+    },
+    "x_peak_freq_20": {
+        "registerType": "input_register",
+        "name": "X Peak Frequency 20",
+        "address": 1645,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak frequency bin 20.",
+        "unit": "Hz"
+    },
+    "x_peak_mag_01": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 01",
+        "address": 1646,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 01.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_02": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 02",
+        "address": 1647,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 02.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_03": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 03",
+        "address": 1648,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 03.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_04": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 04",
+        "address": 1649,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 04.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_05": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 05",
+        "address": 1650,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 05.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_06": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 06",
+        "address": 1651,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 06.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_07": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 07",
+        "address": 1652,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 07.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_08": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 08",
+        "address": 1653,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 08.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_09": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 09",
+        "address": 1654,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 09.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_10": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 10",
+        "address": 1655,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 10.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_11": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 11",
+        "address": 1656,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 11.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_12": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 12",
+        "address": 1657,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 12.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_13": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 13",
+        "address": 1658,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 13.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_14": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 14",
+        "address": 1659,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 14.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_15": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 15",
+        "address": 1660,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 15.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_16": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 16",
+        "address": 1661,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 16.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_17": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 17",
+        "address": 1662,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 17.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_18": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 18",
+        "address": 1663,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 18.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_19": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 19",
+        "address": 1664,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 19.",
+        "unit": "amplitude"
+    },
+    "x_peak_mag_20": {
+        "registerType": "input_register",
+        "name": "X Peak Magnitude 20",
+        "address": 1665,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "X-axis peak magnitude 20.",
+        "unit": "amplitude"
+    },
+    "y_acc_rms": {
+        "registerType": "input_register",
+        "name": "Y Acc RMS",
+        "address": 1712,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis acceleration RMS in g x1000.",
+        "unit": "g"
+    },
+    "y_acc_peak": {
+        "registerType": "input_register",
+        "name": "Y Acc Peak",
+        "address": 1713,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis acceleration peak in g x1000.",
+        "unit": "g"
+    },
+    "y_acc_p2p": {
+        "registerType": "input_register",
+        "name": "Y Acc Peak-to-Peak",
+        "address": 1714,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis acceleration peak-to-peak in g x1000.",
+        "unit": "g"
+    },
+    "y_crest_factor": {
+        "registerType": "input_register",
+        "name": "Y Crest Factor",
+        "address": 1715,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis crest factor x1000.",
+        "unit": "ratio"
+    },
+    "y_vel_rms": {
+        "registerType": "input_register",
+        "name": "Y Vel RMS",
+        "address": 1716,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis velocity RMS raw register value.",
+        "unit": "mm/s"
+    },
+    "y_vel_peak": {
+        "registerType": "input_register",
+        "name": "Y Vel Peak",
+        "address": 1717,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis velocity peak raw register value.",
+        "unit": "mm/s"
+    },
+    "y_disp_p2p": {
+        "registerType": "input_register",
+        "name": "Y Disp Peak-to-Peak",
+        "address": 1718,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis displacement peak-to-peak raw register value.",
+        "unit": "mm"
+    },
+    "y_env_kurtosis": {
+        "registerType": "input_register",
+        "name": "Y Envelope Kurtosis",
+        "address": 1719,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis envelope kurtosis x100.",
+        "unit": "ratio"
+    },
+    "y_iso_class": {
+        "registerType": "input_register",
+        "name": "Y ISO Class",
+        "address": 1720,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis ISO severity class.",
+        "unit": "class"
+    },
+    "y_fault_flags": {
+        "registerType": "input_register",
+        "name": "Y Fault Flags",
+        "address": 1721,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis fault bitmask.",
+        "unit": "bitmask"
+    },
+    "y_peak_freq_01": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 01",
+        "address": 1722,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 01.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_02": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 02",
+        "address": 1723,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 02.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_03": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 03",
+        "address": 1724,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 03.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_04": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 04",
+        "address": 1725,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 04.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_05": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 05",
+        "address": 1726,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 05.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_06": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 06",
+        "address": 1727,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 06.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_07": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 07",
+        "address": 1728,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 07.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_08": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 08",
+        "address": 1729,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 08.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_09": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 09",
+        "address": 1730,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 09.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_10": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 10",
+        "address": 1731,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 10.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_11": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 11",
+        "address": 1732,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 11.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_12": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 12",
+        "address": 1733,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 12.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_13": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 13",
+        "address": 1734,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 13.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_14": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 14",
+        "address": 1735,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 14.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_15": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 15",
+        "address": 1736,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 15.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_16": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 16",
+        "address": 1737,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 16.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_17": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 17",
+        "address": 1738,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 17.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_18": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 18",
+        "address": 1739,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 18.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_19": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 19",
+        "address": 1740,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 19.",
+        "unit": "Hz"
+    },
+    "y_peak_freq_20": {
+        "registerType": "input_register",
+        "name": "Y Peak Frequency 20",
+        "address": 1741,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak frequency bin 20.",
+        "unit": "Hz"
+    },
+    "y_peak_mag_01": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 01",
+        "address": 1742,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 01.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_02": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 02",
+        "address": 1743,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 02.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_03": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 03",
+        "address": 1744,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 03.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_04": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 04",
+        "address": 1745,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 04.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_05": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 05",
+        "address": 1746,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 05.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_06": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 06",
+        "address": 1747,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 06.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_07": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 07",
+        "address": 1748,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 07.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_08": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 08",
+        "address": 1749,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 08.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_09": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 09",
+        "address": 1750,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 09.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_10": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 10",
+        "address": 1751,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 10.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_11": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 11",
+        "address": 1752,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 11.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_12": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 12",
+        "address": 1753,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 12.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_13": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 13",
+        "address": 1754,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 13.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_14": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 14",
+        "address": 1755,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 14.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_15": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 15",
+        "address": 1756,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 15.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_16": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 16",
+        "address": 1757,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 16.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_17": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 17",
+        "address": 1758,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 17.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_18": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 18",
+        "address": 1759,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 18.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_19": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 19",
+        "address": 1760,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 19.",
+        "unit": "amplitude"
+    },
+    "y_peak_mag_20": {
+        "registerType": "input_register",
+        "name": "Y Peak Magnitude 20",
+        "address": 1761,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Y-axis peak magnitude 20.",
+        "unit": "amplitude"
+    },
+    "z_acc_rms": {
+        "registerType": "input_register",
+        "name": "Z Acc RMS",
+        "address": 1808,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis acceleration RMS in g x1000.",
+        "unit": "g"
+    },
+    "z_acc_peak": {
+        "registerType": "input_register",
+        "name": "Z Acc Peak",
+        "address": 1809,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis acceleration peak in g x1000.",
+        "unit": "g"
+    },
+    "z_acc_p2p": {
+        "registerType": "input_register",
+        "name": "Z Acc Peak-to-Peak",
+        "address": 1810,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis acceleration peak-to-peak in g x1000.",
+        "unit": "g"
+    },
+    "z_crest_factor": {
+        "registerType": "input_register",
+        "name": "Z Crest Factor",
+        "address": 1811,
+        "offset": 0,
+        "multiply": 1000,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis crest factor x1000.",
+        "unit": "ratio"
+    },
+    "z_vel_rms": {
+        "registerType": "input_register",
+        "name": "Z Vel RMS",
+        "address": 1812,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis velocity RMS raw register value.",
+        "unit": "mm/s"
+    },
+    "z_vel_peak": {
+        "registerType": "input_register",
+        "name": "Z Vel Peak",
+        "address": 1813,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis velocity peak raw register value.",
+        "unit": "mm/s"
+    },
+    "z_disp_p2p": {
+        "registerType": "input_register",
+        "name": "Z Disp Peak-to-Peak",
+        "address": 1814,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis displacement peak-to-peak raw register value.",
+        "unit": "mm"
+    },
+    "z_env_kurtosis": {
+        "registerType": "input_register",
+        "name": "Z Envelope Kurtosis",
+        "address": 1815,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis envelope kurtosis x100.",
+        "unit": "ratio"
+    },
+    "z_iso_class": {
+        "registerType": "input_register",
+        "name": "Z ISO Class",
+        "address": 1816,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis ISO severity class.",
+        "unit": "class"
+    },
+    "z_fault_flags": {
+        "registerType": "input_register",
+        "name": "Z Fault Flags",
+        "address": 1817,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis fault bitmask.",
+        "unit": "bitmask"
+    },
+    "z_peak_freq_01": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 01",
+        "address": 1818,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 01.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_02": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 02",
+        "address": 1819,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 02.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_03": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 03",
+        "address": 1820,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 03.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_04": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 04",
+        "address": 1821,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 04.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_05": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 05",
+        "address": 1822,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 05.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_06": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 06",
+        "address": 1823,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 06.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_07": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 07",
+        "address": 1824,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 07.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_08": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 08",
+        "address": 1825,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 08.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_09": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 09",
+        "address": 1826,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 09.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_10": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 10",
+        "address": 1827,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 10.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_11": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 11",
+        "address": 1828,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 11.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_12": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 12",
+        "address": 1829,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 12.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_13": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 13",
+        "address": 1830,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 13.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_14": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 14",
+        "address": 1831,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 14.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_15": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 15",
+        "address": 1832,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 15.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_16": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 16",
+        "address": 1833,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 16.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_17": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 17",
+        "address": 1834,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 17.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_18": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 18",
+        "address": 1835,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 18.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_19": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 19",
+        "address": 1836,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 19.",
+        "unit": "Hz"
+    },
+    "z_peak_freq_20": {
+        "registerType": "input_register",
+        "name": "Z Peak Frequency 20",
+        "address": 1837,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak frequency bin 20.",
+        "unit": "Hz"
+    },
+    "z_peak_mag_01": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 01",
+        "address": 1838,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 01.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_02": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 02",
+        "address": 1839,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 02.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_03": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 03",
+        "address": 1840,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 03.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_04": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 04",
+        "address": 1841,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 04.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_05": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 05",
+        "address": 1842,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 05.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_06": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 06",
+        "address": 1843,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 06.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_07": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 07",
+        "address": 1844,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 07.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_08": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 08",
+        "address": 1845,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 08.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_09": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 09",
+        "address": 1846,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 09.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_10": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 10",
+        "address": 1847,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 10.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_11": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 11",
+        "address": 1848,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 11.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_12": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 12",
+        "address": 1849,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 12.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_13": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 13",
+        "address": 1850,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 13.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_14": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 14",
+        "address": 1851,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 14.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_15": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 15",
+        "address": 1852,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 15.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_16": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 16",
+        "address": 1853,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 16.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_17": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 17",
+        "address": 1854,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 17.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_18": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 18",
+        "address": 1855,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 18.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_19": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 19",
+        "address": 1856,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 19.",
+        "unit": "amplitude"
+    },
+    "z_peak_mag_20": {
+        "registerType": "input_register",
+        "name": "Z Peak Magnitude 20",
+        "address": 1857,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Z-axis peak magnitude 20.",
+        "unit": "amplitude"
+    },
+    "time_prev_w0": {
+        "registerType": "input_register",
+        "name": "Previous Timestamp W0",
+        "address": 1904,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Previous timestamp word 0 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_prev_w1": {
+        "registerType": "input_register",
+        "name": "Previous Timestamp W1",
+        "address": 1905,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Previous timestamp word 1 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_prev_w2": {
+        "registerType": "input_register",
+        "name": "Previous Timestamp W2",
+        "address": 1906,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Previous timestamp word 2 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_prev_w3": {
+        "registerType": "input_register",
+        "name": "Previous Timestamp W3",
+        "address": 1907,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Previous timestamp word 3 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_now_w0": {
+        "registerType": "input_register",
+        "name": "Current Timestamp W0",
+        "address": 1908,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Current timestamp word 0 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_now_w1": {
+        "registerType": "input_register",
+        "name": "Current Timestamp W1",
+        "address": 1909,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Current timestamp word 1 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_now_w2": {
+        "registerType": "input_register",
+        "name": "Current Timestamp W2",
+        "address": 1910,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Current timestamp word 2 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_now_w3": {
+        "registerType": "input_register",
+        "name": "Current Timestamp W3",
+        "address": 1911,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Current timestamp word 3 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_diff_w0": {
+        "registerType": "input_register",
+        "name": "Delta Timestamp W0",
+        "address": 1912,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Timestamp delta word 0 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_diff_w1": {
+        "registerType": "input_register",
+        "name": "Delta Timestamp W1",
+        "address": 1913,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Timestamp delta word 1 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_diff_w2": {
+        "registerType": "input_register",
+        "name": "Delta Timestamp W2",
+        "address": 1914,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Timestamp delta word 2 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "time_diff_w3": {
+        "registerType": "input_register",
+        "name": "Delta Timestamp W3",
+        "address": 1915,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Timestamp delta word 3 of a 64-bit microsecond value.",
+        "unit": "us_word"
+    },
+    "current_rpm": {
+        "registerType": "input_register",
+        "name": "Current RPM",
+        "address": 1916,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Current filtered RPM value.",
+        "unit": "rpm"
+    },
+    "tach_quality": {
+        "registerType": "input_register",
+        "name": "Tach Quality",
+        "address": 1917,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Tach quality score in x100 scale.",
+        "unit": "score"
+    },
+    "speed_state": {
+        "registerType": "input_register",
+        "name": "Speed State",
+        "address": 1918,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Current speed state code.",
+        "unit": "code"
+    },
+    "order_1x": {
+        "registerType": "input_register",
+        "name": "Order 1X",
+        "address": 1919,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Dominant 1X order amplitude raw register value.",
+        "unit": "order"
+    },
+    "adv_env_kurtosis": {
+        "registerType": "input_register",
+        "name": "Advanced Envelope Kurtosis",
+        "address": 1920,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Advanced envelope kurtosis value.",
+        "unit": "ratio"
+    },
+    "sideband_density": {
+        "registerType": "input_register",
+        "name": "Sideband Density",
+        "address": 1921,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Sideband energy density metric.",
+        "unit": "ratio"
+    },
+    "harmonic_consistency": {
+        "registerType": "input_register",
+        "name": "Harmonic Consistency",
+        "address": 1922,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Harmonic consistency metric.",
+        "unit": "ratio"
+    },
+    "cepstrum_gear_index": {
+        "registerType": "input_register",
+        "name": "Cepstrum Gear Index",
+        "address": 1923,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Cepstrum-based gear index metric.",
+        "unit": "ratio"
+    },
+    "spectral_kurtosis": {
+        "registerType": "input_register",
+        "name": "Spectral Kurtosis",
+        "address": 1924,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Spectral kurtosis metric.",
+        "unit": "ratio"
+    },
+    "cyclostationary_index": {
+        "registerType": "input_register",
+        "name": "Cyclostationary Index",
+        "address": 1925,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Cyclostationary index metric.",
+        "unit": "ratio"
+    },
+    "rul_days": {
+        "registerType": "input_register",
+        "name": "Remaining Useful Life Days",
+        "address": 1926,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Remaining useful life estimate in days.",
+        "unit": "days"
+    },
+    "failure_probability": {
+        "registerType": "input_register",
+        "name": "Failure Probability",
+        "address": 1927,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Failure probability in x100 scale.",
+        "unit": "%"
+    },
+    "degradation_index": {
+        "registerType": "input_register",
+        "name": "Degradation Index",
+        "address": 1928,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Degradation index in x100 scale.",
+        "unit": "index"
+    },
+    "time_to_maintenance": {
+        "registerType": "input_register",
+        "name": "Time to Maintenance",
+        "address": 1929,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Time-to-maintenance estimate in days.",
+        "unit": "days"
+    },
+    "baseline_update_count": {
+        "registerType": "input_register",
+        "name": "Baseline Update Count",
+        "address": 1930,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Number of baseline updates.",
+        "unit": "count"
+    },
+    "baseline_active": {
+        "registerType": "input_register",
+        "name": "Baseline Active",
+        "address": 1931,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Baseline active flag.",
+        "unit": "flag"
+    },
+    "active_machine_profile": {
+        "registerType": "input_register",
+        "name": "Active Machine Profile",
+        "address": 1932,
+        "offset": 0,
+        "multiply": 1,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Active machine profile code used by analytics.",
+        "unit": "code"
+    },
+    "aging_factor": {
+        "registerType": "input_register",
+        "name": "Aging Factor",
+        "address": 1933,
+        "offset": 0,
+        "multiply": 100,
+        "data_type": "uint16",
+        "bytes": 2,
+        "description": "Aging factor metric in x100 scale.",
+        "unit": "ratio"
+    }
+}

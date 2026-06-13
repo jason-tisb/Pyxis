@@ -12,7 +12,7 @@
 /* ========================= Holding Registers (4xxxx/5xxxx) ========================= */
 
 /* System and communication (40001..) */
-#define MB_REG_SLAVE_ID                    0U
+#define MB_REG_SLAVE_ID                   0U
 #define MB_REG_BAUDRATE                   1U
 #define MB_REG_PARITY                     2U
 #define MB_REG_RESPONSE_DELAY             3U
@@ -57,6 +57,7 @@
 #define MB_IN_MANUFACTURING_DATE         3U
 #define MB_IN_SERIAL_NUMBER_UPPER_W0     4U
 #define MB_IN_SERIAL_NUMBER_UPPER_W1     5U
+
 
 #define MB_DEVICE_CODE_DEFAULT            0U
 #define MB_HARDWARE_VERSION_DEFAULT       0U

@@ -223,11 +223,11 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "Path to CMake executable."
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "INTERNAL",
-			"value" : "C:/Users/PC YH/AppData/Local/stm32cube/bundles/cmake/4.2.3+st.1/bin/cmake.exe"
+			"type" : "UNINITIALIZED",
+			"value" : "cube-cmake"
 		},
 		{
 			"name" : "CMAKE_CPACK_COMMAND",

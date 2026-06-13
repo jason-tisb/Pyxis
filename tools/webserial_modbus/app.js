@@ -4,6 +4,10 @@ import { ModbusRtuMaster } from "./modbus_rtu.js";
 const $ = (id) => document.getElementById(id);
 
 const ui = {
+  btnShowLog: $("btnShowLog"),
+  btnCloseLog: $("btnCloseLog"),
+  btnShowConfig: $("btnShowConfig"),
+  btnCloseConfig: $("btnCloseConfig"),
   btnShowDevice: $("btnShowDevice"),
   btnConnect: $("btnConnect"),
   btnDisconnect: $("btnDisconnect"),
@@ -17,6 +21,8 @@ const ui = {
   portSelect: $("portSelect"),
   btnRefreshPorts: $("btnRefreshPorts"),
   btnAddPort: $("btnAddPort"),
+  logDialog: $("logDialog"),
+  configDialog: $("configDialog"),
   deviceDialog: $("deviceDialog"),
   baudrate: $("baudrate"),
   dataBits: $("dataBits"),
@@ -31,6 +37,7 @@ const ui = {
   inFilter: $("inFilter"),
   holdingBody: $("holdingTable").querySelector("tbody"),
   inputBody: $("inputTable").querySelector("tbody"),
+  fftCharts: $("fftCharts"),
 };
 
 let port = null;
@@ -40,6 +47,12 @@ let logLines = [];
 const holdingState = new Map();
 const inputState = new Map();
 const SETTINGS_KEY = "webserial_modbus_device_v2";
+const FFT_PEAK_COUNT = 20;
+const FFT_AXES = [
+  { axis: "X", freqStart: 1626, magStart: 1646 },
+  { axis: "Y", freqStart: 1722, magStart: 1742 },
+  { axis: "Z", freqStart: 1818, magStart: 1838 },
+];
 
 function num(id, fallback) {
   const value = Number($(id)?.value);
@@ -154,6 +167,25 @@ function buildInputTable() {
   }
 }
 
+function buildFftCharts() {
+  for (const axisCfg of FFT_AXES) {
+    const card = ui.fftCharts?.querySelector(`.fftCard[data-axis="${axisCfg.axis}"]`);
+    const plot = card?.querySelector('[data-role="plot"]');
+    if (!plot) continue;
+    plot.innerHTML = "";
+    for (let i = 0; i < FFT_PEAK_COUNT; i++) {
+      const bar = document.createElement("div");
+      bar.className = "fftBarWrap";
+      bar.innerHTML = `
+        <div class="fftBar" style="height: 0%"></div>
+        <div class="fftFreq mono">-</div>
+      `;
+      plot.appendChild(bar);
+    }
+  }
+  renderFftCharts();
+}
+
 function renderDirty(addr) {
   const row = ui.holdingBody.querySelector(`tr[data-addr="${addr}"]`);
   const state = holdingState.get(addr);
@@ -173,9 +205,54 @@ function setHoldingValue(addr, value, dirty = false) {
 
 function setInputValue(addr, value) {
   const row = ui.inputBody.querySelector(`tr[data-addr="${addr}"]`);
+  const state = inputState.get(addr);
+  const updatedAt = new Date();
+  if (state) inputState.set(addr, { ...state, value, updatedAt });
   if (!row) return;
   row.children[2].textContent = String(value);
-  row.children[3].textContent = new Date().toLocaleTimeString();
+  row.children[3].textContent = updatedAt.toLocaleTimeString();
+}
+
+function inputValue(addr) {
+  const value = inputState.get(addr)?.value;
+  return Number.isFinite(value) ? value : null;
+}
+
+function fftData(axisCfg) {
+  return Array.from({ length: FFT_PEAK_COUNT }, (_, index) => ({
+    freq: inputValue(axisCfg.freqStart + index),
+    mag: inputValue(axisCfg.magStart + index),
+  }));
+}
+
+function renderFftCharts() {
+  for (const axisCfg of FFT_AXES) {
+    const card = ui.fftCharts?.querySelector(`.fftCard[data-axis="${axisCfg.axis}"]`);
+    const plot = card?.querySelector('[data-role="plot"]');
+    const maxLabel = card?.querySelector('[data-role="max"]');
+    if (!plot) continue;
+
+    const data = fftData(axisCfg);
+    const maxMag = Math.max(0, ...data.map((item) => item.mag ?? 0));
+    const maxPoint = data.find((item) => item.mag === maxMag && item.freq !== null);
+    const bars = Array.from(plot.querySelectorAll(".fftBarWrap"));
+
+    if (maxLabel) {
+      maxLabel.textContent = maxPoint ? `${maxPoint.freq} Hz / ${maxMag}` : "-";
+    }
+
+    data.forEach((item, index) => {
+      const wrap = bars[index];
+      if (!wrap) return;
+      const bar = wrap.querySelector(".fftBar");
+      const freq = wrap.querySelector(".fftFreq");
+      const height = maxMag > 0 && item.mag !== null ? Math.max(3, (item.mag / maxMag) * 100) : 0;
+      bar.style.height = `${height}%`;
+      bar.title = item.freq !== null && item.mag !== null ? `${item.freq} Hz, amp ${item.mag}` : "";
+      freq.textContent = item.freq !== null ? String(item.freq) : "-";
+      wrap.classList.toggle("isMax", item.mag !== null && item.mag === maxMag && maxMag > 0);
+    });
+  }
 }
 
 function filterTable(body, query) {
@@ -287,6 +364,7 @@ async function pollInputOnce() {
       if (inputState.has(addr)) setInputValue(addr, value);
     });
   }
+  renderFftCharts();
 }
 
 function setConnectedUi(connected) {
@@ -384,6 +462,10 @@ function stopPoll() {
   ui.btnPollToggle.textContent = "Start Poll";
 }
 
+ui.btnShowLog.addEventListener("click", () => ui.logDialog.showModal());
+ui.btnCloseLog.addEventListener("click", () => ui.logDialog.close());
+ui.btnShowConfig.addEventListener("click", () => ui.configDialog.showModal());
+ui.btnCloseConfig.addEventListener("click", () => ui.configDialog.close());
 ui.btnShowDevice.addEventListener("click", () => ui.deviceDialog.showModal());
 ui.btnConnect.addEventListener("click", () => connect().catch((error) => { setStatus("bad", error.message); appendLog(error.message); }));
 ui.btnDisconnect.addEventListener("click", disconnect);
@@ -408,6 +490,7 @@ ui.addrBase.addEventListener("change", () => {
 loadSettings();
 buildHoldingTable();
 buildInputTable();
+buildFftCharts();
 setConnectedUi(false);
 if (!hasWebSerial()) setStatus("bad", "WebSerial not supported");
 refreshPorts().catch(() => {});

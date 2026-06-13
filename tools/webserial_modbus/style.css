@@ -9,6 +9,7 @@
   --primary: #4f7cff;
   --danger: #e34f6f;
   --ok: #2ed39a;
+  --warn: #ffcc66;
 }
 
 * { box-sizing: border-box; }
@@ -29,26 +30,38 @@ body {
 }
 .title { font-size: 18px; font-weight: 800; }
 .subtitle { color: var(--muted); font-size: 12px; }
+.mutedSmall { color: var(--muted); font-size: 12px; }
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.configBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.logBtn::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  display: inline-block;
+  margin-right: 7px;
+  box-shadow: inset 0 -3px 0 rgba(255, 255, 255, .16);
+}
 
 .layout {
-  display: grid;
-  grid-template-columns: minmax(720px, 1fr) 380px;
-  gap: 14px;
   padding: 14px 18px;
 }
 .mainCol { display: grid; gap: 14px; }
-.sideCol { position: sticky; top: 86px; align-self: start; }
 
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
-}
-.logPanel {
-  height: calc(100vh - 104px);
-  display: flex;
-  flex-direction: column;
 }
 .panelHeader, .dlgHeader, .toolbar, .inline {
   display: flex;
@@ -80,6 +93,65 @@ td input { width: 100%; }
 .mono, .serialLog { font-family: Consolas, Menlo, monospace; }
 .dirty { color: #ffcc66; font-weight: 800; }
 
+.fftGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.fftCard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel2);
+  padding: 10px;
+  min-width: 0;
+}
+.fftTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.fftTitle span:first-child { color: var(--text); font-size: 13px; }
+.fftPlot {
+  height: 190px;
+  display: grid;
+  grid-template-columns: repeat(20, minmax(10px, 1fr));
+  align-items: end;
+  gap: 4px;
+  padding: 10px 6px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #090d15;
+}
+.fftBarWrap {
+  height: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 28px;
+  align-items: end;
+  gap: 5px;
+}
+.fftBar {
+  width: 100%;
+  min-height: 0;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, #58d5c9 0%, #4f7cff 100%);
+  transition: height .18s ease;
+}
+.fftBarWrap.isMax .fftBar { background: linear-gradient(180deg, var(--warn) 0%, #e34f6f 100%); }
+.fftFreq {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.05;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
 .serialLog {
   flex: 1;
   margin: 0;
@@ -107,6 +179,26 @@ td input { width: 100%; }
 }
 .dlg::backdrop { background: rgba(0,0,0,.6); }
 .dlgBody { padding: 14px; margin: 0; }
+.configDlg {
+  width: min(1280px, calc(100vw - 40px));
+}
+.configDlgBody {
+  max-height: min(760px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+}
+.settingsTableWrap {
+  flex: 1;
+  min-height: 320px;
+}
+.logDlg {
+  width: min(900px, calc(100vw - 40px));
+}
+.logDlgBody {
+  height: min(720px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+}
 .deviceGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .field { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
 .field input, .field select { width: 100%; }
@@ -114,12 +206,13 @@ td input { width: 100%; }
 .inline select { flex: 1; }
 
 @media (max-width: 1100px) {
-  .layout { grid-template-columns: 1fr; }
-  .sideCol { position: static; }
-  .logPanel { height: 360px; }
+  .fftGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
   .deviceGrid { grid-template-columns: 1fr; }
   .span2 { grid-column: auto; }
   .panelHeader, .dlgHeader { align-items: flex-start; flex-direction: column; }
+  .topbar { height: auto; align-items: flex-start; gap: 10px; flex-direction: column; }
+  .topbarActions { width: 100%; }
+  .topbarActions button { flex: 1; }
 }

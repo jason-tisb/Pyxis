@@ -1,0 +1,898 @@
+{
+ 
+    "holding_register": {
+        "bsf": {
+            "name": "BSF",
+            "address": 154,
+            "multiple": 100
+        },
+        "ftf": {
+            "name": "FTF",
+            "address": 155,
+            "multiple": 100
+        },
+        "bpfi": {
+            "name": "BPFI",
+            "address": 152,
+            "multiple": 100
+        },
+        "bpfo": {
+            "name": "BPFO",
+            "address": 153,
+            "multiple": 100
+        },
+        "temp": {
+            "name": "Temperature",
+            "address": 3,
+            "multiple": 100
+        },
+        "acc_rms_x": {
+            "name": "Acceleration RMS X",
+            "address": 4,
+            "multiple": 100
+        },
+        "acc_rms_y": {
+            "name": "Acceleration RMS Y",
+            "address": 5,
+            "multiple": 100
+        },
+        "acc_rms_z": {
+            "name": "Acceleration RMS Z",
+            "address": 6,
+            "multiple": 100
+        },
+        "vel_rms_x": {
+            "name": "Velocity RMS X",
+            "address": 0,
+            "multiple": 100
+        },
+        "vel_rms_y": {
+            "name": "Velocity RMS Y",
+            "address": 1,
+            "multiple": 100
+        },
+        "vel_rms_z": {
+            "name": "Velocity RMS Z",
+            "address": 2,
+            "multiple": 100
+        },
+        "acc_peak_x": {
+            "name": "Acceleration Peak X",
+            "address": 9,
+            "multiple": 100
+        },
+        "acc_peak_y": {
+            "name": "Acceleration Peak Y",
+            "address": 13,
+            "multiple": 100
+        },
+        "acc_peak_z": {
+            "name": "Acceleration Peak Z",
+            "address": 17,
+            "multiple": 100
+        },
+        "dis_ptop_x": {
+            "name": "Displacement Peak-to-Peak X",
+            "address": 19,
+            "multiple": 1
+        },
+        "dis_ptop_y": {
+            "name": "Displacement Peak-to-Peak Y",
+            "address": 20,
+            "multiple": 1
+        },
+        "dis_ptop_z": {
+            "name": "Displacement Peak-to-Peak Z",
+            "address": 21,
+            "multiple": 1
+        },
+        "gear_ratio": {
+            "name": "Gear Ratio *100",
+            "value": 100,
+            "address": 169,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vel_peak_x": {
+            "name": "Velocity Peak X",
+            "address": 7,
+            "multiple": 100
+        },
+        "vel_peak_y": {
+            "name": "Velocity Peak Y",
+            "address": 11,
+            "multiple": 100
+        },
+        "vel_peak_z": {
+            "name": "Velocity Peak Z",
+            "address": 15,
+            "multiple": 100
+        },
+        "current_rpm_x": {
+            "name": "Current RPM X",
+            "address": 24,
+            "multiple": 100
+        },
+        "current_rpm_y": {
+            "name": "Current RPM Y",
+            "address": 64,
+            "multiple": 100
+        },
+        "current_rpm_z": {
+            "name": "Current RPM Z",
+            "address": 104,
+            "multiple": 100
+        },
+        "acc_kurtosis_x": {
+            "name": "Acceleration Kurtosis X",
+            "address": 10,
+            "multiple": 100
+        },
+        "acc_kurtosis_y": {
+            "name": "Acceleration Kurtosis Y",
+            "address": 14,
+            "multiple": 100
+        },
+        "acc_kurtosis_z": {
+            "name": "Acceleration Kurtosis Z",
+            "address": 18,
+            "multiple": 100
+        },
+        "diagnosis_type": {
+            "name": "Device Installation (1 on motor, 2 on rotating machine)",
+            "value": 1,
+            "address": 194,
+            "multiple": 1,
+            "attribute": true
+        },
+        "rotating_speed": {
+            "name": "Rotating Speed (RPS) * 100",
+            "value": 100,
+            "address": 168,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vel_kurtosis_x": {
+            "name": "Velocity Kurtosis X",
+            "address": 8,
+            "multiple": 100
+        },
+        "vel_kurtosis_y": {
+            "name": "Velocity Kurtosis Y",
+            "address": 12,
+            "multiple": 100
+        },
+        "vel_kurtosis_z": {
+            "name": "Velocity Kurtosis Z",
+            "address": 16,
+            "multiple": 100
+        },
+        "cage_feature_1x_x": {
+            "name": "Cage Feature 1X X",
+            "address": 28,
+            "multiple": 100
+        },
+        "cage_feature_1x_y": {
+            "name": "Cage Feature 1X Y",
+            "address": 68,
+            "multiple": 100
+        },
+        "cage_feature_1x_z": {
+            "name": "Cage Feature 1X Z",
+            "address": 108,
+            "multiple": 100
+        },
+        "temp_alarm_status": {
+            "name": "Temperature Alarm",
+            "address": 146,
+            "multiple": 1
+        },
+        "blade_feature_1x_x": {
+            "name": "Blade Feature 1X X",
+            "address": 44,
+            "multiple": 100
+        },
+        "blade_feature_1x_y": {
+            "name": "Blade Feature 1X Y",
+            "address": 84,
+            "multiple": 100
+        },
+        "blade_feature_1x_z": {
+            "name": "Blade Feature 1X Z",
+            "address": 124,
+            "multiple": 100
+        },
+        "blade_feature_2x_x": {
+            "name": "Blade Feature 2X X",
+            "address": 45,
+            "multiple": 100
+        },
+        "blade_feature_2x_y": {
+            "name": "Blade Feature 2X Y",
+            "address": 85,
+            "multiple": 100
+        },
+        "blade_feature_2x_z": {
+            "name": "Blade Feature 2X Z",
+            "address": 125,
+            "multiple": 100
+        },
+        "blade_feature_3x_x": {
+            "name": "Blade Feature 3X X",
+            "address": 46,
+            "multiple": 100
+        },
+        "blade_feature_3x_y": {
+            "name": "Blade Feature 3X Y",
+            "address": 86,
+            "multiple": 100
+        },
+        "blade_feature_3x_z": {
+            "name": "Blade Feature 3X Z",
+            "address": 126,
+            "multiple": 100
+        },
+        "blade_feature_4x_x": {
+            "name": "Blade Feature 4X X",
+            "address": 47,
+            "multiple": 100
+        },
+        "blade_feature_4x_y": {
+            "name": "Blade Feature 4X Y",
+            "address": 87,
+            "multiple": 100
+        },
+        "blade_feature_4x_z": {
+            "name": "Blade Feature 4X Z",
+            "address": 127,
+            "multiple": 100
+        },
+        "diagnosis_scenario": {
+            "name": "Diagnosis Scenario (0 with Blower, 1 with Pump, 2 with Gearbox)",
+            "value": 2,
+            "address": 193,
+            "multiple": 1,
+            "attribute": true
+        },
+        "contact_angle_alpha": {
+            "name": "Contact Angle Alpha (°) *100",
+            "value": 0,
+            "address": 191,
+            "multiple": 100,
+            "attribute": true
+        },
+        "rolling_element_count": {
+            "name": "Bearing Ball Quatity",
+            "value": 9,
+            "address": 188,
+            "multiple": 1,
+            "attribute": true
+        },
+        "bearing_pitch_diameter": {
+            "name": "Bearing Pitch Diameter （mm) *100",
+            "value": 3904,
+            "address": 190,
+            "multiple": 100,
+            "attribute": true
+        },
+        "blade_count_input_teeth": {
+            "name": "Blade Count / Input Teeth",
+            "value": 8,
+            "address": 192,
+            "multiple": 1,
+            "attribute": true
+        },
+        "inner_race_feature_1x_x": {
+            "name": "Inner Race Feature 1X X",
+            "address": 25,
+            "multiple": 100
+        },
+        "inner_race_feature_1x_y": {
+            "name": "Inner Race Feature 1X Y",
+            "address": 65,
+            "multiple": 100
+        },
+        "inner_race_feature_1x_z": {
+            "name": "Inner Race Feature 1X Z",
+            "address": 105,
+            "multiple": 100
+        },
+        "outer_race_feature_1x_x": {
+            "name": "Outer Race Feature 1X X",
+            "address": 26,
+            "multiple": 100
+        },
+        "outer_race_feature_1x_y": {
+            "name": "Outer Race Feature 1X Y",
+            "address": 66,
+            "multiple": 100
+        },
+        "outer_race_feature_1x_z": {
+            "name": "Outer Race Feature 1X Z",
+            "address": 106,
+            "multiple": 100
+        },
+        "rolling_element_diameter": {
+            "name": "Bearing Ball Diameter (mm) *100",
+            "value": 794,
+            "address": 189,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_alarm_status_x": {
+            "name": "Vibration Alarm Status X",
+            "address": 147,
+            "multiple": 1
+        },
+        "vibration_alarm_status_y": {
+            "name": "Vibration Alarm Status Y",
+            "address": 148,
+            "multiple": 1
+        },
+        "vibration_alarm_status_z": {
+            "name": "Vibration Alarm Status Z",
+            "address": 149,
+            "multiple": 1
+        },
+        "temperature_alarm_threshold": {
+            "name": "Temperature Alarm Threshold (°C) *100",
+            "value": 6500,
+            "address": 208,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_analysis_status_x": {
+            "name": "Vibration Analysis Status X",
+            "address": 143,
+            "multiple": 1
+        },
+        "vibration_analysis_status_y": {
+            "name": "Vibration Analysis Status Y",
+            "address": 144,
+            "multiple": 1
+        },
+        "vibration_analysis_status_z": {
+            "name": "Vibration Analysis Status Z",
+            "address": 145,
+            "multiple": 1
+        },
+        "rolling_element_feature_1x_x": {
+            "name": "Rolling Element Feature 1X X",
+            "address": 27,
+            "multiple": 100
+        },
+        "rolling_element_feature_1x_y": {
+            "name": "Rolling Element Feature 1X Y",
+            "address": 67,
+            "multiple": 100
+        },
+        "rolling_element_feature_1x_z": {
+            "name": "Rolling Element Feature 1X Z",
+            "address": 107,
+            "multiple": 100
+        },
+        "temperature_warning_threshold": {
+            "name": "Temperature Warning Threshold (°C) *100",
+            "value": 6000,
+            "address": 207,
+            "multiple": 100,
+            "attribute": true
+        },
+        "acc_spectrum_amplitude_band_1_x": {
+            "name": "Acceleration Spectrum Amplitude Band 1 X",
+            "address": 37,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_1_y": {
+            "name": "Acceleration Spectrum Amplitude Band 1 Y",
+            "address": 77,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_1_z": {
+            "name": "Acceleration Spectrum Amplitude Band 1 Z",
+            "address": 117,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_2_x": {
+            "name": "Acceleration Spectrum Amplitude Band 2 X",
+            "address": 38,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_2_y": {
+            "name": "Acceleration Spectrum Amplitude Band 2 Y",
+            "address": 78,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_2_z": {
+            "name": "Acceleration Spectrum Amplitude Band 2 Z",
+            "address": 118,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_3_x": {
+            "name": "Acceleration Spectrum Amplitude Band 3 X",
+            "address": 39,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_3_y": {
+            "name": "Acceleration Spectrum Amplitude Band 3 Y",
+            "address": 79,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_3_z": {
+            "name": "Acceleration Spectrum Amplitude Band 3 Z",
+            "address": 119,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_4_x": {
+            "name": "Acceleration Spectrum Amplitude Band 4 X",
+            "address": 40,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_4_y": {
+            "name": "Acceleration Spectrum Amplitude Band 4 Y",
+            "address": 80,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_4_z": {
+            "name": "Acceleration Spectrum Amplitude Band 4 Z",
+            "address": 120,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_5_x": {
+            "name": "Acceleration Spectrum Amplitude Band 5 X",
+            "address": 41,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_5_y": {
+            "name": "Acceleration Spectrum Amplitude Band 5 Y",
+            "address": 81,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_band_5_z": {
+            "name": "Acceleration Spectrum Amplitude Band 5 Z",
+            "address": 121,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_1_x": {
+            "name": "Velocity Spectrum Amplitude Band 1 X",
+            "address": 56,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_1_y": {
+            "name": "Velocity Spectrum Amplitude Band 1 Y",
+            "address": 96,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_1_z": {
+            "name": "Velocity Spectrum Amplitude Band 1 Z",
+            "address": 136,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_2_x": {
+            "name": "Velocity Spectrum Amplitude Band 2 X",
+            "address": 57,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_2_y": {
+            "name": "Velocity Spectrum Amplitude Band 2 Y",
+            "address": 97,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_2_z": {
+            "name": "Velocity Spectrum Amplitude Band 2 Z",
+            "address": 137,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_3_x": {
+            "name": "Velocity Spectrum Amplitude Band 3 X",
+            "address": 58,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_3_y": {
+            "name": "Velocity Spectrum Amplitude Band 3 Y",
+            "address": 98,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_3_z": {
+            "name": "Velocity Spectrum Amplitude Band 3 Z",
+            "address": 138,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_4_x": {
+            "name": "Velocity Spectrum Amplitude Band 4 X",
+            "address": 59,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_4_y": {
+            "name": "Velocity Spectrum Amplitude Band 4 Y",
+            "address": 99,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_4_z": {
+            "name": "Velocity Spectrum Amplitude Band 4 Z",
+            "address": 139,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_5_x": {
+            "name": "Velocity Spectrum Amplitude Band 5 X",
+            "address": 60,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_5_y": {
+            "name": "Velocity Spectrum Amplitude Band 5 Y",
+            "address": 100,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_band_5_z": {
+            "name": "Velocity Spectrum Amplitude Band 5 Z",
+            "address": 140,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_1_x": {
+            "name": "Acceleration Spectrum Amplitude Point 1 X",
+            "address": 29,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_1_y": {
+            "name": "Acceleration Spectrum Amplitude Point 1 Y",
+            "address": 69,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_1_z": {
+            "name": "Acceleration Spectrum Amplitude Point 1 Z",
+            "address": 109,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_2_x": {
+            "name": "Acceleration Spectrum Amplitude Point 2 X",
+            "address": 30,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_2_y": {
+            "name": "Acceleration Spectrum Amplitude Point 2 Y",
+            "address": 70,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_2_z": {
+            "name": "Acceleration Spectrum Amplitude Point 2 Z",
+            "address": 110,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_3_x": {
+            "name": "Acceleration Spectrum Amplitude Point 3 X",
+            "address": 31,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_3_y": {
+            "name": "Acceleration Spectrum Amplitude Point 3 Y",
+            "address": 71,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_3_z": {
+            "name": "Acceleration Spectrum Amplitude Point 3 Z",
+            "address": 111,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_4_x": {
+            "name": "Acceleration Spectrum Amplitude Point 4 X",
+            "address": 32,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_4_y": {
+            "name": "Acceleration Spectrum Amplitude Point 4 Y",
+            "address": 72,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_4_z": {
+            "name": "Acceleration Spectrum Amplitude Point 4 Z",
+            "address": 112,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_5_x": {
+            "name": "Acceleration Spectrum Amplitude Point 5 X",
+            "address": 33,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_5_y": {
+            "name": "Acceleration Spectrum Amplitude Point 5 Y",
+            "address": 73,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_5_z": {
+            "name": "Acceleration Spectrum Amplitude Point 5 Z",
+            "address": 113,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_6_x": {
+            "name": "Acceleration Spectrum Amplitude Point 6 X",
+            "address": 34,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_6_y": {
+            "name": "Acceleration Spectrum Amplitude Point 6 Y",
+            "address": 74,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_6_z": {
+            "name": "Acceleration Spectrum Amplitude Point 6 Z",
+            "address": 114,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_7_x": {
+            "name": "Acceleration Spectrum Amplitude Point 7 X",
+            "address": 35,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_7_y": {
+            "name": "Acceleration Spectrum Amplitude Point 7 Y",
+            "address": 75,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_7_z": {
+            "name": "Acceleration Spectrum Amplitude Point 7 Z",
+            "address": 115,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_8_x": {
+            "name": "Acceleration Spectrum Amplitude Point 8 X",
+            "address": 36,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_8_y": {
+            "name": "Acceleration Spectrum Amplitude Point 8 Y",
+            "address": 76,
+            "multiple": 100
+        },
+        "acc_spectrum_amplitude_point_8_z": {
+            "name": "Acceleration Spectrum Amplitude Point 8 Z",
+            "address": 116,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_1_x": {
+            "name": "Velocity Spectrum Amplitude Point 1 X",
+            "address": 48,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_1_y": {
+            "name": "Velocity Spectrum Amplitude Point 1 Y",
+            "address": 88,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_1_z": {
+            "name": "Velocity Spectrum Amplitude Point 1 Z",
+            "address": 128,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_2_x": {
+            "name": "Velocity Spectrum Amplitude Point 2 X",
+            "address": 49,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_2_y": {
+            "name": "Velocity Spectrum Amplitude Point 2 Y",
+            "address": 89,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_2_z": {
+            "name": "Velocity Spectrum Amplitude Point 2 Z",
+            "address": 129,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_3_x": {
+            "name": "Velocity Spectrum Amplitude Point 3 X",
+            "address": 50,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_3_y": {
+            "name": "Velocity Spectrum Amplitude Point 3 Y",
+            "address": 90,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_3_z": {
+            "name": "Velocity Spectrum Amplitude Point 3 Z",
+            "address": 130,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_4_x": {
+            "name": "Velocity Spectrum Amplitude Point 4 X",
+            "address": 51,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_4_y": {
+            "name": "Velocity Spectrum Amplitude Point 4 Y",
+            "address": 91,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_4_z": {
+            "name": "Velocity Spectrum Amplitude Point 4 Z",
+            "address": 131,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_5_x": {
+            "name": "Velocity Spectrum Amplitude Point 5 X",
+            "address": 52,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_5_y": {
+            "name": "Velocity Spectrum Amplitude Point 5 Y",
+            "address": 92,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_5_z": {
+            "name": "Velocity Spectrum Amplitude Point 5 Z",
+            "address": 132,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_6_x": {
+            "name": "Velocity Spectrum Amplitude Point 6 X",
+            "address": 53,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_6_y": {
+            "name": "Velocity Spectrum Amplitude Point 6 Y",
+            "address": 93,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_6_z": {
+            "name": "Velocity Spectrum Amplitude Point 6 Z",
+            "address": 133,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_7_x": {
+            "name": "Velocity Spectrum Amplitude Point 7 X",
+            "address": 54,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_7_y": {
+            "name": "Velocity Spectrum Amplitude Point 7 Y",
+            "address": 94,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_7_z": {
+            "name": "Velocity Spectrum Amplitude Point 7 Z",
+            "address": 134,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_8_x": {
+            "name": "Velocity Spectrum Amplitude Point 8 X",
+            "address": 55,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_8_y": {
+            "name": "Velocity Spectrum Amplitude Point 8 Y",
+            "address": 95,
+            "multiple": 100
+        },
+        "vel_spectrum_amplitude_point_8_z": {
+            "name": "Velocity Spectrum Amplitude Point 8 Z",
+            "address": 135,
+            "multiple": 100
+        },
+        "vibration_velocity_alarm_threshold_x": {
+            "name": "Vibration Velocity Alarm Threshold X (mm/s) *100",
+            "value": 700,
+            "address": 202,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_velocity_alarm_threshold_y": {
+            "name": "Vibration Velocity Alarm Threshold Y (mm/s) *100",
+            "value": 700,
+            "address": 204,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_velocity_alarm_threshold_z": {
+            "name": "Vibration Velocity Alarm Threshold Z (mm/s) *100",
+            "value": 700,
+            "address": 206,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_velocity_warning_threshold_x": {
+            "name": "Vibration Velocity Warning Threshold X (mm/s) *100",
+            "value": 500,
+            "address": 201,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_velocity_warning_threshold_y": {
+            "name": "Vibration Velocity Warning Threshold Y (mm/s) *100",
+            "value": 500,
+            "address": 203,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_velocity_warning_threshold_z": {
+            "name": "Vibration Velocity Warning Threshold Z (mm/s) *100",
+            "value": 500,
+            "address": 205,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_acceleration_alarm_threshold_x": {
+            "name": "Vibration Acceleration Alarm Threshold X (m/s²) *100",
+            "value": 500,
+            "address": 196,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_acceleration_alarm_threshold_y": {
+            "name": "Vibration Acceleration Alarm Threshold Y (m/s²) *100",
+            "value": 500,
+            "address": 198,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_acceleration_alarm_threshold_z": {
+            "name": "Vibration Acceleration Alarm Threshold Z (m/s²) *100",
+            "value": 500,
+            "address": 200,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_displacement_alarm_threshold_x": {
+            "name": "Vibration Displacement Alarm Threshold X (um)",
+            "value": 50,
+            "address": 210,
+            "multiple": 1,
+            "attribute": true
+        },
+        "vibration_displacement_alarm_threshold_y": {
+            "name": "Vibration Displacement Alarm Threshold Y (um)",
+            "value": 50,
+            "address": 212,
+            "multiple": 1,
+            "attribute": true
+        },
+        "vibration_displacement_alarm_threshold_z": {
+            "name": "Vibration Displacement Alarm Threshold Z (um)",
+            "value": 50,
+            "address": 214,
+            "multiple": 1,
+            "attribute": true
+        },
+        "vibration_acceleration_warning_threshold_x": {
+            "name": "Vibration Acceleration Warning Threshold X (m/s²) *100",
+            "value": 300,
+            "address": 195,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_acceleration_warning_threshold_y": {
+            "name": "Vibration Acceleration Warning Threshold Y (m/s²) *100",
+            "value": 300,
+            "address": 197,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_acceleration_warning_threshold_z": {
+            "name": "Vibration Acceleration Warning Threshold Z (m/s²) *100",
+            "value": 300,
+            "address": 199,
+            "multiple": 100,
+            "attribute": true
+        },
+        "vibration_displacement_warning_threshold_x": {
+            "name": "Vibration Displacement Warning Threshold X (um)",
+            "value": 30,
+            "address": 209,
+            "multiple": 1,
+            "attribute": true
+        },
+        "vibration_displacement_warning_threshold_y": {
+            "name": "Vibration Displacement Warning Threshold Y (um)",
+            "value": 30,
+            "address": 211,
+            "multiple": 1,
+            "attribute": true
+        },
+        "vibration_displacement_warning_threshold_z": {
+            "name": "Vibration Displacement Warning Threshold Z (um)",
+            "value": 30,
+            "address": 213,
+            "multiple": 1,
+            "attribute": true
+        }
+    }
+}
