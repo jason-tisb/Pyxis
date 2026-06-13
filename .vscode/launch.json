@@ -4,11 +4,24 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
-
-
-
-
+        {
+            "type": "stlinkgdbtarget",
+            "request": "launch",
+            "name": "STM32 App Slot A: Launch ST-Link GDB Server",
+            "cwd": "${workspaceFolder}",
+            "preBuild": "${command:st-stm32-ide-debug-launch.build}",
+            "program": "${workspaceFolder}/build/Debug/Vimot_H563RITX_Professional.elf",
+            "runEntry": "main",
+            "imagesAndSymbols": [
+                {
+                    "imageFileName": "${workspaceFolder}/build/Debug/Vimot_H563RITX_Professional.elf",
+                    "symbolFileName": "${workspaceFolder}/build/Debug/Vimot_H563RITX_Professional.elf"
+                }
+            ],
+            "serverIncrementalFlashing": true,
+            "serverVerify": false,
+            "verbose": true
+        },
         {
             "type": "stgdbtarget",
             "request": "launch",
