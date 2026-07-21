@@ -22,6 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "app_led.h"
 #include "core_cm33.h"
 #include <string.h>
 #include <task_modbus.h>
@@ -629,6 +630,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
+  if (htim->Instance == TIM1)
+  {
+    LED_Task_1ms_ISR();
+  }
 
   /* USER CODE END Callback 1 */
 }

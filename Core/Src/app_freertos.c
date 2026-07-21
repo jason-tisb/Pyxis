@@ -22,6 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "app_led.h"
 #include "user_mb_app.h"
 #include "sys_storage_partition.h"
 
@@ -44,7 +45,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
 /* USER CODE END Variables */
 /* Definitions for vTaskVibration */
 osThreadId_t vTaskVibrationHandle;
@@ -78,6 +78,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 	event_start_modbus_thread = osEventFlagsNew(NULL);
 	regbuf_mtx = osMutexNew(&regbuf_mtx_attr);
+  LED_Init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */

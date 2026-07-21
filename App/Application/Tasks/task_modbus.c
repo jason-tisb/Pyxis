@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 
+#include "app_led.h"
 #include "main.h"
 #include "stm32h5xx_hal.h"
 #include "mb.h"
@@ -144,12 +145,17 @@ void main_TaskModbus(void *argument)
     UCHAR slave_addr;
     eMBParity parity;
     ULONG baud_rate;
+    uint8_t baud_display;
+    uint8_t parity_display;
     eMBErrorCode status;
+    bool config_valid;
 
     (void)argument;
 
     ModbusModule_Init();
     ModbusModule_GetConfig(&cfg);
+    config_valid = ModbusModule_ValidateConfig(&cfg);
+    LED_SetConfigurationInvalid(!config_valid);
     VibrationModule_Init();
     VibrationModule_GetConfig(&vib_cfg);
 
@@ -164,7 +170,14 @@ void main_TaskModbus(void *argument)
     slave_addr = cfg.slave_id;
     parity = ModbusAdapter_ParityFromCode(cfg.parity);
     baud_rate = cfg.baud_rate;
+    baud_display = (uint8_t)ModbusAdapter_BaudToCode(cfg.baud_rate);
+    parity_display = (uint8_t)(cfg.parity + 1U);
     g_modbus_stop_bits = modbus_stop_bits_from_code(cfg.parity);
+    LED_SetBaseState(LED_STATE_NO_POLLING_YET);
+
+    if (config_valid) {
+        LED_RequestStartupDisplay(slave_addr, baud_display, parity_display, 1U);
+    }
 
     if (baud_rate == 0U) {
         uint32_t detected = 0U;

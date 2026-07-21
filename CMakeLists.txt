@@ -64,6 +64,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Product/Validation/system_validator.c
     # External sensor drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/IIS3DWB/iis3dwb_reg.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_led.c
     # ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/main.c
     # FreeModbus middleware
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/FreeModbus/modbus/mb.c
