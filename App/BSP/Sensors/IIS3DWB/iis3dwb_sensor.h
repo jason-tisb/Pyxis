@@ -16,11 +16,13 @@ typedef struct {
     SensorBusPort_t bus_port;
     float32_t full_scale_g;
     uint16_t fifo_watermark;
+    uint8_t fs_mode;
     volatile uint32_t init_stage;
 } IIS3DWB_Sensor_t;
 
 bool IIS3DWB_Sensor_Create(IIS3DWB_Sensor_t *sensor, const SensorBusPort_t *bus_port, float32_t full_scale_g);
 bool IIS3DWB_Sensor_Init(IIS3DWB_Sensor_t *sensor, uint16_t fifo_watermark, uint8_t fs_mode);
+bool IIS3DWB_Sensor_Recover(IIS3DWB_Sensor_t *sensor);
 bool IIS3DWB_Sensor_FetchSamples(IIS3DWB_Sensor_t *sensor,
                                  float32_t *raw_x,
                                  float32_t *raw_y,

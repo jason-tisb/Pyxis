@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/cmake/stm32cubemx
+# Install script for directory: C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/cmake/stm32cubemx
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,6 +40,6 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_Professional_Cmake_Systemize_202604151400/build/Debug/cmake/stm32cubemx/install_local_manifest.txt"
+  file(WRITE "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/build/Debug/cmake/stm32cubemx/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

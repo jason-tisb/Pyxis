@@ -7,6 +7,85 @@
 /* ST driver delay callback doesn't pass handle; keep one active sensor context. */
 static IIS3DWB_Sensor_t *g_iis3dwb_active_sensor = 0;
 
+static bool iis3dwb_wait_reset_clear(IIS3DWB_Sensor_t *sensor, uint32_t stage_base)
+{
+    uint8_t rst = 0U;
+    uint32_t guard = 0U;
+
+    sensor->init_stage = stage_base;
+    do {
+        if (iis3dwb_reset_get(&sensor->io_ctx, &rst) != 0) {
+            sensor->init_stage = stage_base + 1000U;
+            return false;
+        }
+        SensorBus_DelayMs(&sensor->bus_port, 1U);
+        ++guard;
+    } while ((rst != 0U) && (guard < 100U));
+
+    if (rst != 0U) {
+        sensor->init_stage = stage_base + 1001U;
+        return false;
+    }
+
+    return true;
+}
+
+static bool iis3dwb_wait_boot_clear(IIS3DWB_Sensor_t *sensor, uint32_t stage_base)
+{
+    uint8_t boot = 0U;
+    uint32_t guard = 0U;
+
+    sensor->init_stage = stage_base;
+    do {
+        if (iis3dwb_boot_get(&sensor->io_ctx, &boot) != 0) {
+            sensor->init_stage = stage_base + 1000U;
+            return false;
+        }
+        SensorBus_DelayMs(&sensor->bus_port, 1U);
+        ++guard;
+    } while ((boot != 0U) && (guard < 100U));
+
+    if (boot != 0U) {
+        sensor->init_stage = stage_base + 1001U;
+        return false;
+    }
+
+    return true;
+}
+
+static bool iis3dwb_prepare_clean_start(IIS3DWB_Sensor_t *sensor)
+{
+    iis3dwb_pin_int2_route_t int2_route;
+
+    sensor->init_stage = 30U;
+    memset(&int2_route, 0, sizeof(int2_route));
+    (void)iis3dwb_pin_int2_route_set(&sensor->io_ctx, &int2_route);
+    (void)iis3dwb_fifo_mode_set(&sensor->io_ctx, IIS3DWB_BYPASS_MODE);
+    (void)iis3dwb_xl_data_rate_set(&sensor->io_ctx, IIS3DWB_XL_ODR_OFF);
+    (void)iis3dwb_timestamp_set(&sensor->io_ctx, PROPERTY_DISABLE);
+    SensorBus_DelayMs(&sensor->bus_port, 2U);
+
+    sensor->init_stage = 31U;
+    if (iis3dwb_boot_set(&sensor->io_ctx, PROPERTY_ENABLE) != 0) {
+        sensor->init_stage = 1031U;
+        return false;
+    }
+    if (!iis3dwb_wait_boot_clear(sensor, 32U)) {
+        return false;
+    }
+
+    sensor->init_stage = 34U;
+    if (iis3dwb_reset_set(&sensor->io_ctx, PROPERTY_ENABLE) != 0) {
+        sensor->init_stage = 1034U;
+        return false;
+    }
+    if (!iis3dwb_wait_reset_clear(sensor, 35U)) {
+        return false;
+    }
+
+    return true;
+}
+
 static int32_t iis3dwb_bus_write(void *handle, uint8_t reg, const uint8_t *bufp, uint16_t len)
 {
     IIS3DWB_Sensor_t *sensor = (IIS3DWB_Sensor_t *)handle;
@@ -35,6 +114,7 @@ bool IIS3DWB_Sensor_Create(IIS3DWB_Sensor_t *sensor, const SensorBusPort_t *bus_
     sensor->bus_port = *bus_port;
     sensor->full_scale_g = full_scale_g;
     sensor->fifo_watermark = 0U;
+    sensor->fs_mode = 0U;
     sensor->init_stage = 0U;
     g_iis3dwb_active_sensor = sensor;
     sensor->io_ctx.write_reg = iis3dwb_bus_write;
@@ -48,8 +128,6 @@ bool IIS3DWB_Sensor_Create(IIS3DWB_Sensor_t *sensor, const SensorBusPort_t *bus_
 bool IIS3DWB_Sensor_Init(IIS3DWB_Sensor_t *sensor, uint16_t fifo_watermark, uint8_t fs_mode)
 {
     uint8_t whoamI = 0U;
-    uint8_t rst = 0U;
-    uint32_t guard = 0U;
     iis3dwb_pin_int2_route_t int2_route;
 
     if (sensor == 0) {
@@ -58,6 +136,7 @@ bool IIS3DWB_Sensor_Init(IIS3DWB_Sensor_t *sensor, uint16_t fifo_watermark, uint
 
     sensor->init_stage = 10U;
     sensor->fifo_watermark = fifo_watermark;
+    sensor->fs_mode = fs_mode;
     SensorBus_DelayMs(&sensor->bus_port, BOOT_TIME);
 
     sensor->init_stage = 20U;
@@ -70,23 +149,7 @@ bool IIS3DWB_Sensor_Init(IIS3DWB_Sensor_t *sensor, uint16_t fifo_watermark, uint
         return false;
     }
 
-    sensor->init_stage = 30U;
-    if (iis3dwb_reset_set(&sensor->io_ctx, PROPERTY_ENABLE) != 0) {
-        sensor->init_stage = 1030U;
-        return false;
-    }
-    sensor->init_stage = 31U;
-    do {
-        if (iis3dwb_reset_get(&sensor->io_ctx, &rst) != 0) {
-            sensor->init_stage = 1031U;
-            return false;
-        }
-        SensorBus_DelayMs(&sensor->bus_port, 1U);
-        ++guard;
-    } while ((rst != 0U) && (guard < 100U));
-
-    if (rst != 0U) {
-        sensor->init_stage = 1032U;
+    if (!iis3dwb_prepare_clean_start(sensor)) {
         return false;
     }
 
@@ -145,6 +208,15 @@ bool IIS3DWB_Sensor_Init(IIS3DWB_Sensor_t *sensor, uint16_t fifo_watermark, uint
 
     sensor->init_stage = 100U;
     return true;
+}
+
+bool IIS3DWB_Sensor_Recover(IIS3DWB_Sensor_t *sensor)
+{
+    if (sensor == 0 || sensor->fifo_watermark == 0U) {
+        return false;
+    }
+
+    return IIS3DWB_Sensor_Init(sensor, sensor->fifo_watermark, sensor->fs_mode);
 }
 
 bool IIS3DWB_Sensor_FetchSamples(IIS3DWB_Sensor_t *sensor,

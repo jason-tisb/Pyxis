@@ -59,6 +59,9 @@ DMA_HandleTypeDef hdma_spi1_rx;
 DMA_HandleTypeDef hdma_spi1_tx;
 
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart3_rx;
+DMA_QListTypeDef uart3_rx_dma_queue;
+DMA_NodeTypeDef uart3_rx_dma_node;
 
 HCD_HandleTypeDef hhcd_USB_DRD_FS;
 
@@ -104,7 +107,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	  SCB->VTOR = 0x08020000 ;
+	 SCB->VTOR = 0x08020000 ;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -128,7 +131,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_USB_HCD_Init();
-  MX_USART3_UART_Init();
+  MX_USART3_UART_Init() ;
   MX_FDCAN2_Init();
   MX_ICACHE_Init();
   MX_CRC_Init();
@@ -553,20 +556,33 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, LED_PWR_Pin|LED_STAT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LED_PWR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, VBS_CS_Pin|TMP_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, LED_STAT_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LED_PWR_Pin LED_STAT_Pin */
-  GPIO_InitStruct.Pin = LED_PWR_Pin|LED_STAT_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, VBS_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, TMP_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : LED_PWR_Pin */
+  GPIO_InitStruct.Pin = LED_PWR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LED_STAT_Pin VBS_CS_Pin */
+  GPIO_InitStruct.Pin = LED_STAT_Pin|VBS_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : VBS_CS_Pin TMP_CS_Pin */
-  GPIO_InitStruct.Pin = VBS_CS_Pin|TMP_CS_Pin;
+  /*Configure GPIO pin : TMP_CS_Pin */
+  GPIO_InitStruct.Pin = TMP_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -585,8 +601,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(TMP_Alert_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-  HAL_NVIC_SetPriority(EXTI5_IRQn, 6, 0);
-  HAL_NVIC_EnableIRQ(EXTI5_IRQn);
+  HAL_NVIC_SetPriority(EXTI9_IRQn, 6, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_IRQn);
 
   /* USER CODE END MX_GPIO_Init_2 */
 }

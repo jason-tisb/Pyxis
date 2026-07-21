@@ -228,8 +228,9 @@ void main_TaskModbus(void *argument)
         }
 
         if (VibrationAdapter_ReadCommand(&vibration_ctx, &vib_cmd)) {
-            if (vib_cmd == VIBRATION_ADAPTER_CMD_CAPTURE_BASELINE ||
-                vib_cmd == VIBRATION_ADAPTER_CMD_RESET_BASELINE) {
+            if (vib_cmd == VIBRATION_ADAPTER_CMD_CAPTURE_BASELINE) {
+                (void)VibrationModule_SaveBaseline();
+            } else if (vib_cmd == VIBRATION_ADAPTER_CMD_RESET_BASELINE) {
                 VibrationModule_ResetBaseline();
             }
             VibrationAdapter_ClearCommand(&vibration_ctx);

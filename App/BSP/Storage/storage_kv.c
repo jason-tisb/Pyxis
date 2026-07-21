@@ -16,7 +16,7 @@ static uint16_t sys_partition_count = 0;
 
 #if (FEATURE_STORAGE_USE_RTOS == 1)
 static osMutexId_t kv_mutex = NULL;
-static osSemaphoreId_t kv_erase_sem = NULL;
+osSemaphoreId_t kv_erase_sem = NULL;
 #endif
 
 static const KV_Partition_t* Get_Partition(StorageKey_t key) {

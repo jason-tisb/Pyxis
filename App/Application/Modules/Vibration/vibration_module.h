@@ -12,6 +12,7 @@ void VibrationModule_ProcessNewSample(float current_g);
 void VibrationModule_GetRecord(VibRecord_t* out_record);
 void VibrationModule_GetBaseline(VibrationBaseline_t* out_baseline);
 bool VibrationModule_UpdateBaseline(const VibrationBaseline_t* new_baseline);
+bool VibrationModule_SaveBaseline(void);
 void VibrationModule_ResetBaseline(void);
 void VibrationModule_GetTachState(VibrationTachState_t* out_tach);
 void VibrationModule_UpdateTachState(const VibrationTachState_t* tach_state);

@@ -13,6 +13,15 @@ static VibRecord_t s_vib_record;
 static VibrationBaseline_t s_vib_baseline;
 static VibrationTachState_t s_vib_tach;
 
+static bool vibration_persist_baseline(void)
+{
+    if (s_vib_baseline.signature != VIBRATION_BASELINE_SIGNATURE) {
+        s_vib_baseline.signature = VIBRATION_BASELINE_SIGNATURE;
+    }
+
+    return Storage_Write(KV_KEY_VIB_BASELINE, &s_vib_baseline, sizeof(VibrationBaseline_t));
+}
+
 static void vibration_config_defaults(VibConfig_t *cfg)
 {
     cfg->alarm_threshold_g = 5.0f;
@@ -139,20 +148,12 @@ bool VibrationModule_UpdateConfig(const VibConfig_t* new_cfg)
 
 void VibrationModule_ProcessNewSample(float current_g)
 {
-    bool record_changed = false;
-
     if (current_g > s_vib_record.max_peak_g) {
         s_vib_record.max_peak_g = current_g;
-        record_changed = true;
     }
 
     if (current_g > s_vib_cfg.alarm_threshold_g) {
         s_vib_record.total_alarms += 1U;
-        record_changed = true;
-    }
-
-    if (record_changed) {
-        (void)Storage_Write(KV_KEY_VIB_RECORD, &s_vib_record, sizeof(VibRecord_t));
     }
 }
 
@@ -178,14 +179,19 @@ bool VibrationModule_UpdateBaseline(const VibrationBaseline_t* new_baseline)
 
     s_vib_baseline = *new_baseline;
     s_vib_baseline.signature = VIBRATION_BASELINE_SIGNATURE;
-    return Storage_Write(KV_KEY_VIB_BASELINE, &s_vib_baseline, sizeof(VibrationBaseline_t));
+    return true;
+}
+
+bool VibrationModule_SaveBaseline(void)
+{
+    return vibration_persist_baseline();
 }
 
 void VibrationModule_ResetBaseline(void)
 {
     memset(&s_vib_baseline, 0, sizeof(s_vib_baseline));
     s_vib_baseline.signature = VIBRATION_BASELINE_SIGNATURE;
-    (void)Storage_Write(KV_KEY_VIB_BASELINE, &s_vib_baseline, sizeof(VibrationBaseline_t));
+    (void)vibration_persist_baseline();
 }
 
 void VibrationModule_GetTachState(VibrationTachState_t* out_tach)
@@ -215,7 +221,6 @@ void VibrationModule_ProcessSnapshot(const VibrationHealthSnapshot_t* snapshot)
 
     s_vib_record.last_degradation_index = snapshot->degradation_index;
     s_vib_record.last_failure_probability = snapshot->failure_probability;
-    (void)Storage_Write(KV_KEY_VIB_RECORD, &s_vib_record, sizeof(VibRecord_t));
 
     if (s_vib_baseline.update_count == 0U) {
         memset(&updated_baseline, 0, sizeof(updated_baseline));
@@ -229,7 +234,7 @@ void VibrationModule_ProcessSnapshot(const VibrationHealthSnapshot_t* snapshot)
         updated_baseline.harmonic_consistency = snapshot->harmonic_consistency;
         updated_baseline.peak_density = snapshot->peak_density;
         updated_baseline.failure_probability = snapshot->failure_probability;
-        (void)VibrationModule_UpdateBaseline(&updated_baseline);
+        s_vib_baseline = updated_baseline;
         return;
     }
 

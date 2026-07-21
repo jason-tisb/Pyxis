@@ -62,6 +62,7 @@ extern osSemaphoreId_t  kv_erase_sem;
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_spi1_rx;
 extern DMA_HandleTypeDef hdma_spi1_tx;
+extern DMA_HandleTypeDef hdma_usart3_rx;
 extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
@@ -169,9 +170,17 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line 5 interrupt.
+  * @brief This function handles FLASH global interrupt.
   */
-void EXTI5_IRQHandler(void)
+void FLASH_IRQHandler(void)
+{
+  HAL_FLASH_IRQHandler();
+}
+
+/**
+ * @brief This function handles EXTI line 9 interrupt.
+ */
+void EXTI9_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(VBS_INT_Pin);
 }
@@ -190,6 +199,14 @@ void GPDMA1_Channel0_IRQHandler(void)
 void GPDMA1_Channel1_IRQHandler(void)
 {
   HAL_DMA_IRQHandler(&hdma_spi1_tx);
+}
+
+/**
+  * @brief This function handles GPDMA1 Channel 2 global interrupt.
+  */
+void GPDMA1_Channel2_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_usart3_rx);
 }
 
 /**
@@ -220,38 +237,29 @@ void TIM1_UP_IRQHandler(void)
 void USART3_IRQHandler(void)
 {
   /* USER CODE BEGIN USART3_IRQn 0 */
-
     uint32_t isr = huart3.Instance->ISR;
-    uint32_t rxne_it_enabled = __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_RXNE);
-    uint32_t idle_it_enabled = __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_IDLE);
+    uint32_t cr1 = huart3.Instance->CR1;
+    uint32_t cr3 = huart3.Instance->CR3;
+    uint32_t errorflags = isr & (USART_ISR_PE | USART_ISR_FE | USART_ISR_ORE | USART_ISR_NE | USART_ISR_RTOF);
 
-    // RX data available: drain until empty
-    //f7 04 00 32 00 15 84 9c testing
-    if (((isr & USART_ISR_RXNE_RXFNE) != 0u) && (rxne_it_enabled != 0u)) {
-        while ((isr & USART_ISR_RXNE_RXFNE) != 0u) {
-            uint8_t d = (uint8_t)huart3.Instance->RDR;   // RXNE cleared by read
-            prvvUARTRxReceiveCharISR((CHAR)d);
-            isr = huart3.Instance->ISR;
-        }
+    if ((errorflags != 0u)
+        && (((cr3 & (USART_CR3_RXFTIE | USART_CR3_EIE)) != 0u)
+            || ((cr1 & (USART_CR1_RXNEIE_RXFNEIE | USART_CR1_PEIE | USART_CR1_RTOIE)) != 0u))) {
+        HAL_UART_IRQHandler(&huart3);
+        return;
     }
 
-    // IDLE line: end of burst -> wake worker/stack
-    if ((isr & USART_ISR_IDLE) != 0u) {
-        __HAL_UART_CLEAR_IDLEFLAG(&huart3);
-        if (idle_it_enabled != 0u) {
-            prvvUARTRxISR();
-        }
+    if ((huart3.ReceptionType == HAL_UART_RECEPTION_TOIDLE)
+        && ((isr & USART_ISR_IDLE) != 0u)
+        && ((cr1 & USART_CR1_IDLEIE) != 0u)) {
+        HAL_UART_IRQHandler(&huart3);
+        return;
     }
 
-    // TXE: ask stack for next byte
     if (((isr & USART_ISR_TXE_TXFNF) != 0u) && __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_TXE)) {
         prvvUARTTxReadyISR();
+        return;
     }
-
-    // Clear & ignore line errors (optional counters if you care)
-    if ((isr & USART_ISR_ORE) != 0u) { __HAL_UART_CLEAR_OREFLAG(&huart3); (void)huart3.Instance->RDR; }
-    if ((isr & USART_ISR_FE)  != 0u) { __HAL_UART_CLEAR_FEFLAG(&huart3); }
-    if ((isr & USART_ISR_NE)  != 0u) { __HAL_UART_CLEAR_NEFLAG(&huart3); }
   /* USER CODE END USART3_IRQn 0 */
 
   /* USER CODE BEGIN USART3_IRQn 1 */

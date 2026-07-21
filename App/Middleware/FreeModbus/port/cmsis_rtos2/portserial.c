@@ -7,8 +7,9 @@
 #include "mbport.h"
 
 /* ----------------------- Config -------------------------------------------*/
-#define RB_SIZE                 256u                /* power of two */
+#define RB_SIZE                 512u                /* power of two */
 #define RB_MASK                 (RB_SIZE - 1u)
+#define UART3_RX_DMA_SIZE       512u
 #define EVENT_MBSLAVE_HANDLE_RX (1u << 0)
 
 #define RS485_SLAVE_TX_MODE()   //LL_GPIO_SetOutputPin(RS485_SLAVE_CTRL_GPIO_Port, RS485_SLAVE_CTRL_Pin)
@@ -22,6 +23,10 @@ static volatile uint8_t  		rx_buf[RB_SIZE];
 static volatile uint16_t 		rx_head = 0;                  /* ISR writes */
 static volatile uint16_t 		rx_tail = 0;                  /* task reads */
 static volatile uint32_t 		rx_overruns = 0;
+static volatile uint8_t         uart3_rx_enabled = 0u;
+static volatile uint8_t         uart3_rx_dma_running = 0u;
+static uint8_t                  uart3_rx_dma_buf[UART3_RX_DMA_SIZE];
+static volatile uint16_t        uart3_rx_dma_last_pos = 0u;
 
 static osThreadId_t 			receiveDataHandle;
 static osEventFlagsId_t 		xSerialEventHandle;
@@ -38,6 +43,10 @@ static osEventFlagsId_t 		xSerialEventHandle;
 
 /* ----------------------- static functions ---------------------------------*/
 static void handleReceivedDataTask(void *argument);
+static BOOL uart3_start_rx_dma(void);
+static void uart3_stop_rx_dma(void);
+static void uart3_handle_rx_range(uint16_t start, uint16_t end, BOOL notify);
+void prvvUARTRxISR(void);
 
 /* Weak hook to wake your Modbus task in a different way if desired */
 __attribute__((weak)) void UART3_RB_NotifyBytesAvailableISR(void)
@@ -63,6 +72,51 @@ static inline void rb_push_isr(uint8_t b)
     }
     rx_buf[rx_head] = b;
     rx_head = next;
+}
+
+static void uart3_handle_rx_range(uint16_t start, uint16_t end, BOOL notify)
+{
+    uint16_t pos = start;
+
+    while (pos != end) {
+        rb_push_isr(uart3_rx_dma_buf[pos]);
+        pos = (uint16_t)((pos + 1u) % UART3_RX_DMA_SIZE);
+    }
+
+    if ((notify != FALSE) && (start != end)) {
+        prvvUARTRxISR();
+    }
+}
+
+static BOOL uart3_start_rx_dma(void)
+{
+    HAL_StatusTypeDef status;
+
+    if (uart3_rx_dma_running != 0u) {
+        return TRUE;
+    }
+
+    status = HAL_UARTEx_ReceiveToIdle_DMA(&huart, uart3_rx_dma_buf, UART3_RX_DMA_SIZE);
+    if (status != HAL_OK) {
+        return FALSE;
+    }
+
+    if (huart.hdmarx != NULL) {
+        __HAL_DMA_DISABLE_IT(huart.hdmarx, DMA_IT_HT);
+    }
+
+    uart3_rx_dma_running = 1u;
+    return TRUE;
+}
+
+static void uart3_stop_rx_dma(void)
+{
+    if (uart3_rx_dma_running == 0u) {
+        return;
+    }
+
+    (void)HAL_UART_AbortReceive(&huart);
+    uart3_rx_dma_running = 0u;
 }
 
 /* ----------------------- Start implementation -----------------------------*/
@@ -101,18 +155,22 @@ BOOL xMBPortSerialInit(UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits,
     /* Classic RXNE per-byte behavior keeps the ISR simple */
     (void)HAL_UARTEx_DisableFifoMode(&huart);
 
-    /* Clear pending flags then enable RX interrupts */
+    /* Clear pending flags before enabling runtime RX path */
     __HAL_UART_CLEAR_OREFLAG(&huart);
     __HAL_UART_CLEAR_FEFLAG(&huart);
     __HAL_UART_CLEAR_NEFLAG(&huart);
     __HAL_UART_CLEAR_IDLEFLAG(&huart);
+    __HAL_UART_CLEAR_PEFLAG(&huart);
 
-    /* software initialize */
-    __HAL_UART_ENABLE_IT(&huart, UART_IT_RXNE);
-    __HAL_UART_ENABLE_IT(&huart, UART_IT_IDLE);
+    uart3_rx_enabled = 0u;
+    uart3_rx_dma_running = 0u;
+    uart3_rx_dma_last_pos = 0u;
+    rx_head = 0u;
+    rx_tail = 0u;
+
     /* DO NOT enable TC here; we use TXE to drive the byte pump */
-    //__HAL_UART_ENABLE_IT(&huart, UART_IT_TC);
-    __HAL_UART_DISABLE_IT(&huart, UART_IT_TC);    // don't use TC for pumping
+    __HAL_UART_DISABLE_IT(&huart, UART_IT_TC);
+    __HAL_UART_DISABLE_IT(&huart, UART_IT_TXE);
 
     /* Create event + worker task (optional; you can feed your own Modbus task) */
     xSerialEventHandle = osEventFlagsNew(NULL);
@@ -128,9 +186,13 @@ void vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable)
 {
     if (xRxEnable) {
         RS485_SLAVE_RX_MODE();
-        __HAL_UART_ENABLE_IT(&huart, UART_IT_RXNE | UART_IT_IDLE);
+        uart3_rx_enabled = 1u;
+        uart3_rx_dma_last_pos = 0u;
+        (void)uart3_start_rx_dma();
     } else {
-        __HAL_UART_DISABLE_IT(&huart, UART_IT_RXNE | UART_IT_IDLE);
+        uart3_rx_enabled = 0u;
+        uart3_stop_rx_dma();
+        uart3_rx_dma_last_pos = 0u;
     }
 
     if (xTxEnable) {
@@ -150,7 +212,10 @@ void vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable)
 
 void vMBPortClose(void)
 {
-    __HAL_UART_DISABLE_IT(&huart, UART_IT_RXNE|UART_IT_IDLE|UART_IT_TXE|UART_IT_TC);
+    uart3_rx_enabled = 0u;
+    uart3_stop_rx_dma();
+    uart3_rx_dma_last_pos = 0u;
+    __HAL_UART_DISABLE_IT(&huart, UART_IT_TXE|UART_IT_TC);
     (void)HAL_UART_DeInit(&huart);
 }
 
@@ -217,6 +282,50 @@ void prvvUARTRxISR(void)
 void prvvUARTRxReceiveCharISR(CHAR data)
 {
 	rb_push_isr((uint8_t)data);
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
+{
+    HAL_UART_RxEventTypeTypeDef event_type;
+    uint16_t pos;
+
+    if (huart_cb != &huart) {
+        return;
+    }
+
+    event_type = HAL_UARTEx_GetRxEventType(huart_cb);
+    pos = Size;
+    if (pos > UART3_RX_DMA_SIZE) {
+        pos = UART3_RX_DMA_SIZE;
+    }
+
+    if (event_type == HAL_UART_RXEVENT_TC) {
+        pos = 0u;
+    }
+
+    uart3_handle_rx_range(uart3_rx_dma_last_pos, pos, TRUE);
+    uart3_rx_dma_last_pos = pos;
+    uart3_rx_dma_running = 1u;
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart_cb)
+{
+    if (huart_cb != &huart) {
+        return;
+    }
+
+    uart3_rx_dma_running = 0u;
+    uart3_rx_dma_last_pos = 0u;
+
+    __HAL_UART_CLEAR_OREFLAG(&huart);
+    __HAL_UART_CLEAR_FEFLAG(&huart);
+    __HAL_UART_CLEAR_NEFLAG(&huart);
+    __HAL_UART_CLEAR_PEFLAG(&huart);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart);
+
+    if (uart3_rx_enabled != 0u) {
+        (void)uart3_start_rx_dma();
+    }
 }
 
 /*

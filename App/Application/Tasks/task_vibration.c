@@ -35,6 +35,13 @@ static uint8_t g_spi_sensor_dma_tx_buf[SENSOR_SPI_DMA_BUFFER_SIZE];
 static uint8_t g_spi_sensor_dma_rx_buf[SENSOR_SPI_DMA_BUFFER_SIZE];
 static void refresh_bearing_frequency_if_events_pending(void);
 
+typedef enum {
+    VIB_PROCESS_PROGRESS_NONE = 0,
+    VIB_PROCESS_PROGRESS_PARTIAL,
+    VIB_PROCESS_PROGRESS_FRAME_READY,
+    VIB_PROCESS_PROGRESS_ERROR
+} VibrationProcessProgress_t;
+
 static void wait_forever_with_delay(uint32_t delay_ms)
 {
     while (1) {
@@ -171,7 +178,21 @@ static void eventHandlerTask(void *argument)
     }
 }
 
-static inline void processVibration(void)
+static bool vibration_try_recover_sensor(void)
+{
+    static uint32_t s_last_recovery_tick = 0U;
+    uint32_t now = HAL_GetTick();
+
+    if ((now - s_last_recovery_tick) < 5000U) {
+        return false;
+    }
+
+    s_last_recovery_tick = now;
+    fft_sample_count = 0U;
+    return IIS3DWB_Sensor_Recover(&g_sensor);
+}
+
+static inline VibrationProcessProgress_t processVibration(void)
 {
     enum { AXIS_RESULT_COUNT = 3 * RESULT_DATA_PER_AXIS };
 
@@ -194,17 +215,17 @@ static inline void processVibration(void)
 
     if (!IIS3DWB_Sensor_FetchSamples(&g_sensor, raw_x, raw_y, raw_z, fft_sample_count, FFT_LENGTH, &captured)) {
         osDelay(1);
-        return;
+        return VIB_PROCESS_PROGRESS_ERROR;
     }
 
     if (captured == 0U) {
         osThreadYield();
-        return;
+        return VIB_PROCESS_PROGRESS_NONE;
     }
 
     fft_sample_count = (uint16_t)(fft_sample_count + captured);
     if (fft_sample_count < FFT_LENGTH) {
-        return;
+        return VIB_PROCESS_PROGRESS_PARTIAL;
     }
 
     fft_sample_count = 0U;
@@ -287,6 +308,8 @@ static inline void processVibration(void)
     usSRegInBuf[MB_REG_ACTIVE_MACHINE_PROFILE] = (USHORT)vib_cfg.machine_profile;
     usSRegInBuf[MB_REG_AGING_FACTOR] = aging_factor_to_reg(dominant_result, &baseline);
     osMutexRelease(regbuf_mtx);
+
+    return VIB_PROCESS_PROGRESS_FRAME_READY;
 }
 
 void main_TaskVibration(void *argument)
@@ -337,16 +360,47 @@ void main_TaskVibration(void *argument)
         wait_forever_with_delay(1000U);
     }
 
-    for (;;) {
-        if (!g_use_event_helper_task) {
-            refresh_bearing_frequency_if_events_pending();
-        }
-        if (osSemaphoreAcquire(g_fifo_wm_sem, 50U) == osOK) {
-            processVibration();
-        } else {
-            /* Fallback path: keep accumulating samples even if INT edge is missed. */
-            processVibration();
-            osDelay(1U);
+    {
+        uint32_t last_progress_tick = HAL_GetTick();
+        uint16_t consecutive_failures = 0U;
+        uint16_t consecutive_idle_loops = 0U;
+
+        for (;;) {
+            VibrationProcessProgress_t progress;
+
+            if (!g_use_event_helper_task) {
+                refresh_bearing_frequency_if_events_pending();
+            }
+            if (osSemaphoreAcquire(g_fifo_wm_sem, 50U) == osOK) {
+                progress = processVibration();
+            } else {
+                /* Fallback path: keep accumulating samples even if INT edge is missed. */
+                progress = processVibration();
+                osDelay(1U);
+            }
+
+            if (progress == VIB_PROCESS_PROGRESS_FRAME_READY ||
+                progress == VIB_PROCESS_PROGRESS_PARTIAL) {
+                last_progress_tick = HAL_GetTick();
+                consecutive_failures = 0U;
+                consecutive_idle_loops = 0U;
+                continue;
+            }
+
+            if (progress == VIB_PROCESS_PROGRESS_ERROR) {
+                ++consecutive_failures;
+            } else {
+                ++consecutive_idle_loops;
+            }
+
+            if (consecutive_failures >= 3U ||
+                ((HAL_GetTick() - last_progress_tick) > 5000U && consecutive_idle_loops >= 50U)) {
+                if (vibration_try_recover_sensor()) {
+                    last_progress_tick = HAL_GetTick();
+                    consecutive_failures = 0U;
+                    consecutive_idle_loops = 0U;
+                }
+            }
         }
     }
 }

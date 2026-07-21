@@ -56,19 +56,20 @@ void Error_Handler(void);
 extern SPI_HandleTypeDef hspi1;
 extern DMA_HandleTypeDef hdma_spi1_rx;
 extern DMA_HandleTypeDef hdma_spi1_tx;
+extern DMA_HandleTypeDef hdma_usart3_rx;
 
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED_PWR_Pin GPIO_PIN_1
-#define LED_PWR_GPIO_Port GPIOC
-#define LED_STAT_Pin GPIO_PIN_2
+#define LED_PWR_Pin GPIO_PIN_15
+#define LED_PWR_GPIO_Port GPIOB
+#define LED_STAT_Pin GPIO_PIN_6
 #define LED_STAT_GPIO_Port GPIOC
-#define VBS_CS_Pin GPIO_PIN_4
-#define VBS_CS_GPIO_Port GPIOA
-#define VBS_INT_Pin GPIO_PIN_5
-#define VBS_INT_GPIO_Port GPIOC
-#define TMP_CS_Pin GPIO_PIN_8
+#define VBS_CS_Pin GPIO_PIN_14
+#define VBS_CS_GPIO_Port GPIOC
+#define VBS_INT_Pin GPIO_PIN_9
+#define VBS_INT_GPIO_Port GPIOA
+#define TMP_CS_Pin GPIO_PIN_10
 #define TMP_CS_GPIO_Port GPIOA
 #define TMP_Alert_Pin GPIO_PIN_5
 #define TMP_Alert_GPIO_Port GPIOB
