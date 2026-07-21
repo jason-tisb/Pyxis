@@ -9,7 +9,8 @@
 /* ----------------------- Config -------------------------------------------*/
 #define RB_SIZE                 512u                /* power of two */
 #define RB_MASK                 (RB_SIZE - 1u)
-#define UART3_RX_DMA_SIZE       512u
+#define UART3_RX_DMA_SIZE       256u
+#define UART3_RX_DMA_HALF_SIZE  (UART3_RX_DMA_SIZE / 2u)
 #define EVENT_MBSLAVE_HANDLE_RX (1u << 0)
 
 #define RS485_SLAVE_TX_MODE()   //LL_GPIO_SetOutputPin(RS485_SLAVE_CTRL_GPIO_Port, RS485_SLAVE_CTRL_Pin)
@@ -27,6 +28,11 @@ static volatile uint8_t         uart3_rx_enabled = 0u;
 static volatile uint8_t         uart3_rx_dma_running = 0u;
 static uint8_t                  uart3_rx_dma_buf[UART3_RX_DMA_SIZE];
 static volatile uint16_t        uart3_rx_dma_last_pos = 0u;
+static const osThreadAttr_t     serial_rx_task_attr = {
+    .name = "mbRxDrain",
+    .priority = (osPriority_t)osPriorityAboveNormal4,
+    .stack_size = 1024u
+};
 
 static osThreadId_t 			receiveDataHandle;
 static osEventFlagsId_t 		xSerialEventHandle;
@@ -101,10 +107,6 @@ static BOOL uart3_start_rx_dma(void)
         return FALSE;
     }
 
-    if (huart.hdmarx != NULL) {
-        __HAL_DMA_DISABLE_IT(huart.hdmarx, DMA_IT_HT);
-    }
-
     uart3_rx_dma_running = 1u;
     return TRUE;
 }
@@ -176,7 +178,7 @@ BOOL xMBPortSerialInit(UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits,
     xSerialEventHandle = osEventFlagsNew(NULL);
     if (xSerialEventHandle == NULL) return FALSE;
 
-    receiveDataHandle = osThreadNew(handleReceivedDataTask, NULL, NULL);
+    receiveDataHandle = osThreadNew(handleReceivedDataTask, NULL, &serial_rx_task_attr);
     if (receiveDataHandle == NULL) return FALSE;
 
     return TRUE;
@@ -299,7 +301,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
         pos = UART3_RX_DMA_SIZE;
     }
 
-    if (event_type == HAL_UART_RXEVENT_TC) {
+    if (event_type == HAL_UART_RXEVENT_HT) {
+        pos = UART3_RX_DMA_HALF_SIZE;
+    } else if (event_type == HAL_UART_RXEVENT_TC) {
         pos = 0u;
     }
 

@@ -12,6 +12,7 @@
 		[
 			"add_executable",
 			"target_link_libraries",
+			"add_custom_command",
 			"target_compile_options",
 			"target_compile_definitions",
 			"target_include_directories",
@@ -43,293 +44,329 @@
 				"parent" : 2
 			},
 			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 167,
+				"parent" : 0
+			},
+			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 173,
+				"line" : 192,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 154,
+				"line" : 173,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 92,
+				"line" : 154,
 				"parent" : 0
 			},
 			{
 				"command" : 5,
+				"file" : 0,
+				"line" : 92,
+				"parent" : 0
+			},
+			{
+				"command" : 6,
 				"file" : 1,
 				"line" : 126,
 				"parent" : 2
 			},
 			{
-				"command" : 5,
+				"command" : 6,
 				"file" : 0,
 				"line" : 46,
 				"parent" : 0
 			}
 		]
 	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 9
+	},
+	"compileDependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "STM32_Drivers::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "RTOS2::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "CMSIS-DSP::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "stm32cubemx::@768a070a0fe75716b479"
+		}
+	],
 	"compileGroups" : 
 	[
 		{
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O0 -g3 -std=gnu11"
+					"fragment" : " -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O0 -g3 -std=gnu11"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mcpu=cortex-m33"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mthumb"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mfpu=fpv5-sp-d16"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mfloat-abi=hard"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-std=gnu11"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-g3"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-O0"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-Wall"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-ffunction-sections"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-fdata-sections"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-fstack-usage"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-fcyclomatic-complexity"
 				}
 			],
 			"defines" : 
 			[
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "DEBUG"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "EEPROM_MAX_VIRTUAL_ID=1000"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "FEATURE_STORAGE_USE_RTOS=1"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "FLASH_LINES_128B=1"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "STM32H563xx"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "USE_HAL_DRIVER"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Inc"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/STM32H5xx_HAL_Driver/Inc"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/STM32H5xx_HAL_Driver/Inc/Legacy"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/CMSIS/Device/ST/STM32H5xx/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/CMSIS/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/PrivateInclude"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Include/dsp"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Source/CommonTables"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Source/TransformFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/CommonTables"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/ComplexMathFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/TransformFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/StatisticsFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/BasicMathFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/FreeRTOS/Source/include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33_NTZ/non_secure"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/CMSIS/RTOS2/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Tasks"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Modules/Modbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Modules/Vibration"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Ports"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Services/Vibration"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/BSP/Sensors/IIS3DWB"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/BSP/Storage"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Product/Configurations"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Product/Validation"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Product/RegisterMap/Modbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/port"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/port/cmsis_rtos2"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/functions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/ascii"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/rtu"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/tcp"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/IIS3DWB"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/Flash_Storage"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/EEPROM_Emul/Core"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/EEPROM_Emul/Porting"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/EEPROM_Emul/Porting/STM32H5"
 				},
 				{
@@ -433,256 +470,256 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -x assembler-with-cpp -MMD -MP -g"
+					"fragment" : " -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -x assembler-with-cpp -MMD -MP -g"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mcpu=cortex-m33"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mthumb"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mfpu=fpv5-sp-d16"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-mfloat-abi=hard"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-std=gnu11"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-g3"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-O0"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-Wall"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-ffunction-sections"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-fdata-sections"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-fstack-usage"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"fragment" : "-fcyclomatic-complexity"
 				}
 			],
 			"defines" : 
 			[
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "DEBUG"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "EEPROM_MAX_VIRTUAL_ID=1000"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "FEATURE_STORAGE_USE_RTOS=1"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "FLASH_LINES_128B=1"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "STM32H563xx"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 7,
 					"define" : "USE_HAL_DRIVER"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Inc"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/STM32H5xx_HAL_Driver/Inc"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/STM32H5xx_HAL_Driver/Inc/Legacy"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/CMSIS/Device/ST/STM32H5xx/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/CMSIS/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/PrivateInclude"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Include/dsp"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Source/CommonTables"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/ARM_CMSIS/Source/TransformFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/CommonTables"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/ComplexMathFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/TransformFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/StatisticsFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Libraries/DSP/BasicMathFunctions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/FreeRTOS/Source/include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33_NTZ/non_secure"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Middlewares/Third_Party/CMSIS/RTOS2/Include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Tasks"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Modules/Modbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Modules/Vibration"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Ports"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Application/Services/Vibration"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/BSP/Sensors/IIS3DWB"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/BSP/Storage"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Product/Configurations"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Product/Validation"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Product/RegisterMap/Modbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/port"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/port/cmsis_rtos2"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/include"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/functions"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/ascii"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/rtu"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/FreeModbus/modbus/tcp"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/IIS3DWB"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Drivers/Flash_Storage"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/EEPROM_Emul/Core"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/EEPROM_Emul/Porting"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 8,
 					"path" : "C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/App/Middleware/EEPROM_Emul/Porting/STM32H5"
 				},
 				{
@@ -758,7 +795,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O0 -g3",
+				"fragment" : "-mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O0 -g3",
 				"role" : "flags"
 			},
 			{
@@ -773,8 +810,38 @@
 		],
 		"language" : "C"
 	},
+	"linkLibraries" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "STM32_Drivers::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"fragment" : "m"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "RTOS2::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "CMSIS-DSP::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "stm32cubemx::@768a070a0fe75716b479"
+		}
+	],
 	"name" : "Vimot_H563RITX_Professional",
 	"nameOnDisk" : "Vimot_H563RITX_Professional.elf",
+	"orderDependencies" : 
+	[
+		{
+			"backtrace" : 5,
+			"id" : "Vimot_H563RITX_Professional::@6890427a1f51a3e7e1df"
+		}
+	],
 	"paths" : 
 	{
 		"build" : ".",
@@ -887,241 +954,241 @@
 	"sources" : 
 	[
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/main.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/app_freertos.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32h5xx_it.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32h5xx_hal_msp.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32h5xx_hal_timebase_tim.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/sysmem.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/syscalls.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 9,
 			"compileGroupIndex" : 1,
 			"path" : "startup_stm32h563xx.s",
 			"sourceGroupIndex" : 1
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Application/Tasks/task_vibration.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Application/Tasks/task_modbus.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Application/Ports/sensor_bus_port.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Application/Services/Vibration/vibration_algorithm.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Application/Services/Vibration/bearing_freq_calculation.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Application/Modules/Modbus/modbus_module.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Application/Modules/Vibration/vibration_module.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/BSP/Storage/storage_kv.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/BSP/Storage/sys_storage_partition.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Product/RegisterMap/Modbus/modbus_app_adapter.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Product/RegisterMap/Modbus/vibration_modbus_adapter.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Product/Validation/system_validator.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/IIS3DWB/iis3dwb_reg.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/app_led.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/mb.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/functions/mbfunccoils.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/functions/mbfuncdiag.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/functions/mbfuncdisc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/functions/mbfuncholding.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/functions/mbfuncinput.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/functions/mbfuncother.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/functions/mbutils.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/rtu/mbrtu.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/modbus/rtu/mbcrc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/port/user_mb_app.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/port/cmsis_rtos2/portcritical.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/port/cmsis_rtos2/portevent.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/port/cmsis_rtos2/portserial.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/FreeModbus/port/cmsis_rtos2/porttimer.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/EEPROM_Emul/Core/eeprom_emul.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 10,
 			"compileGroupIndex" : 0,
 			"path" : "App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c",
 			"sourceGroupIndex" : 0
