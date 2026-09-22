@@ -7,6 +7,8 @@ The current codebase is centered around two runtime features:
 - Modbus configuration, register access, and communication state handling.
 - Vibration acquisition, signal analysis, health indicators, and persistent machine configuration.
 
+It also contains a cross-cutting application LED subsystem for startup configuration display, communication activity, warnings, and fault indication.
+
 ## Current Repository Shape
 
 ```text
@@ -245,6 +247,8 @@ Project documentation for architecture and register mapping.
   - High-level structure and folder ownership.
 - `MODBUS_REGISTER_MAP.md`
   - Register-level Modbus behavior and documentation.
+- `LED_BEHAVIOR.md`
+  - LED hardware mapping, initialization order, startup configuration display, state priority, timing, and diagnostics.
 
 ## Supporting Top-Level Folders
 
@@ -255,9 +259,15 @@ STM32Cube-generated startup and platform glue.
 - `Core/Inc`
   - Global project headers and RTOS config headers.
 - `Core/Src`
-  - `main.c`, FreeRTOS startup, ISR glue, HAL MSP, timebase, and system startup code.
+  - `main.c`, FreeRTOS startup, LED state engine, ISR glue, HAL MSP, timebase, and system startup code.
 - `Core/Startup`
   - Startup assembly for the target MCU.
+
+#### LED initialization and runtime ownership
+
+The LED subsystem is initialized immediately after GPIO setup in `main.c`. The TIM1 callback remains dedicated to the HAL timebase and does not execute the LED state engine. After the scheduler starts, a dedicated low-priority FreeRTOS task calls `LED_Task_10ms()` every 10 ms.
+
+This ordering guarantees that `LED_ServiceElapsed()` cannot run before `LED_Init()` initializes the context. See `App/Docs/LED_BEHAVIOR.md` for the complete visible pattern and encoding specification.
 
 ### `Drivers`
 
@@ -290,6 +300,7 @@ Build-system support files.
 - If product-specific acceptance rules change, update `App/Product/Validation` or the relevant product adapter validator.
 - If feature state, persistence schema, or final config validation changes, update `App/Application/Modules`.
 - If math or signal processing changes, update `App/Application/Services/Vibration`.
+- If LED timing, status priority, hardware mapping, or startup display encoding changes, update `Core/Src/app_led.c`, `Core/Inc/app_led_config.h`, and `App/Docs/LED_BEHAVIOR.md` together.
 
 ## Recommended Ownership Boundaries
 

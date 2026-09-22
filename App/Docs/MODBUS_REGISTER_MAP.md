@@ -17,6 +17,7 @@ It is based on the active code in:
   - input: `usSRegInBuf[]`
 - Function code `03` reads holding (`4xxxx`) and `04` reads input (`3xxxx`) as separate data images.
 - Internally, register index `0` maps to Modbus address `1`.
+- After a valid Modbus configuration is loaded at startup, the application displays the slave ID, baud code, and parity setting once on the status LEDs. See [LED_BEHAVIOR.md](LED_BEHAVIOR.md) for the encoding and timing.
 
 Recommended interpretation for documentation:
 
