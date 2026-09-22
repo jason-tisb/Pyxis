@@ -1,0 +1,15 @@
+../App/Application/Modules/Vibration/vibration_module.c:16:13:vibration_persist_baseline	2
+../App/Application/Modules/Vibration/vibration_module.c:25:13:vibration_config_defaults	1
+../App/Application/Modules/Vibration/vibration_module.c:46:6:VibrationModule_ValidateConfig	22
+../App/Application/Modules/Vibration/vibration_module.c:98:6:VibrationModule_Init	7
+../App/Application/Modules/Vibration/vibration_module.c:124:6:VibrationModule_GetConfig	2
+../App/Application/Modules/Vibration/vibration_module.c:131:6:VibrationModule_UpdateConfig	4
+../App/Application/Modules/Vibration/vibration_module.c:149:6:VibrationModule_ProcessNewSample	3
+../App/Application/Modules/Vibration/vibration_module.c:160:6:VibrationModule_GetRecord	2
+../App/Application/Modules/Vibration/vibration_module.c:167:6:VibrationModule_GetBaseline	2
+../App/Application/Modules/Vibration/vibration_module.c:174:6:VibrationModule_UpdateBaseline	2
+../App/Application/Modules/Vibration/vibration_module.c:185:6:VibrationModule_SaveBaseline	1
+../App/Application/Modules/Vibration/vibration_module.c:190:6:VibrationModule_ResetBaseline	1
+../App/Application/Modules/Vibration/vibration_module.c:197:6:VibrationModule_GetTachState	2
+../App/Application/Modules/Vibration/vibration_module.c:204:6:VibrationModule_UpdateTachState	2
+../App/Application/Modules/Vibration/vibration_module.c:214:6:VibrationModule_ProcessSnapshot	8

@@ -1,0 +1,10 @@
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:8:10:ModbusAdapter_BaudToCode	9
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:20:13:ModbusAdapter_IsValidCommValue	7
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:34:6:ModbusAdapter_CodeToBaud	11
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:66:6:ModbusAdapter_IsValidBaudCode	1
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:71:6:ModbusAdapter_IsValidSlaveId	1
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:76:6:ModbusAdapter_IsValidParityCode	1
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:81:11:ModbusAdapter_ParityFromCode	5
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:92:10:ModbusAdapter_ParityToCode	2
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:97:6:ModbusAdapter_InitMap	5
+C:/Users/anwar/PiLoT-V/App/Product/RegisterMap/Modbus/modbus_app_adapter.c:108:6:ModbusAdapter_CheckConfigUpdate	13

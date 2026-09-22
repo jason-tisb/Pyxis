@@ -1,0 +1,17 @@
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:45:13:wait_forever_with_delay	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:52:13:sensor_delay_ms	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:57:6:HAL_GPIO_EXTI_Callback	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:64:10:os_time_us	72	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:79:13:write_u64_to_regs	24	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:87:15:scale_to_u16	32	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:101:15:bool_to_reg	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:106:15:speed_state_to_reg	24	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:124:15:aging_factor_to_reg	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:134:14:deg_to_rad	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:139:14:shaft_freq_from_config_hz	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:149:13:refresh_bearing_frequency_from_config	40	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:160:13:eventHandlerTask	72	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:181:13:vibration_try_recover_sensor	16	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:195:42:processVibration	1184	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:315:6:main_TaskVibration	88	static
+C:/Users/anwar/PiLoT-V/App/Application/Tasks/task_vibration.c:408:13:refresh_bearing_frequency_if_events_pending	64	static

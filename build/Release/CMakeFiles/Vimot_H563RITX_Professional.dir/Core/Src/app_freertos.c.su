@@ -1,0 +1,4 @@
+C:/Users/anwar/PiLoT-V/Core/Src/app_freertos.c:85:6:MX_FREERTOS_Init	8	static
+C:/Users/anwar/PiLoT-V/Core/Src/app_freertos.c:130:13:main_TaskVibration	16	static
+C:/Users/anwar/PiLoT-V/Core/Src/app_freertos.c:148:13:main_TaskModbus	16	static
+C:/Users/anwar/PiLoT-V/Core/Src/app_freertos.c:162:13:LED_ServiceTask	16	static

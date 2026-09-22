@@ -1,0 +1,9 @@
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:91:11:FI_WriteDoubleWord	32	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:121:11:FI_PageErase	48	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:156:11:FI_PageErase_IT	40	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:186:6:FI_CacheFlush	4	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:198:17:GetBankNumber	24	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:246:11:FI_DeleteCorruptedFlashAddress	24	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:310:11:FI_CheckBankConfig	4	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:348:6:OB_Init	96	static
+../App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c:393:13:Error_Handler	4	static

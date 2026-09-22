@@ -19,7 +19,6 @@ typedef enum
 
 void LED_Init(void);
 void LED_Task_10ms(void);
-void LED_Task_1ms_ISR(void);
 
 void LED_SetBaseState(led_base_state_t state);
 void LED_RequestSlaveIdDisplay(uint8_t slave_id, uint8_t repeat_count);

@@ -22,12 +22,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "app_led.h"
 #include "core_cm33.h"
 #include <string.h>
 #include <task_modbus.h>
 #include <task_vibration.h>
 #include "NonVolatileData.h"
+#include "app_led.h"
 #include "sys_storage_partition.h"
 
 /* USER CODE END Includes */
@@ -129,6 +129,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  LED_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_USB_HCD_Init();
@@ -630,11 +631,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  if (htim->Instance == TIM1)
-  {
-    LED_Task_1ms_ISR();
-  }
-
   /* USER CODE END Callback 1 */
 }
 

@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app_led.h"
+#include "app_led_config.h"
 #include "user_mb_app.h"
 #include "sys_storage_partition.h"
 
@@ -45,6 +46,12 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+static osThreadId_t ledTaskHandle;
+static const osThreadAttr_t ledTask_attributes = {
+  .name = "ledTask",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 512U
+};
 /* USER CODE END Variables */
 /* Definitions for vTaskVibration */
 osThreadId_t vTaskVibrationHandle;
@@ -67,6 +74,7 @@ const osThreadAttr_t vTaskModbus_attributes = {
 osMutexId_t regbuf_mtx;
 const osMutexAttr_t regbuf_mtx_attr = {.name = "regbuf_mtx"};
 EventGroupHandle_t xSettingsEventGroup;
+static void LED_ServiceTask(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 /**
@@ -78,7 +86,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 	event_start_modbus_thread = osEventFlagsNew(NULL);
 	regbuf_mtx = osMutexNew(&regbuf_mtx_attr);
-  LED_Init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -108,7 +115,7 @@ void MX_FREERTOS_Init(void) {
    vTaskModbusHandle = osThreadNew(main_TaskModbus, NULL, &vTaskModbus_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+  ledTaskHandle = osThreadNew(LED_ServiceTask, NULL, &ledTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -150,6 +157,17 @@ __weak void main_TaskModbus(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+static void LED_ServiceTask(void *argument)
+{
+  (void)argument;
+
+  for (;;)
+  {
+    LED_Task_10ms();
+    osDelay(LED_TASK_PERIOD_MS);
+  }
+}
 
 /* USER CODE END Application */
 

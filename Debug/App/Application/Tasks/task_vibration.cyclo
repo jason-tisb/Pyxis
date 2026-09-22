@@ -1,0 +1,17 @@
+../App/Application/Tasks/task_vibration.c:45:13:wait_forever_with_delay	1
+../App/Application/Tasks/task_vibration.c:52:13:sensor_delay_ms	1
+../App/Application/Tasks/task_vibration.c:57:6:HAL_GPIO_EXTI_Callback	3
+../App/Application/Tasks/task_vibration.c:64:10:os_time_us	2
+../App/Application/Tasks/task_vibration.c:79:13:write_u64_to_regs	1
+../App/Application/Tasks/task_vibration.c:87:15:scale_to_u16	3
+../App/Application/Tasks/task_vibration.c:101:15:bool_to_reg	2
+../App/Application/Tasks/task_vibration.c:106:15:speed_state_to_reg	5
+../App/Application/Tasks/task_vibration.c:124:15:aging_factor_to_reg	4
+../App/Application/Tasks/task_vibration.c:134:14:deg_to_rad	1
+../App/Application/Tasks/task_vibration.c:139:14:shaft_freq_from_config_hz	2
+../App/Application/Tasks/task_vibration.c:149:13:refresh_bearing_frequency_from_config	1
+../App/Application/Tasks/task_vibration.c:160:13:eventHandlerTask	2
+../App/Application/Tasks/task_vibration.c:181:13:vibration_try_recover_sensor	2
+../App/Application/Tasks/task_vibration.c:195:42:processVibration	9
+../App/Application/Tasks/task_vibration.c:315:6:main_TaskVibration	15
+../App/Application/Tasks/task_vibration.c:408:13:refresh_bearing_frequency_if_events_pending	2

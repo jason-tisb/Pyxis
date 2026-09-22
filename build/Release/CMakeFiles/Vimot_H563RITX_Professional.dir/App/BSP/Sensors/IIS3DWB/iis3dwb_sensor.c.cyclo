@@ -1,0 +1,14 @@
+C:/Users/anwar/PiLoT-V/App/Application/Ports/sensor_bus_port.h:81:23:SensorBus_WriteReg	4
+C:/Users/anwar/PiLoT-V/App/Application/Ports/sensor_bus_port.h:89:23:SensorBus_ReadReg	4
+C:/Users/anwar/PiLoT-V/App/Application/Ports/sensor_bus_port.h:97:20:SensorBus_DelayMs	4
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:10:13:iis3dwb_wait_reset_clear	5
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:33:13:iis3dwb_wait_boot_clear	5
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:56:13:iis3dwb_prepare_clean_start	5
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:89:16:iis3dwb_bus_write	1
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:95:16:iis3dwb_bus_read	1
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:101:13:iis3dwb_bus_delay	2
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:108:6:IIS3DWB_Sensor_Create	4
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:128:6:IIS3DWB_Sensor_Init	15
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:213:6:IIS3DWB_Sensor_Recover	3
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:222:6:IIS3DWB_Sensor_FetchSamples	26
+C:/Users/anwar/PiLoT-V/App/BSP/Sensors/IIS3DWB/iis3dwb_sensor.c:308:6:IIS3DWB_Sensor_ReadTemperatureX10	6

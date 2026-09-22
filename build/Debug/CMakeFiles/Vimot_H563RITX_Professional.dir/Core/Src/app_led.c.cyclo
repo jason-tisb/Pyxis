@@ -1,32 +1,31 @@
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:106:6:LED_Init	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:115:6:LED_Task_10ms	2
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:132:6:LED_Task_1ms_ISR	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:137:6:LED_SetBaseState	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:144:6:LED_RequestSlaveIdDisplay	5
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:166:6:LED_RequestStartupDisplay	7
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:186:10:LED_GetStartupDisplayDurationMs	8
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:217:6:LED_RequestIdentify	2
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:231:6:LED_NotifyValidModbusTransaction	2
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:244:6:LED_NotifyCommunicationError	2
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:257:6:LED_SetFatalFault	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:264:6:LED_SetDeviceFault	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:271:6:LED_SetConfigurationInvalid	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:278:6:LED_SetGeneralWarning	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:285:6:LED_SetCommunicationWarning	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:292:13:LED_HW_Write	2
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:311:13:LED_HW_SetGreen	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:316:13:LED_HW_SetRed	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:321:13:LED_UpdateTimers	5
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:360:25:LED_ResolveBaseState	6
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:385:13:LED_IsSpecialEngineActive	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:390:13:LED_RunBasePattern	22
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:458:13:LED_ServiceElapsed	4
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:497:13:LED_RunSpecialEngine	23
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:614:13:LED_ApplyEventOverlays	4
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:634:13:LED_RunDigitPhase	15
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:710:16:LED_HighHexDigit	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:715:16:LED_LowHexDigit	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:720:17:LED_DigitDurationMs	4
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:736:13:LED_StartSlaveIdSequence	2
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:750:13:LED_BeginDigitMode	1
-C:/Users/PC YH/STM32CubeIDE/workspace_2.1.0/Vimot_H563RITX_V1.3_1/Core/Src/app_led.c:760:13:LED_ResetTransientState	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:106:6:LED_Init	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:115:6:LED_Task_10ms	2
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:132:6:LED_SetBaseState	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:139:6:LED_RequestSlaveIdDisplay	5
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:161:6:LED_RequestStartupDisplay	7
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:181:10:LED_GetStartupDisplayDurationMs	8
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:212:6:LED_RequestIdentify	2
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:226:6:LED_NotifyValidModbusTransaction	2
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:239:6:LED_NotifyCommunicationError	2
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:252:6:LED_SetFatalFault	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:259:6:LED_SetDeviceFault	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:266:6:LED_SetConfigurationInvalid	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:273:6:LED_SetGeneralWarning	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:280:6:LED_SetCommunicationWarning	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:287:13:LED_HW_Write	2
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:306:13:LED_HW_SetGreen	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:311:13:LED_HW_SetRed	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:316:13:LED_UpdateTimers	5
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:355:25:LED_ResolveBaseState	6
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:380:13:LED_IsSpecialEngineActive	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:385:13:LED_RunBasePattern	22
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:453:13:LED_ServiceElapsed	4
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:492:13:LED_RunSpecialEngine	23
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:609:13:LED_ApplyEventOverlays	4
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:629:13:LED_RunDigitPhase	15
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:705:16:LED_HighHexDigit	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:710:16:LED_LowHexDigit	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:715:17:LED_DigitDurationMs	4
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:731:13:LED_StartSlaveIdSequence	2
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:745:13:LED_BeginDigitMode	1
+C:/Users/anwar/PiLoT-V/Core/Src/app_led.c:755:13:LED_ResetTransientState	1

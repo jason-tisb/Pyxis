@@ -1,0 +1,16 @@
+../App/Application/Ports/sensor_bus_port.c:12:31:sensor_bus_spi_find_context	4
+../App/Application/Ports/sensor_bus_port.c:25:13:sensor_bus_spi_register_context	4
+../App/Application/Ports/sensor_bus_port.c:40:13:sensor_bus_spi_dma_ready	11
+../App/Application/Ports/sensor_bus_port.c:59:13:sensor_bus_spi_complete	7
+../App/Application/Ports/sensor_bus_port.c:83:16:sensor_bus_spi_wait_dma	4
+../App/Application/Ports/sensor_bus_port.c:100:16:sensor_bus_spi_write_reg	13
+../App/Application/Ports/sensor_bus_port.c:160:16:sensor_bus_spi_read_reg	14
+../App/Application/Ports/sensor_bus_port.c:228:13:sensor_bus_spi_delay_ms	3
+../App/Application/Ports/sensor_bus_port.c:252:6:SensorBusSpi_Init	3
+../App/Application/Ports/sensor_bus_port.c:276:6:SensorBusSpi_EnableDma	2
+../App/Application/Ports/sensor_bus_port.c:285:6:SensorBusSpi_DisableDma	2
+../App/Application/Ports/sensor_bus_port.c:294:31:SensorBusSpi_GetDmaDebug	1
+../App/Application/Ports/sensor_bus_port.c:299:6:SensorBusSpi_ResetDmaDebug	1
+../App/Application/Ports/sensor_bus_port.c:305:6:HAL_SPI_TxCpltCallback	2
+../App/Application/Ports/sensor_bus_port.c:316:6:HAL_SPI_TxRxCpltCallback	2
+../App/Application/Ports/sensor_bus_port.c:327:6:HAL_SPI_ErrorCallback	2

@@ -1,0 +1,3 @@
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/port/cmsis_rtos2/portevent.c:33:1:xMBPortEventInit	8	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/port/cmsis_rtos2/portevent.c:40:1:xMBPortEventPost	16	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/port/cmsis_rtos2/portevent.c:53:1:xMBPortEventGet	24	static

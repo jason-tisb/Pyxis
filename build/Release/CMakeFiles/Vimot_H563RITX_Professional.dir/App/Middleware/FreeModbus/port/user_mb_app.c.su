@@ -1,0 +1,4 @@
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/port/user_mb_app.c:54:14:eMBRegInputCB	32	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/port/user_mb_app.c:101:14:eMBRegHoldingCB	40	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/port/user_mb_app.c:179:14:eMBRegCoilsCB	56	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/port/user_mb_app.c:256:14:eMBRegDiscreteCB	48	static

@@ -1,0 +1,5 @@
+../App/BSP/Storage/storage_kv.c:22:30:Get_Partition	4
+../App/BSP/Storage/storage_kv.c:30:13:Wait_For_Erase_Complete	2
+../App/BSP/Storage/storage_kv.c:40:6:Storage_Init	11
+../App/BSP/Storage/storage_kv.c:76:6:Storage_Write	10
+../App/BSP/Storage/storage_kv.c:123:6:Storage_Read	8

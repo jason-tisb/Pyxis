@@ -1,0 +1,2 @@
+../App/Middleware/FreeModbus/port/cmsis_rtos2/portcritical.c:22:6:EnterCriticalSection	1
+../App/Middleware/FreeModbus/port/cmsis_rtos2/portcritical.c:27:6:ExitCriticalSection	1

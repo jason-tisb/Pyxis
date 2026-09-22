@@ -1,0 +1,9 @@
+../App/Application/Modules/Modbus/modbus_module.c:13:6:ModbusModule_Init	3
+../App/Application/Modules/Modbus/modbus_module.c:26:6:ModbusModule_GetConfig	2
+../App/Application/Modules/Modbus/modbus_module.c:33:13:is_allowed_baud_rate	9
+../App/Application/Modules/Modbus/modbus_module.c:48:6:ModbusModule_ValidateConfig	6
+../App/Application/Modules/Modbus/modbus_module.c:69:6:ModbusModule_UpdateConfig	4
+../App/Application/Modules/Modbus/modbus_module.c:87:6:ModbusModule_RecordRxOk	2
+../App/Application/Modules/Modbus/modbus_module.c:98:6:ModbusModule_RecordCrcError	2
+../App/Application/Modules/Modbus/modbus_module.c:109:6:ModbusModule_GetStats	2
+../App/Application/Modules/Modbus/modbus_module.c:116:6:ModbusModule_ClearStats	1

@@ -129,11 +129,6 @@ void LED_Task_10ms(void)
     taskEXIT_CRITICAL();
 }
 
-void LED_Task_1ms_ISR(void)
-{
-    LED_ServiceElapsed(1U);
-}
-
 void LED_SetBaseState(led_base_state_t state)
 {
     taskENTER_CRITICAL();

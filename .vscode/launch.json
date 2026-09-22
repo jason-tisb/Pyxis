@@ -7,10 +7,11 @@
         {
             "type": "stlinkgdbtarget",
             "request": "launch",
-            "name": "STM32 App Slot A: Launch ST-Link GDB Server",
+            "name": "PiLoT-V: Debug Slot A via ST-LINK (F5)",
             "cwd": "${workspaceFolder}",
-            "preBuild": "${command:st-stm32-ide-debug-launch.build}",
+            "preLaunchTask": "PiLoT-V: Build Slot A (Debug)",
             "program": "${workspaceFolder}/build/Debug/Vimot_H563RITX_Professional.elf",
+            "gdb": "C:\\ST\\STM32CubeIDE_1.18.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740\\tools\\bin\\arm-none-eabi-gdb.exe",
             "runEntry": "main",
             "imagesAndSymbols": [
                 {
@@ -19,7 +20,7 @@
                 }
             ],
             "serverIncrementalFlashing": true,
-            "serverVerify": false,
+            "serverVerify": true,
             "verbose": true
         },
         {

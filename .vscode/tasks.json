@@ -1,0 +1,69 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "PiLoT-V: Configure Slot A (Debug)",
+            "type": "process",
+            "command": "C:\\ST\\STM32CubeIDE_1.18.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.cmake.win32_1.1.100.202601091506\\tools\\bin\\cmake.exe",
+            "args": [
+                "--preset",
+                "Debug"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "C:\\ST\\STM32CubeIDE_1.18.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740\\tools\\bin;C:\\ST\\STM32CubeIDE_1.18.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.ninja.win32_1.1.100.202601091506\\tools\\bin;${env:PATH}"
+                }
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "PiLoT-V: Build Slot A (Debug)",
+            "type": "process",
+            "command": "C:\\ST\\STM32CubeIDE_1.18.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.cmake.win32_1.1.100.202601091506\\tools\\bin\\cmake.exe",
+            "args": [
+                "--build",
+                "--preset",
+                "Debug"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "C:\\ST\\STM32CubeIDE_1.18.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740\\tools\\bin;C:\\ST\\STM32CubeIDE_1.18.0\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.ninja.win32_1.1.100.202601091506\\tools\\bin;${env:PATH}"
+                }
+            },
+            "dependsOn": "PiLoT-V: Configure Slot A (Debug)",
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "PiLoT-V: Flash Slot A (preserve bootloader)",
+            "type": "process",
+            "command": "C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeProgrammer\\bin\\STM32_Programmer_CLI.exe",
+            "args": [
+                "-c",
+                "port=SWD",
+                "mode=UR",
+                "-w",
+                "${workspaceFolder}/build/Debug/Vimot_H563RITX_Professional.elf",
+                "-v",
+                "-rst"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "PiLoT-V: Build Slot A (Debug)",
+            "dependsOrder": "sequence",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

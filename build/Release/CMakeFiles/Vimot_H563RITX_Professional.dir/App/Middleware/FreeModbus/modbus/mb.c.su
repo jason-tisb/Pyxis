@@ -1,0 +1,6 @@
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/modbus/mb.c:133:1:eMBInit	24	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/modbus/mb.c:231:1:eMBRegisterCB	24	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/modbus/mb.c:278:1:eMBClose	16	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/modbus/mb.c:298:1:eMBEnable	16	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/modbus/mb.c:316:1:eMBDisable	16	static
+C:/Users/anwar/PiLoT-V/App/Middleware/FreeModbus/modbus/mb.c:337:14:eMBPoll	24	static

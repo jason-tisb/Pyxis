@@ -1,0 +1,4 @@
+../App/Middleware/FreeModbus/port/cmsis_rtos2/porttimer.c:37:6:xMBPortTimersInit	1
+../App/Middleware/FreeModbus/port/cmsis_rtos2/porttimer.c:45:6:vMBPortTimersEnable	1
+../App/Middleware/FreeModbus/port/cmsis_rtos2/porttimer.c:50:6:vMBPortTimersDisable	1
+../App/Middleware/FreeModbus/port/cmsis_rtos2/porttimer.c:55:13:prvvTIMERExpiredISR	1
