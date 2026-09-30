@@ -86,6 +86,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # EEPROM emulation middleware
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/EEPROM_Emul/Core/eeprom_emul.c
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/EEPROM_Emul/Porting/STM32H5/flash_interface.c
+
+    # Custom Modbus protocol kernel
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_core.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_crc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_port_engine.c
 )
 
 # Add include paths
@@ -129,6 +134,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/App/Product/Validation
     ${CMAKE_SOURCE_DIR}/App/Product/RegisterMap/Modbus
    
+    ${CMAKE_SOURCE_DIR}/App/Middleware/ModbusEngine/Inc
 
     # FreeModbus middleware
     ${CMAKE_SOURCE_DIR}/App/Middleware/FreeModbus
