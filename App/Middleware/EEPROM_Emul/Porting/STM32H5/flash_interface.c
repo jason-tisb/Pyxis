@@ -21,6 +21,8 @@
 #include "eeprom_emul.h"
 #include "flash_interface.h"
 
+static void Error_Handler(void);
+
 /** @addtogroup EEPROM_Emulation
   * @{
   */

@@ -142,7 +142,6 @@ EE_Status FI_PageErase(uint32_t Page, uint16_t NbPages);
 EE_Status FI_PageErase_IT(uint32_t Page, uint16_t NbPages);
 EE_Status FI_DeleteCorruptedFlashAddress(uint32_t Address);
 EE_Status FI_CheckBankConfig(void);
-static void Error_Handler(void);
 void FI_CacheFlush(void);
 void OB_Init(void);
 /**
