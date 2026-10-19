@@ -7,6 +7,9 @@
     "cmake.defaultConfigurePreset": "Debug",
     "cmake.defaultBuildPreset": "Debug",
     "cmake.configureArgs": [],
+    "cmake.environment": {
+        "PATH": "C:/ST/STM32CubeIDE_2.1.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin;${env:PATH}"
+    },
     "cmake.configureSettings": {
         "CMAKE_C_COMPILER": "C:/ST/STM32CubeIDE_2.1.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/arm-none-eabi-gcc.exe",
         "CMAKE_ASM_COMPILER": "C:/ST/STM32CubeIDE_2.1.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/arm-none-eabi-gcc.exe",
