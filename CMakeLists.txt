@@ -35,7 +35,7 @@ set(MODBUS_PYXIS_TX_IT "1" CACHE STRING "Pyxis interrupt-driven TX (0=blocking, 
 set(MODBUS_PYXIS_HW_DE "0" CACHE STRING "Pyxis RS485 DE control (0=software, 1=USART hardware)")
 
 # Core project settings
-project(${CMAKE_PROJECT_NAME})
+project(${CMAKE_PROJECT_NAME} LANGUAGES C ASM)
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Resolve auxiliary GNU Arm tools beside the compiler.  This keeps BIN/HEX
@@ -52,9 +52,11 @@ if (CMAKE_C_COMPILER)
     endif()
     if (EXISTS "${_GNU_ARM_OBJCOPY}")
         set(CMAKE_OBJCOPY "${_GNU_ARM_OBJCOPY}" CACHE FILEPATH "GNU Arm objcopy" FORCE)
+        set(CMAKE_OBJCOPY "${_GNU_ARM_OBJCOPY}")
     endif()
     if (EXISTS "${_GNU_ARM_SIZE}")
         set(CMAKE_SIZE "${_GNU_ARM_SIZE}" CACHE FILEPATH "GNU Arm size" FORCE)
+        set(CMAKE_SIZE "${_GNU_ARM_SIZE}")
     endif()
 endif()
 
