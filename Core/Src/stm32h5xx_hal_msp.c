@@ -582,6 +582,28 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 
 }
 
+/* TIM2 is reserved for the optional dynamic-autobaud capture backend.  It is
+ * initialized on demand by modbus_autobaud_capture.c, so the clock/IRQ are
+ * enabled only while HAL_TIM_IC_Init is active. */
+void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* htim)
+{
+  if (htim->Instance == TIM2)
+  {
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    HAL_NVIC_SetPriority(TIM2_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
+  }
+}
+
+void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* htim)
+{
+  if (htim->Instance == TIM2)
+  {
+    __HAL_RCC_TIM2_CLK_DISABLE();
+    HAL_NVIC_DisableIRQ(TIM2_IRQn);
+  }
+}
+
 /**
   * @brief HCD MSP Initialization
   * This function configures the hardware resources used in this example

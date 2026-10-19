@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "storage_kv.h"
 #include "mb.h"
+#include "modbus_engine_config.h"
 
 #include <string.h>
 
@@ -12,10 +13,12 @@ static bool s_stats_need_save = false;
 
 void ModbusModule_Init(void)
 {
-    if (!Storage_Read(KV_KEY_MODBUS_CFG, &s_mb_cfg, sizeof(s_mb_cfg))) {
+    if (!Storage_Read(KV_KEY_MODBUS_CFG, &s_mb_cfg, sizeof(s_mb_cfg)) ||
+        !ModbusModule_ValidateConfig(&s_mb_cfg)) {
         s_mb_cfg.slave_id = 3U;
         s_mb_cfg.baud_rate = 9600U;
         s_mb_cfg.parity = 3U;
+        (void)Storage_Write(KV_KEY_MODBUS_CFG, &s_mb_cfg, sizeof(s_mb_cfg));
     }
 
     if (!Storage_Read(KV_KEY_MODBUS_STATS, &s_mb_stats, sizeof(s_mb_stats))) {
@@ -32,9 +35,12 @@ void ModbusModule_GetConfig(ModbusConfig_t* out_cfg)
 
 static bool is_allowed_baud_rate(uint32_t baud_rate)
 {
-    /* 0 = auto-baud (supported by firmware). */
+    /* Baud code 0 is reserved for autobaud and is rejected while the
+     * autobaud coordinator is disabled. */
     switch (baud_rate) {
+#if MODBUS_AUTOBAUD_ENABLE
         case 0U:
+#endif
         case 9600U:
         case 19200U:
         case 38400U:

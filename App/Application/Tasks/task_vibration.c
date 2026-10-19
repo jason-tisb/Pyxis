@@ -8,6 +8,13 @@
 #include "iis3dwb_reg.h"
 #include "iis3dwb_sensor.h"
 #include "modbus_register_map.h"
+#include "modbus_engine_config.h"
+#if MODBUS_ENGINE_ACTIVE
+#include "modbus_engine_map.h"
+#define MODBUS_INPUT_REGS (ModbusEngineMap_InputStorage())
+#else
+#define MODBUS_INPUT_REGS usSRegInBuf
+#endif
 #include "vibration_product_config.h"
 #include "vibration_algorithm.h"
 #include "vibration_module.h"
@@ -275,38 +282,38 @@ static inline VibrationProcessProgress_t processVibration(void)
     VibrationModule_ProcessSnapshot(&snapshot);
 
     osMutexAcquire(regbuf_mtx, osWaitForever);
-    usSRegInBuf[MB_REG_TEMPERATURE] = (USHORT)temperature_x10;
-    write_u64_to_regs(usSRegInBuf, MB_REG_TIME_PREV_W0, time_prev - time_diff);
-    write_u64_to_regs(usSRegInBuf, MB_REG_TIME_NOW_W0, time_now);
-    write_u64_to_regs(usSRegInBuf, MB_REG_TIME_DIFF_W0, time_diff);
-    memcpy(&usSRegInBuf[MB_REG_X_ACC_RMS],
+    MODBUS_INPUT_REGS[MB_REG_TEMPERATURE] = (USHORT)temperature_x10;
+    write_u64_to_regs(MODBUS_INPUT_REGS, MB_REG_TIME_PREV_W0, time_prev - time_diff);
+    write_u64_to_regs(MODBUS_INPUT_REGS, MB_REG_TIME_NOW_W0, time_now);
+    write_u64_to_regs(MODBUS_INPUT_REGS, MB_REG_TIME_DIFF_W0, time_diff);
+    memcpy(&MODBUS_INPUT_REGS[MB_REG_X_ACC_RMS],
            &shadow[0 * RESULT_DATA_PER_AXIS],
            RESULT_DATA_PER_AXIS * sizeof(uint16_t));
-    memcpy(&usSRegInBuf[MB_REG_Y_ACC_RMS],
+    memcpy(&MODBUS_INPUT_REGS[MB_REG_Y_ACC_RMS],
            &shadow[1 * RESULT_DATA_PER_AXIS],
            RESULT_DATA_PER_AXIS * sizeof(uint16_t));
-    memcpy(&usSRegInBuf[MB_REG_Z_ACC_RMS],
+    memcpy(&MODBUS_INPUT_REGS[MB_REG_Z_ACC_RMS],
            &shadow[2 * RESULT_DATA_PER_AXIS],
            RESULT_DATA_PER_AXIS * sizeof(uint16_t));
 
-    usSRegInBuf[MB_REG_CURRENT_RPM] = scale_to_u16(tach_state.rpm_filtered, 1.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_TACH_QUALITY] = scale_to_u16(dominant_result->tach_quality, 100.0f, 0.0f, 100.0f);
-    usSRegInBuf[MB_REG_SPEED_STATE] = speed_state_to_reg(&tach_state);
-    usSRegInBuf[MB_REG_ORDER_1X] = scale_to_u16(dominant_result->order_1, 1000.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_ADV_ENV_KURTOSIS] = scale_to_u16(dominant_result->envelope_kurtosis, 100.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_SIDEBAND_DENSITY] = scale_to_u16(dominant_result->sideband_density, 1000.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_HARMONIC_CONSISTENCY] = scale_to_u16(dominant_result->harmonic_consistency, 100.0f, 0.0f, 100.0f);
-    usSRegInBuf[MB_REG_CEPSTRUM_GEAR_INDEX] = scale_to_u16(dominant_result->cepstrum_peak, 1000.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_SPECTRAL_KURTOSIS] = scale_to_u16(dominant_result->spectral_kurtosis, 100.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_CYCLOSTATIONARY_INDEX] = scale_to_u16(dominant_result->cyclostationary_index, 100.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_RUL_DAYS] = scale_to_u16(dominant_result->remaining_useful_life_hours, 1.0f / 24.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_FAILURE_PROBABILITY] = scale_to_u16(dominant_result->failure_probability, 100.0f, 0.0f, 100.0f);
-    usSRegInBuf[MB_REG_DEGRADATION_INDEX] = scale_to_u16(dominant_result->degradation_index, 100.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_TIME_TO_MAINTENANCE] = scale_to_u16(dominant_result->remaining_useful_life_hours, 1.0f / 24.0f, 0.0f, 65535.0f);
-    usSRegInBuf[MB_REG_BASELINE_UPDATE_COUNT] = (USHORT)((baseline.update_count > 65535U) ? 65535U : baseline.update_count);
-    usSRegInBuf[MB_REG_BASELINE_ACTIVE] = bool_to_reg(baseline.update_count > 0U);
-    usSRegInBuf[MB_REG_ACTIVE_MACHINE_PROFILE] = (USHORT)vib_cfg.machine_profile;
-    usSRegInBuf[MB_REG_AGING_FACTOR] = aging_factor_to_reg(dominant_result, &baseline);
+    MODBUS_INPUT_REGS[MB_REG_CURRENT_RPM] = scale_to_u16(tach_state.rpm_filtered, 1.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_TACH_QUALITY] = scale_to_u16(dominant_result->tach_quality, 100.0f, 0.0f, 100.0f);
+    MODBUS_INPUT_REGS[MB_REG_SPEED_STATE] = speed_state_to_reg(&tach_state);
+    MODBUS_INPUT_REGS[MB_REG_ORDER_1X] = scale_to_u16(dominant_result->order_1, 1000.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_ADV_ENV_KURTOSIS] = scale_to_u16(dominant_result->envelope_kurtosis, 100.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_SIDEBAND_DENSITY] = scale_to_u16(dominant_result->sideband_density, 1000.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_HARMONIC_CONSISTENCY] = scale_to_u16(dominant_result->harmonic_consistency, 100.0f, 0.0f, 100.0f);
+    MODBUS_INPUT_REGS[MB_REG_CEPSTRUM_GEAR_INDEX] = scale_to_u16(dominant_result->cepstrum_peak, 1000.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_SPECTRAL_KURTOSIS] = scale_to_u16(dominant_result->spectral_kurtosis, 100.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_CYCLOSTATIONARY_INDEX] = scale_to_u16(dominant_result->cyclostationary_index, 100.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_RUL_DAYS] = scale_to_u16(dominant_result->remaining_useful_life_hours, 1.0f / 24.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_FAILURE_PROBABILITY] = scale_to_u16(dominant_result->failure_probability, 100.0f, 0.0f, 100.0f);
+    MODBUS_INPUT_REGS[MB_REG_DEGRADATION_INDEX] = scale_to_u16(dominant_result->degradation_index, 100.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_TIME_TO_MAINTENANCE] = scale_to_u16(dominant_result->remaining_useful_life_hours, 1.0f / 24.0f, 0.0f, 65535.0f);
+    MODBUS_INPUT_REGS[MB_REG_BASELINE_UPDATE_COUNT] = (USHORT)((baseline.update_count > 65535U) ? 65535U : baseline.update_count);
+    MODBUS_INPUT_REGS[MB_REG_BASELINE_ACTIVE] = bool_to_reg(baseline.update_count > 0U);
+    MODBUS_INPUT_REGS[MB_REG_ACTIVE_MACHINE_PROFILE] = (USHORT)vib_cfg.machine_profile;
+    MODBUS_INPUT_REGS[MB_REG_AGING_FACTOR] = aging_factor_to_reg(dominant_result, &baseline);
     osMutexRelease(regbuf_mtx);
 
     return VIB_PROCESS_PROGRESS_FRAME_READY;

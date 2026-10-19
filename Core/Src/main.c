@@ -67,7 +67,7 @@ DMA_NodeTypeDef uart3_rx_dma_node;
 HCD_HandleTypeDef hhcd_USB_DRD_FS;
 
 /* USER CODE BEGIN PV */
-
+volatile uint32_t g_tim1_tick_count = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -628,6 +628,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM1)
   {
+    g_tim1_tick_count++;
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */

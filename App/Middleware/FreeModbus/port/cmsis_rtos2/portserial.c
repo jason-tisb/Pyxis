@@ -5,6 +5,716 @@
 /* ----------------------- Modbus includes ----------------------------------*/
 #include "mb.h"
 #include "mbport.h"
+#include "modbus_engine_config.h"
+#include "modbus_engine_hw_config.h"
+#include "modbus_engine_port.h"
+#include "modbus_engine_tx.h"
+
+#if MODBUS_ENGINE_ACTIVE
+
+/*
+ * Custom-engine transport.  The UART/DMA ISR records the DMA producer and
+ * wakes a worker task.  The worker task harvests bytes and feeds the engine outside
+ * interrupt context, preserving the transport boundary used by the original
+ * stable FreeModbus implementation without invoking FreeModbus itself.
+ */
+#define RB_SIZE                 MODBUS_PYXIS_RX_RING_SIZE
+#define RB_MASK                 (RB_SIZE - 1U)
+#define UART3_RX_DMA_SIZE       MODBUS_PYXIS_RX_DMA_SIZE
+#define EVENT_CUSTOM_RX         (1U << 0)
+#define RX_BOUNDARY_QUEUE_SIZE  8U
+#define RX_BOUNDARY_QUEUE_MASK  (RX_BOUNDARY_QUEUE_SIZE - 1U)
+#define UART3_FRAME_QUEUE_DEPTH 4U
+#define UART3_FRAME_MAX_SIZE    256U
+
+extern UART_HandleTypeDef huart3;
+extern uint32_t g_modbus_stop_bits;
+
+static volatile uint8_t uart3_rx_ring[RB_SIZE];
+static volatile uint16_t uart3_rx_head;
+static volatile uint16_t uart3_rx_tail;
+static volatile uint32_t uart3_rx_overruns;
+static uint8_t uart3_rx_dma_buf[UART3_RX_DMA_SIZE];
+static volatile uint8_t uart3_rx_enabled;
+static volatile uint8_t uart3_rx_dma_running;
+static volatile uint16_t uart3_rx_dma_last_pos;
+static volatile uint32_t uart3_rx_dma_harvest_abs;
+static volatile uint32_t uart3_rx_boundary_queue[RX_BOUNDARY_QUEUE_SIZE];
+static volatile uint8_t uart3_rx_boundary_head;
+static volatile uint8_t uart3_rx_boundary_tail;
+static volatile uint32_t uart3_rto_pending;
+typedef struct {
+    uint8_t data[UART3_FRAME_MAX_SIZE];
+    uint16_t length;
+} uart3_frame_slot_t;
+static uart3_frame_slot_t uart3_frame_queue[UART3_FRAME_QUEUE_DEPTH];
+static uint8_t uart3_frame_queue_head;
+static uint8_t uart3_frame_queue_tail;
+static uint8_t uart3_frame_queue_count;
+static osEventFlagsId_t custom_rx_event;
+static osThreadId_t custom_rx_task;
+static const osThreadAttr_t custom_rx_task_attr = {
+    .name = "customMbRx",
+    .priority = (osPriority_t)osPriorityAboveNormal4,
+    .stack_size = 1024U
+};
+
+volatile uint32_t g_uart3_rx_callback_count = 0;
+volatile uint32_t g_uart3_rx_forwarded_bytes = 0;
+volatile uint16_t g_uart3_last_rx_size = 0;
+volatile uint32_t g_uart3_last_event_type = 0;
+volatile uint32_t g_custom_uart_init_stage = 0;
+volatile uint32_t g_custom_uart_hal_status = 0;
+volatile uint16_t g_uart3_dma_last_start = 0;
+volatile uint16_t g_uart3_dma_last_end = 0;
+volatile uint16_t g_uart3_dma_last_count = 0;
+volatile uint32_t g_uart3_rx_overruns = 0;
+volatile uint32_t g_uart3_dma_producer_abs = 0;
+volatile uint32_t g_uart3_dma_wrap_count = 0;
+volatile uint32_t g_uart3_dma_position_errors = 0;
+volatile uint32_t g_uart3_dma_overruns = 0;
+volatile uint32_t g_uart3_rto_count = 0;
+volatile uint32_t g_modbus_frame_boundary_tick = 0;
+volatile uint32_t g_modbus_rx_first_tick = 0;
+volatile uint32_t g_modbus_rx_last_tick = 0;
+volatile uint32_t g_uart3_dma_restart_tick = 0;
+volatile uint32_t g_uart3_rx_callback_tick = 0;
+volatile uint32_t g_uart3_last_disable_tick = 0;
+volatile uint32_t g_uart3_last_enable_tick = 0;
+/* RX event-to-worker handoff diagnostics. */
+volatile uint32_t g_uart3_callbacks_while_disabled = 0;
+volatile uint32_t g_uart3_boundaries_queued = 0;
+volatile uint32_t g_uart3_boundaries_harvested = 0;
+volatile uint32_t g_uart3_zero_length_events = 0;
+volatile uint32_t g_uart3_boundary_flush_timeouts = 0;
+volatile uint32_t g_uart3_frame_queue_pushed = 0;
+volatile uint32_t g_uart3_frame_queue_popped = 0;
+volatile uint32_t g_uart3_frame_queue_overruns = 0;
+volatile uint32_t g_uart3_frame_queue_max_depth = 0;
+
+static BOOL uart3_start_custom_dma(void)
+{
+    g_uart3_dma_restart_tick = HAL_GetTick();
+    if (uart3_rx_dma_running != 0U) {
+        return TRUE;
+    }
+    if (HAL_UARTEx_ReceiveToIdle_DMA(&huart3, uart3_rx_dma_buf,
+                                     UART3_RX_DMA_SIZE) != HAL_OK) {
+        return FALSE;
+    }
+    uart3_rx_dma_running = 1U;
+    return TRUE;
+}
+
+static void uart3_stop_custom_dma(void)
+{
+    if (uart3_rx_dma_running != 0U) {
+        (void)HAL_UART_AbortReceive(&huart3);
+        uart3_rx_dma_running = 0U;
+    }
+}
+
+static void uart3_harvest_dma_range(uint32_t start_abs, uint32_t end_abs)
+{
+    uint32_t distance = end_abs - start_abs;
+    uint32_t pos_abs;
+    uint16_t count;
+    BOOL received = FALSE;
+
+    /* The ISR may be delayed while the DMA continues. Keep only the newest
+     * complete window if the producer has lapped the foreground harvester. */
+    if (distance > UART3_RX_DMA_SIZE) {
+        g_uart3_dma_overruns++;
+        start_abs = end_abs - UART3_RX_DMA_SIZE;
+        distance = UART3_RX_DMA_SIZE;
+    }
+    count = (uint16_t)distance;
+
+    g_uart3_dma_last_start = (uint16_t)(start_abs % UART3_RX_DMA_SIZE);
+    g_uart3_dma_last_end = (uint16_t)(end_abs % UART3_RX_DMA_SIZE);
+    g_uart3_dma_last_count = count;
+
+    pos_abs = start_abs;
+    while (count-- != 0U) {
+        uint16_t pos = (uint16_t)(pos_abs % UART3_RX_DMA_SIZE);
+        uint16_t next = (uint16_t)((uart3_rx_head + 1U) & RB_MASK);
+
+        if (next == uart3_rx_tail) {
+            /* Preserve the newest data, matching the old stable transport. */
+            uart3_rx_tail = (uint16_t)((uart3_rx_tail + 1U) & RB_MASK);
+            uart3_rx_overruns++;
+            g_uart3_rx_overruns = uart3_rx_overruns;
+        }
+
+        uart3_rx_ring[uart3_rx_head] = uart3_rx_dma_buf[pos];
+        uart3_rx_head = next;
+        received = TRUE;
+        pos_abs++;
+    }
+
+    if ((received != FALSE) && (custom_rx_event != NULL)) {
+        (void)osEventFlagsSet(custom_rx_event, EVENT_CUSTOM_RX);
+    }
+}
+
+static void uart3_queue_boundary(uint32_t end_abs)
+{
+    uint8_t next = (uint8_t)((uart3_rx_boundary_head + 1U) &
+                             RX_BOUNDARY_QUEUE_MASK);
+    if (next == uart3_rx_boundary_tail) {
+        uart3_rx_boundary_tail = (uint8_t)((uart3_rx_boundary_tail + 1U) &
+                                           RX_BOUNDARY_QUEUE_MASK);
+        g_uart3_dma_overruns++;
+    }
+    uart3_rx_boundary_queue[uart3_rx_boundary_head] = end_abs;
+    uart3_rx_boundary_head = next;
+    g_uart3_boundaries_queued++;
+}
+
+static void uart3_queue_current_ring_frame(void)
+{
+    uart3_frame_slot_t *slot;
+    uint16_t length = 0U;
+
+    if (uart3_rx_tail == uart3_rx_head) {
+        return;
+    }
+
+    if (uart3_frame_queue_count >= UART3_FRAME_QUEUE_DEPTH) {
+        g_uart3_frame_queue_overruns++;
+        /* Drop the oldest completed frame, preserving the newest request. */
+        uart3_frame_queue_tail = (uint8_t)((uart3_frame_queue_tail + 1U) %
+                                           UART3_FRAME_QUEUE_DEPTH);
+        uart3_frame_queue_count--;
+    }
+
+    slot = &uart3_frame_queue[uart3_frame_queue_head];
+    while ((uart3_rx_tail != uart3_rx_head) &&
+           (length < UART3_FRAME_MAX_SIZE)) {
+        slot->data[length++] = uart3_rx_ring[uart3_rx_tail];
+        uart3_rx_tail = (uint16_t)((uart3_rx_tail + 1U) & RB_MASK);
+        g_uart3_rx_forwarded_bytes++;
+    }
+
+    /* Discard an overlong tail rather than allowing it to contaminate the
+     * next RTU frame.  Normal Modbus requests are well below this limit. */
+    while (uart3_rx_tail != uart3_rx_head) {
+        uart3_rx_tail = (uint16_t)((uart3_rx_tail + 1U) & RB_MASK);
+        g_uart3_rx_overruns++;
+    }
+
+    if (length != 0U) {
+        slot->length = length;
+        uart3_frame_queue_head = (uint8_t)((uart3_frame_queue_head + 1U) %
+                                           UART3_FRAME_QUEUE_DEPTH);
+        uart3_frame_queue_count++;
+        g_uart3_frame_queue_pushed++;
+        if (uart3_frame_queue_count > g_uart3_frame_queue_max_depth) {
+            g_uart3_frame_queue_max_depth = uart3_frame_queue_count;
+        }
+    }
+}
+
+static void uart3_feed_queued_frames(void)
+{
+    while ((uart3_frame_queue_count != 0U) &&
+           (ModbusEnginePort_FramePending() == false)) {
+        uart3_frame_slot_t frame =
+            uart3_frame_queue[uart3_frame_queue_tail];
+        uart3_frame_queue_tail = (uint8_t)((uart3_frame_queue_tail + 1U) %
+                                           UART3_FRAME_QUEUE_DEPTH);
+        uart3_frame_queue_count--;
+        g_uart3_frame_queue_popped++;
+
+        for (uint16_t i = 0U; i < frame.length; ++i) {
+            if (i == 0U) {
+                g_modbus_rx_first_tick = HAL_GetTick();
+            }
+            g_modbus_rx_last_tick = HAL_GetTick();
+            ModbusEnginePort_OnRxByte(frame.data[i]);
+        }
+        ModbusEnginePort_OnRxFrameBoundary();
+    }
+}
+
+static void custom_rx_task_entry(void *argument)
+{
+    (void)argument;
+
+    for (;;) {
+        /* Use a short timeout so a frame queued while the core is pending is
+         * fed promptly after main_TaskModbus clears the previous frame. */
+        (void)osEventFlagsWait(custom_rx_event, EVENT_CUSTOM_RX,
+                               osFlagsWaitAny, 1U);
+
+        while (uart3_rx_boundary_tail != uart3_rx_boundary_head) {
+            uint32_t end_abs = uart3_rx_boundary_queue[uart3_rx_boundary_tail];
+            uart3_rx_boundary_tail = (uint8_t)((uart3_rx_boundary_tail + 1U) &
+                                               RX_BOUNDARY_QUEUE_MASK);
+            uart3_harvest_dma_range(uart3_rx_dma_harvest_abs, end_abs);
+            uart3_rx_dma_harvest_abs = end_abs;
+            g_uart3_boundaries_harvested++;
+            uart3_queue_current_ring_frame();
+        }
+        if (uart3_rto_pending != 0U) {
+            uart3_rto_pending = 0U;
+            uart3_queue_current_ring_frame();
+        }
+        uart3_feed_queued_frames();
+    }
+}
+
+bool ModbusEnginePort_UartInit(uint32_t baud_rate, uint8_t data_bits,
+                               uint8_t parity_code)
+{
+    g_custom_uart_init_stage = 1U;
+    g_custom_uart_hal_status = 0U;
+
+    /* Fail closed if CubeMX has been regenerated with a different UART/DMA
+     * assignment.  This keeps a board-port mistake from presenting as a
+     * protocol or register-map failure. */
+    if ((huart3.Instance != MODBUS_PYXIS_UART_INSTANCE) ||
+        (huart3.hdmarx == NULL) ||
+        (huart3.hdmarx->Instance != MODBUS_PYXIS_DMA_INSTANCE)) {
+        g_custom_uart_hal_status = (uint32_t)HAL_ERROR;
+        return false;
+    }
+
+    huart3.Init.BaudRate = baud_rate;
+    /* Codes 0/1 include parity; codes 2/3 are no-parity formats. */
+    huart3.Init.WordLength = (parity_code >= 2U) ?
+        ((data_bits <= 8U) ? UART_WORDLENGTH_8B : UART_WORDLENGTH_9B) :
+        UART_WORDLENGTH_9B;
+    huart3.Init.StopBits = g_modbus_stop_bits;
+    huart3.Init.Parity = (parity_code == 1U) ? UART_PARITY_ODD :
+                         (parity_code == 0U) ? UART_PARITY_EVEN :
+                                               UART_PARITY_NONE;
+    huart3.Init.Mode = UART_MODE_TX_RX;
+    huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+
+    /* Custom engine uses software-controlled DE on the existing PB14 pin.
+     * Use normal UART init, then take PB14 out of USART alternate function. */
+    #if MODBUS_PYXIS_HW_DE
+        g_custom_uart_hal_status =
+            (uint32_t)HAL_RS485Ex_Init(&huart3,
+                                    UART_DE_POLARITY_HIGH,
+                                    1U,
+                                    1U);
+    #else
+        g_custom_uart_hal_status =
+            (uint32_t)HAL_UART_Init(&huart3);
+    #endif
+
+    if (g_custom_uart_hal_status != (uint32_t)HAL_OK) {
+        return false;
+    }
+#if !MODBUS_PYXIS_HW_DE
+#if defined(USART_CR3_DEM)
+    CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
+#endif
+    {
+        GPIO_InitTypeDef de_gpio = {0};
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        de_gpio.Pin = MODBUS_PYXIS_DE_GPIO_PIN;
+        de_gpio.Mode = GPIO_MODE_OUTPUT_PP;
+        de_gpio.Pull = GPIO_NOPULL;
+        de_gpio.Speed = GPIO_SPEED_FREQ_LOW;
+        HAL_GPIO_Init(MODBUS_PYXIS_DE_GPIO_PORT, &de_gpio);
+        ModbusEngineTx_SetDe(false);
+    }
+#endif
+    ModbusEnginePort_SetRtuTiming(baud_rate, data_bits, parity_code,
+                                  g_modbus_stop_bits);
+#if MODBUS_PYXIS_HW_RTO
+    {
+        uint32_t bits_per_character = 1U + (uint32_t)data_bits +
+            ((parity_code <= 1U) ? 1U : 0U) +
+            ((g_modbus_stop_bits == UART_STOPBITS_2) ? 2U : 1U);
+        HAL_UART_ReceiverTimeout_Config(&huart3, bits_per_character * 4U);
+        if (HAL_UART_EnableReceiverTimeout(&huart3) != HAL_OK) {
+            g_custom_uart_hal_status = (uint32_t)HAL_ERROR;
+            return false;
+        }
+        __HAL_UART_ENABLE_IT(&huart3, UART_IT_RTO);
+    }
+#endif
+    g_custom_uart_init_stage = 2U;
+    (void)HAL_UARTEx_DisableFifoMode(&huart3);
+    __HAL_UART_CLEAR_OREFLAG(&huart3);
+    __HAL_UART_CLEAR_FEFLAG(&huart3);
+    __HAL_UART_CLEAR_NEFLAG(&huart3);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart3);
+    __HAL_UART_CLEAR_PEFLAG(&huart3);
+    __HAL_UART_DISABLE_IT(&huart3, UART_IT_TXE | UART_IT_TC);
+    uart3_rx_enabled = 0U;
+    uart3_rx_dma_running = 0U;
+    uart3_rx_dma_last_pos = 0U;
+    uart3_rx_dma_harvest_abs = 0U;
+    uart3_rx_boundary_head = 0U;
+    uart3_rx_boundary_tail = 0U;
+    uart3_frame_queue_head = 0U;
+    uart3_frame_queue_tail = 0U;
+    uart3_frame_queue_count = 0U;
+    g_uart3_dma_producer_abs = 0U;
+    g_uart3_dma_wrap_count = 0U;
+    g_uart3_dma_position_errors = 0U;
+    g_uart3_dma_overruns = 0U;
+    g_uart3_rto_count = 0U;
+    g_uart3_callbacks_while_disabled = 0U;
+    g_uart3_boundaries_queued = 0U;
+    g_uart3_boundaries_harvested = 0U;
+    g_uart3_zero_length_events = 0U;
+    g_uart3_boundary_flush_timeouts = 0U;
+    g_uart3_frame_queue_pushed = 0U;
+    g_uart3_frame_queue_popped = 0U;
+    g_uart3_frame_queue_overruns = 0U;
+    g_uart3_frame_queue_max_depth = 0U;
+    g_modbus_rx_first_tick = 0U;
+    g_modbus_rx_last_tick = 0U;
+    g_uart3_dma_restart_tick = 0U;
+    g_uart3_rx_callback_tick = 0U;
+    g_uart3_last_disable_tick = 0U;
+    g_uart3_last_enable_tick = 0U;
+    uart3_rto_pending = 0U;
+    uart3_rx_head = 0U;
+    uart3_rx_tail = 0U;
+    uart3_rx_overruns = 0U;
+
+    custom_rx_event = osEventFlagsNew(NULL);
+    if (custom_rx_event == NULL) {
+        return false;
+    }
+    g_custom_uart_init_stage = 3U;
+
+    custom_rx_task = osThreadNew(custom_rx_task_entry, NULL,
+                                 &custom_rx_task_attr);
+    if (custom_rx_task == NULL) {
+        return false;
+    }
+    g_custom_uart_init_stage = 4U;
+    return true;
+}
+
+bool ModbusEnginePort_UartEnable(bool enable)
+{
+    if (!enable) {
+        uint32_t flush_start;
+
+        g_uart3_last_disable_tick = HAL_GetTick();
+
+        /* Stop accepting new RX events, then allow the worker to harvest
+         * boundaries already queued by the ISR.  Resetting the queue first
+         * loses complete requests during the TX ownership handoff. */
+        uart3_rx_enabled = 0U;
+        uart3_stop_custom_dma();
+        __HAL_UART_DISABLE_IT(&huart3, UART_IT_IDLE | UART_IT_RTO);
+        __HAL_UART_CLEAR_IDLEFLAG(&huart3);
+#if MODBUS_PYXIS_HW_RTO
+        __HAL_UART_CLEAR_FLAG(&huart3, UART_CLEAR_RTOF);
+#endif
+
+        flush_start = HAL_GetTick();
+        while ((uart3_rx_boundary_tail != uart3_rx_boundary_head) &&
+               ((HAL_GetTick() - flush_start) < 20U)) {
+            (void)osDelay(1U);
+        }
+        if (uart3_rx_boundary_tail != uart3_rx_boundary_head) {
+            g_uart3_boundary_flush_timeouts++;
+        }
+
+        uart3_rx_dma_last_pos = 0U;
+        g_uart3_dma_producer_abs = 0U;
+        g_uart3_dma_wrap_count = 0U;
+        uart3_rx_dma_harvest_abs = 0U;
+        uart3_rx_boundary_head = 0U;
+        uart3_rx_boundary_tail = 0U;
+        uart3_rto_pending = 0U;
+        uart3_rx_head = 0U;
+        uart3_rx_tail = 0U;
+        return true;
+    }
+
+    g_uart3_last_enable_tick = HAL_GetTick();
+    uart3_rx_enabled = 1U;
+    uart3_rx_dma_last_pos = 0U;
+    g_uart3_dma_producer_abs = 0U;
+    g_uart3_dma_wrap_count = 0U;
+    uart3_rx_dma_harvest_abs = 0U;
+    uart3_rto_pending = 0U;
+    uart3_rx_boundary_head = 0U;
+    uart3_rx_boundary_tail = 0U;
+    __HAL_UART_CLEAR_IDLEFLAG(&huart3);
+#if MODBUS_PYXIS_HW_RTO
+    __HAL_UART_CLEAR_FLAG(&huart3, UART_CLEAR_RTOF);
+    __HAL_UART_ENABLE_IT(&huart3, UART_IT_RTO);
+#endif
+    return uart3_start_custom_dma() == TRUE;
+}
+
+static bool uart3_supported_config(uint32_t baud_rate, uint8_t data_bits,
+                                   uint8_t parity_code, uint32_t stop_bits)
+{
+    return ((baud_rate == 9600U) || (baud_rate == 19200U) ||
+            (baud_rate == 38400U) || (baud_rate == 57600U) ||
+            (baud_rate == 115200U)) &&
+           (data_bits == 8U) && (parity_code <= 2U) &&
+           ((stop_bits == UART_STOPBITS_1) ||
+            (stop_bits == UART_STOPBITS_2));
+}
+
+static bool uart3_apply_config(const UART_InitTypeDef *init,
+                               uint32_t stop_bits)
+{
+    if (init == NULL) {
+        return false;
+    }
+
+    huart3.Init = *init;
+#if MODBUS_PYXIS_HW_DE
+    if (HAL_RS485Ex_Init(&huart3, UART_DE_POLARITY_HIGH, 1U, 1U) != HAL_OK) {
+        return false;
+    }
+#else
+    if (HAL_UART_Init(&huart3) != HAL_OK) {
+        return false;
+    }
+#if defined(USART_CR3_DEM)
+    CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
+#endif
+    {
+        GPIO_InitTypeDef de_gpio = {0};
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        de_gpio.Pin = MODBUS_PYXIS_DE_GPIO_PIN;
+        de_gpio.Mode = GPIO_MODE_OUTPUT_PP;
+        de_gpio.Pull = GPIO_NOPULL;
+        de_gpio.Speed = GPIO_SPEED_FREQ_LOW;
+        HAL_GPIO_Init(MODBUS_PYXIS_DE_GPIO_PORT, &de_gpio);
+        ModbusEngineTx_SetDe(false);
+    }
+#endif
+    (void)HAL_UARTEx_DisableFifoMode(&huart3);
+    __HAL_UART_CLEAR_OREFLAG(&huart3);
+    __HAL_UART_CLEAR_FEFLAG(&huart3);
+    __HAL_UART_CLEAR_NEFLAG(&huart3);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart3);
+    __HAL_UART_CLEAR_PEFLAG(&huart3);
+    __HAL_UART_DISABLE_IT(&huart3, UART_IT_TXE | UART_IT_TC);
+#if MODBUS_PYXIS_HW_RTO
+    {
+        uint32_t bits = 1U + 8U +
+            ((init->Parity == UART_PARITY_NONE) ? 0U : 1U) +
+            ((stop_bits == UART_STOPBITS_2) ? 2U : 1U);
+        HAL_UART_ReceiverTimeout_Config(&huart3, bits * 4U);
+        if (HAL_UART_EnableReceiverTimeout(&huart3) != HAL_OK) {
+            return false;
+        }
+        __HAL_UART_ENABLE_IT(&huart3, UART_IT_RTO);
+    }
+#endif
+    g_modbus_stop_bits = stop_bits;
+    ModbusEnginePort_SetRtuTiming(init->BaudRate, 8U,
+                                  (init->Parity == UART_PARITY_EVEN) ? 0U :
+                                  (init->Parity == UART_PARITY_ODD) ? 1U : 2U,
+                                  stop_bits);
+    return (huart3.Instance == MODBUS_PYXIS_UART_INSTANCE) &&
+           (huart3.hdmarx != NULL) &&
+           (huart3.hdmarx->Instance == MODBUS_PYXIS_DMA_INSTANCE);
+}
+
+bool ModbusEnginePort_GetUartConfig(uint32_t *baud_rate, uint8_t *data_bits,
+                                    uint8_t *parity_code,
+                                    uint32_t *stop_bits)
+{
+    if ((baud_rate == NULL) || (data_bits == NULL) ||
+        (parity_code == NULL) || (stop_bits == NULL)) {
+        return false;
+    }
+    *baud_rate = huart3.Init.BaudRate;
+    *data_bits = (huart3.Init.Parity == UART_PARITY_NONE) ? 8U : 8U;
+    *parity_code = (huart3.Init.Parity == UART_PARITY_EVEN) ? 0U :
+                   (huart3.Init.Parity == UART_PARITY_ODD) ? 1U : 2U;
+    *stop_bits = huart3.Init.StopBits;
+    return true;
+}
+
+bool ModbusEnginePort_ReconfigureUart(uint32_t baud_rate, uint8_t data_bits,
+                                      uint8_t parity_code,
+                                      uint32_t stop_bits)
+{
+    UART_InitTypeDef previous;
+    UART_InitTypeDef requested;
+    uint32_t previous_stop_bits;
+    bool disabled;
+    bool applied = false;
+
+    if (!uart3_supported_config(baud_rate, data_bits, parity_code, stop_bits) ||
+        ModbusEngineTx_IsBusy()) {
+        return false;
+    }
+    if (!ModbusEnginePort_GetUartConfig(&previous.BaudRate, &data_bits,
+                                        &parity_code, &previous_stop_bits)) {
+        return false;
+    }
+    previous = huart3.Init;
+    previous_stop_bits = g_modbus_stop_bits;
+    requested = previous;
+    requested.BaudRate = baud_rate;
+    requested.WordLength = (parity_code <= 1U) ? UART_WORDLENGTH_9B :
+                           UART_WORDLENGTH_8B;
+    requested.Parity = (parity_code == 0U) ? UART_PARITY_EVEN :
+                       (parity_code == 1U) ? UART_PARITY_ODD :
+                                             UART_PARITY_NONE;
+    requested.StopBits = stop_bits;
+    requested.Mode = UART_MODE_TX_RX;
+    requested.HwFlowCtl = UART_HWCONTROL_NONE;
+    requested.OverSampling = UART_OVERSAMPLING_16;
+
+    ModbusEnginePort_ClearFrame();
+    disabled = ModbusEnginePort_UartEnable(false);
+    if (disabled) {
+        (void)HAL_UART_DeInit(&huart3);
+        applied = uart3_apply_config(&requested, stop_bits);
+        if (applied) {
+            applied = ModbusEnginePort_UartEnable(true);
+        }
+    }
+    if (applied) {
+        return true;
+    }
+
+    /* Transactional rollback.  Keep the worker/event objects untouched. */
+    (void)ModbusEnginePort_UartEnable(false);
+    (void)HAL_UART_DeInit(&huart3);
+    if (uart3_apply_config(&previous, previous_stop_bits)) {
+        return ModbusEnginePort_UartEnable(true);
+    }
+    return false;
+}
+
+/* The interrupt file references this symbol for the FreeModbus fallback. */
+void prvvUARTTxReadyISR(void)
+{
+}
+
+void prvvUARTRxISR(void)
+{
+}
+
+void prvvUARTRxReceiveCharISR(CHAR data)
+{
+    uint16_t next = (uint16_t)((uart3_rx_head + 1U) & RB_MASK);
+
+    if (next == uart3_rx_tail) {
+        uart3_rx_tail = (uint16_t)((uart3_rx_tail + 1U) & RB_MASK);
+        uart3_rx_overruns++;
+    }
+
+    uart3_rx_ring[uart3_rx_head] = (uint8_t)data;
+    uart3_rx_head = next;
+    if (custom_rx_event != NULL) {
+        (void)osEventFlagsSet(custom_rx_event, EVENT_CUSTOM_RX);
+    }
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
+{
+    HAL_UART_RxEventTypeTypeDef event_type;
+    uint16_t pos;
+    uint16_t start;
+    uint16_t delta;
+
+    if (huart_cb != &huart3) {
+        return;
+    }
+
+    g_uart3_rx_callback_tick = HAL_GetTick();
+    g_uart3_rx_callback_count++;
+    g_uart3_last_rx_size = Size;
+    if (uart3_rx_enabled == 0U) {
+        g_uart3_callbacks_while_disabled++;
+    }
+
+    event_type = HAL_UARTEx_GetRxEventType(huart_cb);
+    if (Size > UART3_RX_DMA_SIZE) {
+        g_uart3_dma_position_errors++;
+        pos = UART3_RX_DMA_SIZE;
+    } else {
+        pos = Size;
+    }
+    g_uart3_last_event_type = (uint32_t)event_type;
+
+    /*
+     * In circular DMA mode HT/TC are transfer events, not evidence of a
+     * received Modbus frame.  Forwarding those fixed half-buffer ranges when
+     * the line is idle feeds stale/zero bytes into the custom parser.  Only
+     * the IDLE event carries the actual end position for a received burst.
+     */
+    if (event_type != HAL_UART_RXEVENT_IDLE) {
+        return;
+    }
+
+    start = (uart3_rx_dma_last_pos == UART3_RX_DMA_SIZE) ?
+        0U : uart3_rx_dma_last_pos;
+    if ((pos == uart3_rx_dma_last_pos) && (pos != UART3_RX_DMA_SIZE)) {
+        g_uart3_zero_length_events++;
+        return;
+    }
+
+    if (pos >= start) {
+        delta = (uint16_t)(pos - start);
+    } else {
+        delta = (uint16_t)(UART3_RX_DMA_SIZE - start + pos);
+        g_uart3_dma_wrap_count++;
+    }
+
+    /* A callback at exactly DMA_SIZE after position zero represents one full
+     * circular-buffer pass, not an empty range. */
+    if ((pos == UART3_RX_DMA_SIZE) && (start == 0U)) {
+        delta = UART3_RX_DMA_SIZE;
+    }
+    if (delta == 0U) {
+        g_uart3_zero_length_events++;
+        return;
+    }
+
+    g_uart3_dma_producer_abs += delta;
+    uart3_rx_dma_last_pos = (pos == UART3_RX_DMA_SIZE) ? 0U : pos;
+    uart3_queue_boundary(g_uart3_dma_producer_abs);
+    uart3_rx_dma_running = 1U;
+    if (custom_rx_event != NULL) {
+        (void)osEventFlagsSet(custom_rx_event, EVENT_CUSTOM_RX);
+    }
+}
+
+void ModbusEnginePort_RxTimeoutIsr(void)
+{
+    g_uart3_rto_count++;
+    uart3_rto_pending++;
+    if (custom_rx_event != NULL) {
+        (void)osEventFlagsSet(custom_rx_event, EVENT_CUSTOM_RX);
+    }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart_cb)
+{
+    if (huart_cb != &huart3) {
+        return;
+    }
+
+    uart3_rx_dma_running = 0U;
+    uart3_rx_dma_last_pos = 0U;
+    __HAL_UART_CLEAR_OREFLAG(&huart3);
+    __HAL_UART_CLEAR_FEFLAG(&huart3);
+    __HAL_UART_CLEAR_NEFLAG(&huart3);
+    __HAL_UART_CLEAR_PEFLAG(&huart3);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart3);
+    if (uart3_rx_enabled != 0U) {
+        (void)uart3_start_custom_dma();
+    }
+}
+
+#else /* MODBUS_ENGINE_ACTIVE == 0: FreeModbus transport */
 
 /* ----------------------- Config -------------------------------------------*/
 #define RB_SIZE                 512u                /* power of two */
@@ -36,6 +746,12 @@ static const osThreadAttr_t     serial_rx_task_attr = {
 
 static osThreadId_t 			receiveDataHandle;
 static osEventFlagsId_t 		xSerialEventHandle;
+
+/* Optional receive-only hook for the custom Modbus engine. */
+__attribute__((weak)) void ModbusEnginePort_OnRxByte(uint8_t byte)
+{
+    (void)byte;
+}
 
 
 /* ----------------------- Static variables ---------------------------------*/
@@ -85,7 +801,9 @@ static void uart3_handle_rx_range(uint16_t start, uint16_t end, BOOL notify)
     uint16_t pos = start;
 
     while (pos != end) {
-        rb_push_isr(uart3_rx_dma_buf[pos]);
+        uint8_t byte = uart3_rx_dma_buf[pos];
+        ModbusEnginePort_OnRxByte(byte);
+        rb_push_isr(byte);
         pos = (uint16_t)((pos + 1u) % UART3_RX_DMA_SIZE);
     }
 
@@ -349,3 +1067,5 @@ static void handleReceivedDataTask(void *argument)
         }
     }
 }
+
+#endif /* MODBUS_ENGINE_ACTIVE */

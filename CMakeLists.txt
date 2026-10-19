@@ -24,9 +24,39 @@ set(CMAKE_PROJECT_NAME Vimot_H563RITX_Professional)
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+# Select the protocol/transport owner at configure time:
+# 0 = FreeModbus fallback, 1 = custom ModbusEngine.
+set(MODBUS_ENGINE_ACTIVE "1" CACHE STRING "Active Modbus engine (0=FreeModbus, 1=custom)")
+set(MODBUS_ENGINE_FORCE_FIXED_COMM "0" CACHE STRING "Force custom Modbus communication settings (0/1)")
+set(MODBUS_AUTOBAUD_ENABLE "0" CACHE STRING "Enable Milestone E autobaud startup (0/1)")
+set(MODBUS_PYXIS_DMA_ABSOLUTE "0" CACHE STRING "Pyxis absolute-position DMA transport (0=baseline, 1=next milestone)")
+set(MODBUS_PYXIS_HW_RTO "0" CACHE STRING "Pyxis USART receiver-timeout framing (0=off, 1=on)")
+set(MODBUS_PYXIS_TX_IT "1" CACHE STRING "Pyxis interrupt-driven TX (0=blocking, 1=IT)")
+set(MODBUS_PYXIS_HW_DE "0" CACHE STRING "Pyxis RS485 DE control (0=software, 1=USART hardware)")
+
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
+
+# Resolve auxiliary GNU Arm tools beside the compiler.  This keeps BIN/HEX
+# generation working in IDE builds where arm-none-eabi-gcc is configured by
+# full path but the toolchain directory is not present on PATH.
+if (CMAKE_C_COMPILER)
+    get_filename_component(_GNU_ARM_BIN_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+    if (WIN32)
+        set(_GNU_ARM_OBJCOPY "${_GNU_ARM_BIN_DIR}/arm-none-eabi-objcopy.exe")
+        set(_GNU_ARM_SIZE "${_GNU_ARM_BIN_DIR}/arm-none-eabi-size.exe")
+    else()
+        set(_GNU_ARM_OBJCOPY "${_GNU_ARM_BIN_DIR}/arm-none-eabi-objcopy")
+        set(_GNU_ARM_SIZE "${_GNU_ARM_BIN_DIR}/arm-none-eabi-size")
+    endif()
+    if (EXISTS "${_GNU_ARM_OBJCOPY}")
+        set(CMAKE_OBJCOPY "${_GNU_ARM_OBJCOPY}" CACHE FILEPATH "GNU Arm objcopy" FORCE)
+    endif()
+    if (EXISTS "${_GNU_ARM_SIZE}")
+        set(CMAKE_SIZE "${_GNU_ARM_SIZE}" CACHE FILEPATH "GNU Arm size" FORCE)
+    endif()
+endif()
 
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
@@ -91,6 +121,16 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_core.c
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_crc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_port_engine.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_engine_port.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_engine_runtime.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_engine_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_engine_tx.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_autobaud_capture.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_autobaud_score.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_autobaud_validate.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_autobaud_scan.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_autobaud_startup.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_autobaud_diag.c
 )
 
 # Add include paths
@@ -164,6 +204,13 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     FLASH_LINES_128B=1
     USE_HAL_DRIVER
     STM32H563xx
+    MODBUS_ENGINE_ACTIVE=${MODBUS_ENGINE_ACTIVE}
+    MODBUS_ENGINE_FORCE_FIXED_COMM=${MODBUS_ENGINE_FORCE_FIXED_COMM}
+    MODBUS_AUTOBAUD_ENABLE=${MODBUS_AUTOBAUD_ENABLE}
+    MODBUS_PYXIS_DMA_ABSOLUTE=${MODBUS_PYXIS_DMA_ABSOLUTE}
+    MODBUS_PYXIS_HW_RTO=${MODBUS_PYXIS_HW_RTO}
+    MODBUS_PYXIS_TX_IT=${MODBUS_PYXIS_TX_IT}
+    MODBUS_PYXIS_HW_DE=${MODBUS_PYXIS_HW_DE}
 )
 
 # Remove wrong libob.a library dependency when using cpp files

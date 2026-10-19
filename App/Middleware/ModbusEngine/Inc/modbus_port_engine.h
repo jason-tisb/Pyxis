@@ -50,6 +50,7 @@ bool modbus_port_engine_init(modbus_port_engine_t *e,
                              const modbus_port_engine_cfg_t *cfg);
 void modbus_port_engine_reset(modbus_port_engine_t *e);
 void modbus_port_engine_on_rx_byte(modbus_port_engine_t *e, uint8_t b);
+void modbus_port_engine_on_rx_boundary(modbus_port_engine_t *e);
 
 modbus_port_poll_status_t modbus_port_engine_poll_frame(
     modbus_port_engine_t *e,

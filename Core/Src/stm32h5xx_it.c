@@ -23,11 +23,20 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "mbport.h"
+#include "modbus_engine_config.h"
+#include "modbus_engine_port.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
 extern volatile uint8_t ErasingOnGoing;
+
+volatile uint32_t g_usart3_irq_count = 0;
+volatile uint32_t g_usart3_idle_count = 0;
+volatile uint32_t g_usart3_error_count = 0;
+volatile uint32_t g_usart3_txe_count = 0;
+volatile uint32_t g_usart3_tc_count = 0;
+volatile uint32_t g_gpdma_uart3_irq_count = 0;
 
 #if (FEATURE_STORAGE_USE_RTOS == 1)
 extern osSemaphoreId_t  kv_erase_sem;
@@ -65,6 +74,7 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_usart3_rx;
 extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart3;
+extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
@@ -206,6 +216,7 @@ void GPDMA1_Channel1_IRQHandler(void)
   */
 void GPDMA1_Channel2_IRQHandler(void)
 {
+	g_gpdma_uart3_irq_count++;
   HAL_DMA_IRQHandler(&hdma_usart3_rx);
 }
 
@@ -236,35 +247,79 @@ void TIM1_UP_IRQHandler(void)
   */
 void USART3_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART3_IRQn 0 */
-    uint32_t isr = huart3.Instance->ISR;
-    uint32_t cr1 = huart3.Instance->CR1;
-    uint32_t cr3 = huart3.Instance->CR3;
-    uint32_t errorflags = isr & (USART_ISR_PE | USART_ISR_FE | USART_ISR_ORE | USART_ISR_NE | USART_ISR_RTOF);
+    uint32_t isr;
+    uint32_t cr1;
+    uint32_t errorflags;
 
-    if ((errorflags != 0u)
-        && (((cr3 & (USART_CR3_RXFTIE | USART_CR3_EIE)) != 0u)
-            || ((cr1 & (USART_CR1_RXNEIE_RXFNEIE | USART_CR1_PEIE | USART_CR1_RTOIE)) != 0u))) {
+    g_usart3_irq_count++;
+
+    isr = huart3.Instance->ISR;
+    cr1 = huart3.Instance->CR1;
+
+#if MODBUS_ENGINE_ACTIVE && MODBUS_PYXIS_HW_RTO
+    if (((isr & USART_ISR_RTOF) != 0U) &&
+        ((cr1 & USART_CR1_RTOIE) != 0U))
+    {
+        __HAL_UART_CLEAR_FLAG(&huart3, UART_CLEAR_RTOF);
+        ModbusEnginePort_RxTimeoutIsr();
+    }
+#endif
+
+    errorflags = isr & (USART_ISR_PE |
+                        USART_ISR_FE |
+                        USART_ISR_ORE |
+                        USART_ISR_NE);
+#if !MODBUS_PYXIS_HW_RTO
+    errorflags |= isr & USART_ISR_RTOF;
+#endif
+
+    if (errorflags != 0U)
+    {
+        g_usart3_error_count++;
+    }
+
+    if ((huart3.ReceptionType == HAL_UART_RECEPTION_TOIDLE) &&
+        ((isr & USART_ISR_IDLE) != 0U) &&
+        ((cr1 & USART_CR1_IDLEIE) != 0U))
+    {
+        g_usart3_idle_count++;
         HAL_UART_IRQHandler(&huart3);
         return;
     }
 
-    if ((huart3.ReceptionType == HAL_UART_RECEPTION_TOIDLE)
-        && ((isr & USART_ISR_IDLE) != 0u)
-        && ((cr1 & USART_CR1_IDLEIE) != 0u)) {
+#if MODBUS_ENGINE_ACTIVE && MODBUS_PYXIS_TX_IT
+    /* HAL's interrupt transmitter needs both TXE and TC servicing.  The
+     * legacy path only handled TXE, which can leave HAL_UART_Transmit_IT()
+     * waiting forever for its completion callback (and can release RS485 DE
+     * at the wrong time). */
+    if (((isr & USART_ISR_TXE_TXFNF) != 0U) &&
+        __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_TXE))
+    {
         HAL_UART_IRQHandler(&huart3);
         return;
     }
 
-    if (((isr & USART_ISR_TXE_TXFNF) != 0u) && __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_TXE)) {
+    if (((isr & USART_ISR_TC) != 0U) &&
+        __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_TC))
+    {
+    	g_usart3_tc_count++;
+        HAL_UART_IRQHandler(&huart3);
+        return;
+    }
+#else
+    if (((isr & USART_ISR_TXE_TXFNF) != 0U) &&
+        __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_TXE))
+    {
+        g_usart3_txe_count++;
         prvvUARTTxReadyISR();
         return;
     }
-  /* USER CODE END USART3_IRQn 0 */
+#endif
+}
 
-  /* USER CODE BEGIN USART3_IRQn 1 */
-
-  /* USER CODE END USART3_IRQn 1 */
+void TIM2_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&htim2);
 }
 
 /* USER CODE BEGIN 1 */

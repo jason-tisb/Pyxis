@@ -207,6 +207,14 @@ void modbus_port_engine_on_rx_byte(modbus_port_engine_t *e, uint8_t byte) {
   modbus_port_engine_append(e, byte, true);
 }
 
+void modbus_port_engine_on_rx_boundary(modbus_port_engine_t *e) {
+  if ((e == NULL) || (e->frame_len == 0U) ||
+      (e->frame_ready != 0U) || (e->has_frame != 0U)) {
+    return;
+  }
+  e->frame_ready = 1U;
+}
+
 /*
  * When MODBUS_PORT_FRAME_READY is returned, *rx points to the engine-owned
  * frame buffer. The buffer remains valid only until the frame is cleared,

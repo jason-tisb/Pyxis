@@ -49,7 +49,8 @@
 static osThreadId_t ledTaskHandle;
 static const osThreadAttr_t ledTask_attributes = {
   .name = "ledTask",
-  .priority = (osPriority_t) osPriorityLow,
+  //.priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal3,
   .stack_size = 512U
 };
 /* USER CODE END Variables */
@@ -157,14 +158,21 @@ __weak void main_TaskModbus(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
+volatile uint32_t g_led_task_runs = 0;
+volatile uint32_t g_led_before_service = 0;
+volatile uint32_t g_led_after_service = 0;
 static void LED_ServiceTask(void *argument)
 {
   (void)argument;
 
   for (;;)
   {
-    LED_Task_10ms();
+      g_led_task_runs++;
+      g_led_before_service++;
+
+      LED_Task_10ms();
+
+      g_led_after_service++;
     osDelay(LED_TASK_PERIOD_MS);
   }
 }

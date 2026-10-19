@@ -15,19 +15,34 @@
 #include "user_mb_app.h"
 #include "vibration_modbus_adapter.h"
 #include "vibration_module.h"
+#include "modbus_engine_port.h"
+#include "modbus_engine_map.h"
+#include "modbus_engine_runtime.h"
+#include "modbus_engine_config.h"
+#include "modbus_engine_tx.h"
+#include "modbus_autobaud_startup.h"
+#include "modbus_autobaud_diag.h"
 
+#if !MODBUS_ENGINE_ACTIVE
 extern USHORT usSRegInBuf[S_REG_INPUT_NREGS];
 extern USHORT usSRegHoldBuf[S_REG_HOLDING_NREGS];
+#endif
 extern UART_HandleTypeDef huart3;
 
 static ModbusConfig_t cfg;
 uint32_t g_modbus_stop_bits = UART_STOPBITS_1;
+volatile uint32_t g_custom_uart_init_ok = 0U;
+volatile uint32_t g_custom_uart_enable_ok = 0U;
 
+#if !MODBUS_AUTOBAUD_ENABLE
 static uint32_t uart3_autobaud_lock(uint32_t timeout_ms);
 static uint32_t snap_modbus_rate(uint32_t measured);
+#endif
 static uint32_t modbus_stop_bits_from_code(uint16_t parity_code);
 static void notify_vibration_config_changed(const VibConfig_t *old_cfg, const VibConfig_t *new_cfg);
+static void modbus_task_process_one_frame(void);
 
+#if !MODBUS_AUTOBAUD_ENABLE
 static uint32_t uart3_autobaud_lock(uint32_t timeout_ms)
 {
 #ifdef USART_CR2_ABRMODE
@@ -89,6 +104,7 @@ static uint32_t snap_modbus_rate(uint32_t measured)
 
     return (best_err_ppm <= 30000U) ? best : measured;
 }
+#endif
 
 static uint32_t modbus_stop_bits_from_code(uint16_t parity_code)
 {
@@ -137,38 +153,100 @@ static void notify_vibration_config_changed(const VibConfig_t *old_cfg, const Vi
     }
 }
 
+static void modbus_task_process_one_frame(void)
+{
+    const uint8_t *shadow_frame;
+    uint16_t shadow_length;
+
+    if (ModbusEnginePort_Poll(&shadow_frame, &shadow_length)) {
+        const uint8_t *response = NULL;
+        uint16_t response_length = 0U;
+        bool has_response = ModbusEngineRuntime_ProcessFrame(
+            shadow_frame, shadow_length, &response, &response_length);
+#if MODBUS_ENGINE_ACTIVE
+        if (has_response) {
+            ModbusEnginePort_ClearFrame();
+            (void)ModbusEnginePort_UartEnable(false);
+            (void)ModbusEngineTx_Send(response, response_length);
+            (void)ModbusEnginePort_UartEnable(true);
+        } else {
+            ModbusEnginePort_ClearFrame();
+        }
+#else
+        (void)has_response;
+        (void)response;
+        (void)response_length;
+        ModbusEnginePort_ClearFrame();
+#endif
+    }
+}
+
 void main_TaskModbus(void *argument)
 {
     ModbusAdapterContext_t modbus_ctx;
     VibrationAdapterContext_t vibration_ctx;
     VibConfig_t vib_cfg;
     UCHAR slave_addr;
+#if !MODBUS_ENGINE_ACTIVE
     eMBParity parity;
+#endif
     ULONG baud_rate;
     uint8_t baud_display;
     uint8_t parity_display;
+#if !MODBUS_ENGINE_ACTIVE
     eMBErrorCode status;
+#endif
+    bool transport_ready = false;
     bool config_valid;
+#if MODBUS_ENGINE_ACTIVE
+    USHORT *input_regs = ModbusEngineMap_InputStorage();
+    USHORT *holding_regs = ModbusEngineMap_HoldingStorage();
+#else
+    USHORT *input_regs = usSRegInBuf;
+    USHORT *holding_regs = usSRegHoldBuf;
+#endif
 
     (void)argument;
 
     ModbusModule_Init();
     ModbusModule_GetConfig(&cfg);
+#if MODBUS_ENGINE_ACTIVE && MODBUS_ENGINE_FORCE_FIXED_COMM
+    cfg.slave_id = MODBUS_ENGINE_FIXED_SLAVE_ID;
+    cfg.baud_rate = MODBUS_ENGINE_FIXED_BAUD_RATE;
+    cfg.parity = MODBUS_ENGINE_FIXED_PARITY;
+#endif
+#if MODBUS_ENGINE_ACTIVE && MODBUS_AUTOBAUD_ENABLE
+    /* Autobaud owns startup selection, but begins from the safe commissioning
+     * UART and fixed slave ID until a validated candidate is found. */
+    cfg.slave_id = MODBUS_ENGINE_FIXED_SLAVE_ID;
+    cfg.baud_rate = MODBUS_ENGINE_FIXED_BAUD_RATE;
+    cfg.parity = MODBUS_ENGINE_FIXED_PARITY;
+#endif
     config_valid = ModbusModule_ValidateConfig(&cfg);
     LED_SetConfigurationInvalid(!config_valid);
     VibrationModule_Init();
     VibrationModule_GetConfig(&vib_cfg);
 
-    modbus_ctx.holding_regs = usSRegHoldBuf;
+    modbus_ctx.holding_regs = holding_regs;
     modbus_ctx.reg_count = S_REG_HOLDING_NREGS;
-    vibration_ctx.holding_regs = usSRegHoldBuf;
+    vibration_ctx.holding_regs = holding_regs;
     vibration_ctx.reg_count = S_REG_HOLDING_NREGS;
 
+    /* Initialize custom storage before adapters populate configuration values. */
+    ModbusEngineMap_Init();
     ModbusAdapter_InitMap(&modbus_ctx, &cfg);
     VibrationAdapter_InitMap(&vibration_ctx, &vib_cfg);
+    ModbusEnginePort_Init();
+    ModbusEngineRuntime_Init();
+    ModbusAutobaudDiag_Init();
+#if MODBUS_ENGINE_ACTIVE
+    (void)ModbusEngineTx_Init();
+#endif
 
     slave_addr = cfg.slave_id;
+#if !MODBUS_ENGINE_ACTIVE
     parity = ModbusAdapter_ParityFromCode(cfg.parity);
+#endif
     baud_rate = cfg.baud_rate;
     baud_display = (uint8_t)ModbusAdapter_BaudToCode(cfg.baud_rate);
     parity_display = (uint8_t)(cfg.parity + 1U);
@@ -179,6 +257,7 @@ void main_TaskModbus(void *argument)
         LED_RequestStartupDisplay(slave_addr, baud_display, parity_display, 1U);
     }
 
+#if !MODBUS_AUTOBAUD_ENABLE
     if (baud_rate == 0U) {
         uint32_t detected = 0U;
 
@@ -189,35 +268,72 @@ void main_TaskModbus(void *argument)
             baud_rate = snap_modbus_rate(detected);
         }
     }
+#endif
 
+#if MODBUS_ENGINE_ACTIVE
+    /* Custom mode owns UART3/DMA.  Do not initialize or enable FreeModbus. */
+    g_custom_uart_init_ok =
+        ModbusEnginePort_UartInit(baud_rate, 8U, cfg.parity) ? 1U : 0U;
+    g_custom_uart_enable_ok = 0U;
+    if (g_custom_uart_init_ok != 0U) {
+        g_custom_uart_enable_ok =
+            ModbusEnginePort_UartEnable(true) ? 1U : 0U;
+    }
+    transport_ready =
+        (g_custom_uart_init_ok != 0U) &&
+        (g_custom_uart_enable_ok != 0U);
+#if MODBUS_AUTOBAUD_ENABLE
+    if (transport_ready) {
+        ModbusAutobaudStartup_Start();
+        for (;;) {
+            modbus_task_process_one_frame();
+            if (ModbusAutobaudStartup_Service() !=
+                MODBUS_AUTOBAUD_STARTUP_RUNNING) {
+                break;
+            }
+            osDelay(1U);
+        }
+        /* Keep the effective custom-engine address aligned with the startup
+         * policy's fixed slave ID.  The selected UART profile is retained by
+         * the coordinator after a measured/scanned lock. */
+        ModbusEngineRuntime_SetSlaveId(MODBUS_ENGINE_FIXED_SLAVE_ID);
+    }
+#endif
+#else
     status = eMBInit(MB_RTU, slave_addr, 2U, baud_rate, parity);
     if (status == MB_ENOERR) {
-        //when eMBInit no Error
         status = eMBEnable();
     }
+    transport_ready = (status == MB_ENOERR);
+#endif
 
-    if (status == MB_ENOERR) {
+    if (transport_ready) {
         //when eMBInit no Error and after run eMBEnable no error also
-        usSRegHoldBuf[MB_REG_SLAVE_ID] = slave_addr;
-        usSRegHoldBuf[MB_REG_BAUDRATE] = ModbusAdapter_BaudToCode(cfg.baud_rate);
-        usSRegHoldBuf[MB_REG_PARITY] = ModbusAdapter_ParityToCode(cfg.parity);
+        holding_regs[MB_REG_SLAVE_ID] = slave_addr;
+        holding_regs[MB_REG_BAUDRATE] = ModbusAdapter_BaudToCode(cfg.baud_rate);
+        holding_regs[MB_REG_PARITY] = ModbusAdapter_ParityToCode(cfg.parity);
 
         /* 3xxxx identity block (30001..30006). */
-        usSRegInBuf[MB_IN_DEVICE_CODE] = MB_DEVICE_CODE_DEFAULT;
-        usSRegInBuf[MB_IN_HARDWARE_VERSION] = MB_HARDWARE_VERSION_DEFAULT;
-        usSRegInBuf[MB_IN_FIRMWARE_VERSION] = MB_FIRMWARE_VERSION_DEFAULT;
-        usSRegInBuf[MB_IN_MANUFACTURING_DATE] = MB_MANUFACTURING_DATE_DEFAULT;
-        usSRegInBuf[MB_IN_SERIAL_NUMBER_UPPER_W0] = MB_SERIAL_NUMBER_UPPER_W0_DEFAULT;
-        usSRegInBuf[MB_IN_SERIAL_NUMBER_UPPER_W1] = MB_SERIAL_NUMBER_UPPER_W1_DEFAULT;
+        input_regs[MB_IN_DEVICE_CODE] = MB_DEVICE_CODE_DEFAULT;
+        input_regs[MB_IN_HARDWARE_VERSION] = MB_HARDWARE_VERSION_DEFAULT;
+        input_regs[MB_IN_FIRMWARE_VERSION] = MB_FIRMWARE_VERSION_DEFAULT;
+        input_regs[MB_IN_MANUFACTURING_DATE] = MB_MANUFACTURING_DATE_DEFAULT;
+        input_regs[MB_IN_SERIAL_NUMBER_UPPER_W0] = MB_SERIAL_NUMBER_UPPER_W0_DEFAULT;
+        input_regs[MB_IN_SERIAL_NUMBER_UPPER_W1] = MB_SERIAL_NUMBER_UPPER_W1_DEFAULT;
     }
 
     for (;;) {
+#if !(MODBUS_ENGINE_ACTIVE && MODBUS_ENGINE_FORCE_FIXED_COMM)
         ModbusConfig_t next_cfg;
+#endif
         VibConfig_t next_vib_cfg;
         VibrationAdapterCommand_t vib_cmd;
-
+#if !MODBUS_ENGINE_ACTIVE
         eMBPoll();
+#endif
+        modbus_task_process_one_frame();
 
+#if !(MODBUS_ENGINE_ACTIVE && MODBUS_ENGINE_FORCE_FIXED_COMM)
         if (ModbusAdapter_CheckConfigUpdate(&modbus_ctx, &cfg, &next_cfg)) {
             cfg = next_cfg;
             if (ModbusModule_UpdateConfig(&cfg)) {
@@ -227,6 +343,7 @@ void main_TaskModbus(void *argument)
                 ModbusAdapter_InitMap(&modbus_ctx, &cfg);
             }
         }
+#endif
 
         if (VibrationAdapter_CheckConfigUpdate(&vibration_ctx, &vib_cfg, &next_vib_cfg)) {
             VibConfig_t old_vib_cfg = vib_cfg;
