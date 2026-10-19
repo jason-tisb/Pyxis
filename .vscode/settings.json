@@ -7,6 +7,19 @@
     "cmake.defaultConfigurePreset": "Debug",
     "cmake.defaultBuildPreset": "Debug",
     "cmake.configureArgs": [],
+    "cmake.configureSettings": {
+        "CMAKE_C_COMPILER": "C:/ST/STM32CubeIDE_2.1.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/arm-none-eabi-gcc.exe",
+        "CMAKE_ASM_COMPILER": "C:/ST/STM32CubeIDE_2.1.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/arm-none-eabi-gcc.exe",
+        "CMAKE_CXX_COMPILER": "C:/ST/STM32CubeIDE_2.1.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/arm-none-eabi-g++.exe",
+        "CMAKE_MAKE_PROGRAM": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe",
+        "MODBUS_ENGINE_ACTIVE": "1",
+        "MODBUS_ENGINE_FORCE_FIXED_COMM": "0",
+        "MODBUS_AUTOBAUD_ENABLE": "0",
+        "MODBUS_PYXIS_DMA_ABSOLUTE": "0",
+        "MODBUS_PYXIS_HW_RTO": "0",
+        "MODBUS_PYXIS_TX_IT": "1",
+        "MODBUS_PYXIS_HW_DE": "0"
+    },
     "cmake.preferredGenerators": [
         "Ninja"
     ],
