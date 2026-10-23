@@ -108,11 +108,9 @@ static uint32_t snap_modbus_rate(uint32_t measured)
 
 static uint32_t modbus_stop_bits_from_code(uint16_t parity_code)
 {
-    if (parity_code == 3U) {
-        return UART_STOPBITS_1;
-    }
-
-    return UART_STOPBITS_2;
+    /* Communication-code mapping:
+     *   0 = 8E1, 1 = 8O1, 2 = 8N2, 3 = 8N1. */
+    return (parity_code == 2U) ? UART_STOPBITS_2 : UART_STOPBITS_1;
 }
 
 static void notify_vibration_config_changed(const VibConfig_t *old_cfg, const VibConfig_t *new_cfg)
@@ -216,9 +214,9 @@ void main_TaskModbus(void *argument)
     cfg.parity = MODBUS_ENGINE_FIXED_PARITY;
 #endif
 #if MODBUS_ENGINE_ACTIVE && MODBUS_AUTOBAUD_ENABLE
-    /* Autobaud owns startup selection, but begins from the safe commissioning
-     * UART and fixed slave ID until a validated candidate is found. */
-    cfg.slave_id = MODBUS_ENGINE_FIXED_SLAVE_ID;
+    /* Autobaud changes UART parameters only.  Preserve the resolved user
+     * address; ModbusModule supplies the default ID (3) when storage is
+     * empty or invalid. */
     cfg.baud_rate = MODBUS_ENGINE_FIXED_BAUD_RATE;
     cfg.parity = MODBUS_ENGINE_FIXED_PARITY;
 #endif
@@ -238,6 +236,10 @@ void main_TaskModbus(void *argument)
     VibrationAdapter_InitMap(&vibration_ctx, &vib_cfg);
     ModbusEnginePort_Init();
     ModbusEngineRuntime_Init();
+#if MODBUS_AUTOBAUD_ENABLE
+    /* Validation must use the resolved user/default address immediately. */
+    ModbusEngineRuntime_SetSlaveId(cfg.slave_id);
+#endif
     ModbusAutobaudDiag_Init();
 #if MODBUS_ENGINE_ACTIVE
     (void)ModbusEngineTx_Init();
@@ -293,10 +295,8 @@ void main_TaskModbus(void *argument)
             }
             osDelay(1U);
         }
-        /* Keep the effective custom-engine address aligned with the startup
-         * policy's fixed slave ID.  The selected UART profile is retained by
-         * the coordinator after a measured/scanned lock. */
-        ModbusEngineRuntime_SetSlaveId(MODBUS_ENGINE_FIXED_SLAVE_ID);
+        /* Autobaud does not change the resolved user/default address. */
+        ModbusEngineRuntime_SetSlaveId(cfg.slave_id);
     }
 #endif
 #else

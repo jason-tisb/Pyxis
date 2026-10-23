@@ -276,6 +276,12 @@ void USART3_IRQHandler(void)
     if (errorflags != 0U)
     {
         g_usart3_error_count++;
+        /* Let HAL clear FE/PE/NE/ORE (and any non-hardware-RTO timeout
+         * flag included above) before returning.  Leaving an error flag
+         * pending retriggers USART3_IRQHandler continuously and can starve
+         * the RTOS, including the autobaud restore path. */
+        HAL_UART_IRQHandler(&huart3);
+        return;
     }
 
     if ((huart3.ReceptionType == HAL_UART_RECEPTION_TOIDLE) &&

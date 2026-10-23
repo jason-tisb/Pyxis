@@ -113,7 +113,8 @@ modbus_autobaud_validation_status_t ModbusAutobaudValidate_Service(void)
     if (processed != processed_observed) {
         processed_observed = processed;
         if ((ModbusEngineRuntime_GetLastResult() == MODBUS_PROC_OK) &&
-            ModbusEngineRuntime_LastFrameMatches(MODBUS_ENGINE_FIXED_SLAVE_ID)) {
+            ModbusEngineRuntime_LastFrameMatches(
+                ModbusEngineRuntime_GetSlaveId())) {
             result.processed_at_result = processed;
             set_result(MODBUS_AUTOBAUD_VALIDATE_VALID);
             running = 0U;

@@ -54,6 +54,74 @@ static void modbus_engine_delay_us(uint32_t delay_us)
     }
 }
 
+/* Match Titania's RS485 timing policy: derive the timeout from the active
+ * UART framing and the actual response length instead of using a fixed
+ * one-second wait. */
+static bool modbus_engine_calculate_tx_timeouts(uint16_t length,
+                                                uint32_t *tx_timeout_ms,
+                                                uint32_t *tc_timeout_ms)
+{
+    uint32_t word_bits;
+    uint32_t data_bits;
+    uint32_t parity_bits;
+    uint32_t stop_bits;
+    uint32_t bits_per_character;
+    uint64_t transfer_us;
+    uint64_t tx_ms;
+    uint64_t tc_ms;
+
+    if ((length == 0U) || (tx_timeout_ms == NULL) ||
+        (tc_timeout_ms == NULL) || (huart3.Init.BaudRate == 0U)) {
+        return false;
+    }
+
+    switch (huart3.Init.WordLength) {
+    case UART_WORDLENGTH_8B:
+        word_bits = 8U;
+        break;
+    case UART_WORDLENGTH_9B:
+        word_bits = 9U;
+        break;
+    default:
+        return false;
+    }
+
+    if (huart3.Init.Parity == UART_PARITY_NONE) {
+        data_bits = word_bits;
+        parity_bits = 0U;
+    } else if ((huart3.Init.Parity == UART_PARITY_EVEN) ||
+               (huart3.Init.Parity == UART_PARITY_ODD)) {
+        data_bits = word_bits - 1U;
+        parity_bits = 1U;
+    } else {
+        return false;
+    }
+
+    if (huart3.Init.StopBits == UART_STOPBITS_1) {
+        stop_bits = 1U;
+    } else if (huart3.Init.StopBits == UART_STOPBITS_2) {
+        stop_bits = 2U;
+    } else {
+        return false;
+    }
+
+    bits_per_character = 1U + data_bits + parity_bits + stop_bits;
+    transfer_us = (((uint64_t)length * bits_per_character * 1000000ULL) +
+                   huart3.Init.BaudRate - 1ULL) /
+                  huart3.Init.BaudRate;
+    tx_ms = ((transfer_us + 999ULL) / 1000ULL) + 10ULL;
+    tc_ms = ((((uint64_t)bits_per_character * 1000ULL) +
+              huart3.Init.BaudRate - 1ULL) /
+             huart3.Init.BaudRate) + 2ULL;
+
+    if ((tx_ms > UINT32_MAX) || (tc_ms > UINT32_MAX)) {
+        return false;
+    }
+    *tx_timeout_ms = (uint32_t)tx_ms;
+    *tc_timeout_ms = (uint32_t)tc_ms;
+    return true;
+}
+
 static bool modbus_engine_wait_uart_tc(uint32_t timeout_ms)
 {
     const uint32_t start = HAL_GetTick();
@@ -119,12 +187,19 @@ bool ModbusEngineTx_Init(void)
 bool ModbusEngineTx_Send(const uint8_t *frame, uint16_t length)
 {
     HAL_StatusTypeDef status;
+    uint32_t tx_timeout_ms;
+    uint32_t tc_timeout_ms;
 
     if ((frame == NULL) || (length == 0U)) {
         return false;
     }
     if (tx_busy) {
         g_modbus_tx_busy_rejections++;
+        return false;
+    }
+    if (!modbus_engine_calculate_tx_timeouts(length, &tx_timeout_ms,
+                                             &tc_timeout_ms)) {
+        g_modbus_tx_errors++;
         return false;
     }
 
@@ -139,22 +214,23 @@ bool ModbusEngineTx_Send(const uint8_t *frame, uint16_t length)
     status = HAL_UART_Transmit_IT(&huart3, (uint8_t *)frame, length);
     if (status == HAL_OK) {
         uint32_t flags = osEventFlagsWait(tx_event, TX_COMPLETE_EVENT,
-                                          osFlagsWaitAny, 1000U);
+                                          osFlagsWaitAny, tx_timeout_ms);
         if ((flags & TX_COMPLETE_EVENT) == 0U) {
             g_modbus_tx_wait_timeouts++;
             (void)HAL_UART_AbortTransmit(&huart3);
             status = HAL_TIMEOUT;
         }
         if ((status == HAL_OK) &&
-            !modbus_engine_wait_uart_tc(MODBUS_PYXIS_TX_TC_TIMEOUT_MS)) {
+            !modbus_engine_wait_uart_tc(tc_timeout_ms)) {
             g_modbus_tx_wait_timeouts++;
             status = HAL_TIMEOUT;
         }
     }
 #else
-    status = HAL_UART_Transmit(&huart3, (uint8_t *)frame, length, 1000U);
+    status = HAL_UART_Transmit(&huart3, (uint8_t *)frame, length,
+                               tx_timeout_ms);
     if ((status == HAL_OK) &&
-        !modbus_engine_wait_uart_tc(MODBUS_PYXIS_TX_TC_TIMEOUT_MS)) {
+        !modbus_engine_wait_uart_tc(tc_timeout_ms)) {
         g_modbus_tx_wait_timeouts++;
         status = HAL_TIMEOUT;
     }

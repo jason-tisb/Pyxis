@@ -23,10 +23,10 @@ static uint8_t measurement_attempt;
 static uint8_t framing_index;
 static modbus_autobaud_score_result_t score_result;
 static const modbus_autobaud_framing_t framing_order[4] = {
+    MODBUS_AUTOBAUD_FRAMING_8N1,
     MODBUS_AUTOBAUD_FRAMING_8E1,
     MODBUS_AUTOBAUD_FRAMING_8N2,
-    MODBUS_AUTOBAUD_FRAMING_8O1,
-    MODBUS_AUTOBAUD_FRAMING_8N1
+    MODBUS_AUTOBAUD_FRAMING_8O1
 };
 
 static uint32_t elapsed_ms(void)
@@ -79,7 +79,7 @@ static bool apply_fallback(void)
         ModbusAutobaudDiag_OnTerminal(&result);
         return false;
     }
-    ModbusEngineRuntime_SetSlaveId(MODBUS_ENGINE_FIXED_SLAVE_ID);
+    /* Preserve the resolved user/default slave ID during UART fallback. */
     result.baud_rate = MODBUS_ENGINE_FIXED_BAUD_RATE;
     result.framing_mode = MODBUS_AUTOBAUD_FRAMING_8N1;
     result.lock_source = 3U;

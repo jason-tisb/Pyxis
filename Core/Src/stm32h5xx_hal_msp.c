@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -448,6 +449,13 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     /* Peripheral clock enable */
     __HAL_RCC_USART3_CLK_ENABLE();
     __HAL_RCC_GPDMA1_CLK_ENABLE();
+
+    /* HAL_UART_DeInit releases the DMA handle, but the application-owned
+     * linked-list objects retain their previous node links. Autobaud may
+     * reconfigure USART3 for several framing candidates, so reset them
+     * before rebuilding the RX list. */
+    (void)memset(&uart3_rx_dma_queue, 0, sizeof(uart3_rx_dma_queue));
+    (void)memset(&uart3_rx_dma_node, 0, sizeof(uart3_rx_dma_node));
 
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();

@@ -14,6 +14,7 @@ typedef struct {
 
 void ModbusEngineRuntime_Init(void);
 void ModbusEngineRuntime_SetSlaveId(uint8_t slave_id);
+uint8_t ModbusEngineRuntime_GetSlaveId(void);
 bool ModbusEngineRuntime_ProcessFrame(const uint8_t *frame, uint16_t length,
                                       const uint8_t **response,
                                       uint16_t *response_length);

@@ -83,10 +83,18 @@
 #error "MODBUS_PYXIS_DE_HOLD_DELAY_US is unreasonably large"
 #endif
 
+#ifndef MODBUS_ENGINE_FIXED_SLAVE_ID
 #define MODBUS_ENGINE_FIXED_SLAVE_ID  3U
+#endif
+
+#ifndef MODBUS_ENGINE_FIXED_BAUD_RATE
 #define MODBUS_ENGINE_FIXED_BAUD_RATE 9600U
-/* 3 = no parity, one stop bit (8N1). */
+#endif
+
+/* 0 = 8E1, 1 = 8O1, 2 = 8N2, 3 = 8N1. */
+#ifndef MODBUS_ENGINE_FIXED_PARITY
 #define MODBUS_ENGINE_FIXED_PARITY    3U
+#endif
 
 #endif
 

@@ -176,6 +176,11 @@ void ModbusEngineRuntime_SetSlaveId(uint8_t slave_id)
     core_ctx.slave_id = slave_id;
 }
 
+uint8_t ModbusEngineRuntime_GetSlaveId(void)
+{
+    return core_ctx.slave_id;
+}
+
 bool ModbusEngineRuntime_ProcessFrame(const uint8_t *frame, uint16_t length,
                                       const uint8_t **response,
                                       uint16_t *response_length)

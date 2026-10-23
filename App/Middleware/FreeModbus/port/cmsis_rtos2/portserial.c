@@ -544,6 +544,8 @@ bool ModbusEnginePort_ReconfigureUart(uint32_t baud_rate, uint8_t data_bits,
 {
     UART_InitTypeDef previous;
     UART_InitTypeDef requested;
+    uint8_t previous_data_bits;
+    uint8_t previous_parity;
     uint32_t previous_stop_bits;
     bool disabled;
     bool applied = false;
@@ -552,10 +554,14 @@ bool ModbusEnginePort_ReconfigureUart(uint32_t baud_rate, uint8_t data_bits,
         ModbusEngineTx_IsBusy()) {
         return false;
     }
-    if (!ModbusEnginePort_GetUartConfig(&previous.BaudRate, &data_bits,
-                                        &parity_code, &previous_stop_bits)) {
+    if (!ModbusEnginePort_GetUartConfig(&previous.BaudRate,
+                                        &previous_data_bits,
+                                        &previous_parity,
+                                        &previous_stop_bits)) {
         return false;
     }
+    (void)previous_data_bits;
+    (void)previous_parity;
     previous = huart3.Init;
     previous_stop_bits = g_modbus_stop_bits;
     requested = previous;
