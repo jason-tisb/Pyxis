@@ -43,6 +43,11 @@ static volatile uint32_t uart3_rx_boundary_queue[RX_BOUNDARY_QUEUE_SIZE];
 static volatile uint8_t uart3_rx_boundary_head;
 static volatile uint8_t uart3_rx_boundary_tail;
 static volatile uint32_t uart3_rto_pending;
+/* UART/DMA error recovery is completed by the worker task, not from the
+ * interrupt callback.  HAL aborts the DMA receive asynchronously on a
+ * blocking UART error, so restarting it directly from the callback can race
+ * the HAL state transition back to READY. */
+static volatile uint8_t uart3_rx_recovery_pending;
 typedef struct {
     uint8_t data[UART3_FRAME_MAX_SIZE];
     uint16_t length;
@@ -91,6 +96,10 @@ volatile uint32_t g_uart3_frame_queue_pushed = 0;
 volatile uint32_t g_uart3_frame_queue_popped = 0;
 volatile uint32_t g_uart3_frame_queue_overruns = 0;
 volatile uint32_t g_uart3_frame_queue_max_depth = 0;
+volatile uint32_t g_uart3_error_recovery_attempts = 0;
+volatile uint32_t g_uart3_error_recovery_failures = 0;
+volatile uint32_t g_uart3_transport_flushes = 0;
+volatile uint32_t g_uart3_last_recovery_status = 0;
 
 static BOOL uart3_start_custom_dma(void)
 {
@@ -237,6 +246,67 @@ static void uart3_feed_queued_frames(void)
     }
 }
 
+static BOOL uart3_recover_after_error(void)
+{
+    const uint8_t restart = uart3_rx_enabled;
+
+    g_uart3_error_recovery_attempts++;
+    g_uart3_last_recovery_status = (uint32_t)HAL_ERROR;
+
+    /* Prevent callbacks from publishing more data while the old receive
+     * transaction and its parser state are being discarded. */
+    uart3_rx_enabled = 0U;
+    __HAL_UART_DISABLE_IT(&huart3, UART_IT_IDLE | UART_IT_RTO);
+
+    /* In the normal DMA-error path HAL has already aborted the channel.  The
+     * conditional makes this safe if the callback was caused by a peripheral
+     * error before the DMA abort completed. */
+    if ((huart3.Instance->CR3 & USART_CR3_DMAR) != 0U) {
+        (void)HAL_UART_AbortReceive(&huart3);
+    }
+    uart3_rx_dma_running = 0U;
+
+    /* Drop every partial/stale byte and boundary.  A parity/framing-error
+     * burst must never be concatenated with the first valid frame after the
+     * master changes back to the correct UART format. */
+    ModbusEnginePort_ClearFrame();
+    uart3_rx_head = 0U;
+    uart3_rx_tail = 0U;
+    uart3_rx_dma_last_pos = 0U;
+    uart3_rx_dma_harvest_abs = 0U;
+    g_uart3_dma_producer_abs = 0U;
+    g_uart3_dma_wrap_count = 0U;
+    uart3_rx_boundary_head = 0U;
+    uart3_rx_boundary_tail = 0U;
+    uart3_frame_queue_head = 0U;
+    uart3_frame_queue_tail = 0U;
+    uart3_frame_queue_count = 0U;
+    uart3_rto_pending = 0U;
+    g_uart3_transport_flushes++;
+
+    __HAL_UART_CLEAR_OREFLAG(&huart3);
+    __HAL_UART_CLEAR_FEFLAG(&huart3);
+    __HAL_UART_CLEAR_NEFLAG(&huart3);
+    __HAL_UART_CLEAR_PEFLAG(&huart3);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart3);
+    __HAL_UART_CLEAR_FLAG(&huart3, UART_CLEAR_RTOF);
+    __HAL_UART_SEND_REQ(&huart3, UART_RXDATA_FLUSH_REQUEST);
+    huart3.ErrorCode = HAL_UART_ERROR_NONE;
+
+    if (restart != 0U) {
+        uart3_rx_enabled = 1U;
+        if (uart3_start_custom_dma() != TRUE) {
+            uart3_rx_enabled = 0U;
+            g_uart3_error_recovery_failures++;
+            g_uart3_last_recovery_status = (uint32_t)HAL_ERROR;
+            return FALSE;
+        }
+    }
+
+    g_uart3_last_recovery_status = (uint32_t)HAL_OK;
+    return TRUE;
+}
+
 static void custom_rx_task_entry(void *argument)
 {
     (void)argument;
@@ -246,6 +316,11 @@ static void custom_rx_task_entry(void *argument)
          * fed promptly after main_TaskModbus clears the previous frame. */
         (void)osEventFlagsWait(custom_rx_event, EVENT_CUSTOM_RX,
                                osFlagsWaitAny, 1U);
+
+        if (uart3_rx_recovery_pending != 0U) {
+            uart3_rx_recovery_pending = 0U;
+            (void)uart3_recover_after_error();
+        }
 
         while (uart3_rx_boundary_tail != uart3_rx_boundary_head) {
             uint32_t end_abs = uart3_rx_boundary_queue[uart3_rx_boundary_tail];
@@ -377,6 +452,7 @@ bool ModbusEnginePort_UartInit(uint32_t baud_rate, uint8_t data_bits,
     g_uart3_last_disable_tick = 0U;
     g_uart3_last_enable_tick = 0U;
     uart3_rto_pending = 0U;
+    uart3_rx_recovery_pending = 0U;
     uart3_rx_head = 0U;
     uart3_rx_tail = 0U;
     uart3_rx_overruns = 0U;
@@ -430,6 +506,7 @@ bool ModbusEnginePort_UartEnable(bool enable)
         uart3_rx_boundary_head = 0U;
         uart3_rx_boundary_tail = 0U;
         uart3_rto_pending = 0U;
+        uart3_rx_recovery_pending = 0U;
         uart3_rx_head = 0U;
         uart3_rx_tail = 0U;
         return true;
@@ -442,6 +519,7 @@ bool ModbusEnginePort_UartEnable(bool enable)
     g_uart3_dma_wrap_count = 0U;
     uart3_rx_dma_harvest_abs = 0U;
     uart3_rto_pending = 0U;
+    uart3_rx_recovery_pending = 0U;
     uart3_rx_boundary_head = 0U;
     uart3_rx_boundary_tail = 0U;
     __HAL_UART_CLEAR_IDLEFLAG(&huart3);
@@ -639,6 +717,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
     g_uart3_last_rx_size = Size;
     if (uart3_rx_enabled == 0U) {
         g_uart3_callbacks_while_disabled++;
+        return;
     }
 
     event_type = HAL_UARTEx_GetRxEventType(huart_cb);
@@ -709,14 +788,16 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart_cb)
     }
 
     uart3_rx_dma_running = 0U;
-    uart3_rx_dma_last_pos = 0U;
     __HAL_UART_CLEAR_OREFLAG(&huart3);
     __HAL_UART_CLEAR_FEFLAG(&huart3);
     __HAL_UART_CLEAR_NEFLAG(&huart3);
     __HAL_UART_CLEAR_PEFLAG(&huart3);
     __HAL_UART_CLEAR_IDLEFLAG(&huart3);
     if (uart3_rx_enabled != 0U) {
-        (void)uart3_start_custom_dma();
+        uart3_rx_recovery_pending = 1U;
+        if (custom_rx_event != NULL) {
+            (void)osEventFlagsSet(custom_rx_event, EVENT_CUSTOM_RX);
+        }
     }
 }
 

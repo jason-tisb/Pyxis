@@ -38,5 +38,9 @@ extern volatile uint32_t g_uart3_frame_queue_pushed;
 extern volatile uint32_t g_uart3_frame_queue_popped;
 extern volatile uint32_t g_uart3_frame_queue_overruns;
 extern volatile uint32_t g_uart3_frame_queue_max_depth;
+extern volatile uint32_t g_uart3_error_recovery_attempts;
+extern volatile uint32_t g_uart3_error_recovery_failures;
+extern volatile uint32_t g_uart3_transport_flushes;
+extern volatile uint32_t g_uart3_last_recovery_status;
 
 #endif
