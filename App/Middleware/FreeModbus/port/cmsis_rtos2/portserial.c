@@ -458,7 +458,7 @@ static bool uart3_supported_config(uint32_t baud_rate, uint8_t data_bits,
     return ((baud_rate == 9600U) || (baud_rate == 19200U) ||
             (baud_rate == 38400U) || (baud_rate == 57600U) ||
             (baud_rate == 115200U)) &&
-           (data_bits == 8U) && (parity_code <= 2U) &&
+           (data_bits == 8U) && (parity_code <= 3U) &&
            ((stop_bits == UART_STOPBITS_1) ||
             (stop_bits == UART_STOPBITS_2));
 }

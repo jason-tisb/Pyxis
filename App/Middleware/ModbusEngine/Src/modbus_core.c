@@ -1120,17 +1120,16 @@ static modbus_core_process_result_t modbus_core_fc10_write_multiple_registers(
   }
 
   /*
-   * Validate every target register.
+   * Phase A: validate every target address and access permission first.
+   * This gives FC16 deterministic ILLEGAL_ADDRESS precedence over any value
+   * error later in the request.
    */
   for (uint16_t i = 0U; i < quantity; i++) {
     uint16_t address;
-    uint16_t value;
     modbus_core_reg_info_t info;
     modbus_core_access_result_t result;
 
     address = (uint16_t)(start_address + i);
-
-    value = s_register_write_values[i];
 
     result = modbus_core_read_writable(ctx, address, MODBUS_REG_HOLDING, &info,
                                        &cursor_hint);
@@ -1141,15 +1140,33 @@ static modbus_core_process_result_t modbus_core_fc10_write_multiple_registers(
                                              need_reply);
     }
 
+  }
+
+  /*
+   * Phase B: only after all addresses are valid, validate every supplied
+   * value against its exact register metadata and application policy.
+   */
+  for (uint16_t i = 0U; i < quantity; i++) {
+    uint16_t address = (uint16_t)(start_address + i);
+    uint16_t value = s_register_write_values[i];
+    modbus_core_reg_info_t info;
+    modbus_core_access_result_t result;
+
+    result = modbus_core_read_writable(ctx, address, MODBUS_REG_HOLDING, &info,
+                                       &cursor_hint);
+    if (result != MODBUS_ACCESS_OK) {
+      /* Defensive only; Phase A already checked every address. */
+      return modbus_core_handle_access_error(ctx, is_broadcast, slave_id,
+                                             function_code, result, tx, tx_len,
+                                             need_reply);
+    }
     if (!modbus_core_value_in_range(&info, value)) {
       return modbus_core_handle_access_error(
           ctx, is_broadcast, slave_id, function_code,
           MODBUS_ACCESS_ILLEGAL_VALUE, tx, tx_len, need_reply);
     }
-
     if (ctx->validate_write != NULL) {
       result = ctx->validate_write(address, MODBUS_REG_HOLDING, value, &info);
-
       if (result != MODBUS_ACCESS_OK) {
         return modbus_core_handle_access_error(ctx, is_broadcast, slave_id,
                                                function_code, result, tx,

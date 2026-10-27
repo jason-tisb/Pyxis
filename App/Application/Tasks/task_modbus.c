@@ -20,6 +20,7 @@
 #include "modbus_engine_runtime.h"
 #include "modbus_engine_config.h"
 #include "modbus_engine_tx.h"
+#include "modbus_persistence.h"
 #include "modbus_autobaud_startup.h"
 #include "modbus_autobaud_diag.h"
 
@@ -40,7 +41,12 @@ static uint32_t snap_modbus_rate(uint32_t measured);
 #endif
 static uint32_t modbus_stop_bits_from_code(uint16_t parity_code);
 static void notify_vibration_config_changed(const VibConfig_t *old_cfg, const VibConfig_t *new_cfg);
+static bool modbus_task_read_holding(void *user, uint16_t address,
+                                     uint16_t *value);
 static void modbus_task_process_one_frame(void);
+#if MODBUS_ENGINE_ACTIVE
+static void modbus_task_service_comm_persistence(void);
+#endif
 
 #if !MODBUS_AUTOBAUD_ENABLE
 static uint32_t uart3_autobaud_lock(uint32_t timeout_ms)
@@ -151,6 +157,19 @@ static void notify_vibration_config_changed(const VibConfig_t *old_cfg, const Vi
     }
 }
 
+static bool modbus_task_read_holding(void *user, uint16_t address,
+                                     uint16_t *value)
+{
+    const USHORT *holding = (const USHORT *)user;
+
+    if ((holding == NULL) || (value == NULL) ||
+        (address >= S_REG_HOLDING_NREGS)) {
+        return false;
+    }
+    *value = holding[address];
+    return true;
+}
+
 static void modbus_task_process_one_frame(void)
 {
     const uint8_t *shadow_frame;
@@ -165,8 +184,19 @@ static void modbus_task_process_one_frame(void)
         if (has_response) {
             ModbusEnginePort_ClearFrame();
             (void)ModbusEnginePort_UartEnable(false);
-            (void)ModbusEngineTx_Send(response, response_length);
+            bool tx_complete = ModbusEngineTx_Send(response, response_length);
             (void)ModbusEnginePort_UartEnable(true);
+            /* Destructive system commands are deliberately serviced only
+             * after ModbusEngineTx_Send() has waited for UART TC and DE has
+             * been returned to receive mode. */
+            if (ModbusEngineRuntime_GetPendingSystemAction() !=
+                MODBUS_SYSTEM_ACTION_NONE) {
+                if (tx_complete) {
+                    (void)ModbusEngineRuntime_ServiceSystemAction();
+                } else {
+                    ModbusEngineRuntime_CancelSystemAction();
+                }
+            }
         } else {
             ModbusEnginePort_ClearFrame();
         }
@@ -179,6 +209,16 @@ static void modbus_task_process_one_frame(void)
     }
 }
 
+#if MODBUS_ENGINE_ACTIVE
+static void modbus_task_service_comm_persistence(void)
+{
+    if (!ModbusEngineRuntime_HasCommPersistencePending()) {
+        return;
+    }
+    (void)ModbusEngineRuntime_PersistConfiguredComm();
+}
+#endif
+
 void main_TaskModbus(void *argument)
 {
     ModbusAdapterContext_t modbus_ctx;
@@ -189,6 +229,10 @@ void main_TaskModbus(void *argument)
     eMBParity parity;
 #endif
     ULONG baud_rate;
+#if MODBUS_ENGINE_ACTIVE
+    uint32_t uart_startup_baud;
+    uint8_t uart_startup_parity;
+#endif
     uint8_t baud_display;
     uint8_t parity_display;
 #if !MODBUS_ENGINE_ACTIVE
@@ -206,17 +250,15 @@ void main_TaskModbus(void *argument)
 
     (void)argument;
 
+    /* Initialise canonical storage and bind the persistence shadow before
+     * loading the configured communication image.  The map remains the sole
+     * source of persistent Holding-word enumeration. */
+    ModbusEngineMap_Init();
+    ModbusPersistence_BindHoldingStorage(holding_regs, S_REG_HOLDING_NREGS);
     ModbusModule_Init();
     ModbusModule_GetConfig(&cfg);
 #if MODBUS_ENGINE_ACTIVE && MODBUS_ENGINE_FORCE_FIXED_COMM
     cfg.slave_id = MODBUS_ENGINE_FIXED_SLAVE_ID;
-    cfg.baud_rate = MODBUS_ENGINE_FIXED_BAUD_RATE;
-    cfg.parity = MODBUS_ENGINE_FIXED_PARITY;
-#endif
-#if MODBUS_ENGINE_ACTIVE && MODBUS_AUTOBAUD_ENABLE
-    /* Autobaud changes UART parameters only.  Preserve the resolved user
-     * address; ModbusModule supplies the default ID (3) when storage is
-     * empty or invalid. */
     cfg.baud_rate = MODBUS_ENGINE_FIXED_BAUD_RATE;
     cfg.parity = MODBUS_ENGINE_FIXED_PARITY;
 #endif
@@ -225,17 +267,31 @@ void main_TaskModbus(void *argument)
     VibrationModule_Init();
     VibrationModule_GetConfig(&vib_cfg);
 
+    /* A verified H1 shadow is authoritative for persistent Holding words.
+     * Legacy per-module storage remains a migration source only when no H1
+     * record exists. */
+    if (ModbusPersistence_HasVerifiedRecord()) {
+        VibConfig_t persisted_vib_cfg;
+        if (VibrationAdapter_BuildConfigFromReader(
+                modbus_task_read_holding, holding_regs, &vib_cfg,
+                &persisted_vib_cfg) &&
+            VibrationModule_CommitValidatedRuntimeConfig(&persisted_vib_cfg)) {
+            vib_cfg = persisted_vib_cfg;
+        }
+    }
+
     modbus_ctx.holding_regs = holding_regs;
     modbus_ctx.reg_count = S_REG_HOLDING_NREGS;
     vibration_ctx.holding_regs = holding_regs;
     vibration_ctx.reg_count = S_REG_HOLDING_NREGS;
 
-    /* Initialize custom storage before adapters populate configuration values. */
-    ModbusEngineMap_Init();
     ModbusAdapter_InitMap(&modbus_ctx, &cfg);
     VibrationAdapter_InitMap(&vibration_ctx, &vib_cfg);
     ModbusEnginePort_Init();
     ModbusEngineRuntime_Init();
+    /* Freeze the communication settings selected for this boot.  Later
+     * Modbus writes update the configured/persistent image only. */
+    ModbusEngineRuntime_SetActiveCommConfig(&cfg);
 #if MODBUS_AUTOBAUD_ENABLE
     /* Validation must use the resolved user/default address immediately. */
     ModbusEngineRuntime_SetSlaveId(cfg.slave_id);
@@ -250,6 +306,16 @@ void main_TaskModbus(void *argument)
     parity = ModbusAdapter_ParityFromCode(cfg.parity);
 #endif
     baud_rate = cfg.baud_rate;
+#if MODBUS_ENGINE_ACTIVE
+    /* A zero baud selector means Auto.  The capture coordinator owns the
+     * actual UART candidate selection, but HAL still needs a valid provisional
+     * baud/framing while the transport is brought up.  Keep that provisional
+     * setup separate from the configured and active snapshots. */
+    uart_startup_baud = (baud_rate == 0U) ? MODBUS_ENGINE_FIXED_BAUD_RATE :
+                        baud_rate;
+    uart_startup_parity = (baud_rate == 0U) ? MODBUS_ENGINE_FIXED_PARITY :
+                          cfg.parity;
+#endif
     baud_display = (uint8_t)ModbusAdapter_BaudToCode(cfg.baud_rate);
     parity_display = (uint8_t)(cfg.parity + 1U);
     g_modbus_stop_bits = modbus_stop_bits_from_code(cfg.parity);
@@ -275,7 +341,8 @@ void main_TaskModbus(void *argument)
 #if MODBUS_ENGINE_ACTIVE
     /* Custom mode owns UART3/DMA.  Do not initialize or enable FreeModbus. */
     g_custom_uart_init_ok =
-        ModbusEnginePort_UartInit(baud_rate, 8U, cfg.parity) ? 1U : 0U;
+        ModbusEnginePort_UartInit(uart_startup_baud, 8U,
+                                  uart_startup_parity) ? 1U : 0U;
     g_custom_uart_enable_ok = 0U;
     if (g_custom_uart_init_ok != 0U) {
         g_custom_uart_enable_ok =
@@ -285,7 +352,9 @@ void main_TaskModbus(void *argument)
         (g_custom_uart_init_ok != 0U) &&
         (g_custom_uart_enable_ok != 0U);
 #if MODBUS_AUTOBAUD_ENABLE
-    if (transport_ready) {
+    /* Only selector 0 requests automatic detection.  A fixed configured
+     * selector must start and remain on that configuration for this boot. */
+    if (transport_ready && (cfg.baud_rate == 0U)) {
         ModbusAutobaudStartup_Start();
         for (;;) {
             modbus_task_process_one_frame();
@@ -323,7 +392,7 @@ void main_TaskModbus(void *argument)
     }
 
     for (;;) {
-#if !(MODBUS_ENGINE_ACTIVE && MODBUS_ENGINE_FORCE_FIXED_COMM)
+#if !MODBUS_ENGINE_ACTIVE && !MODBUS_ENGINE_FORCE_FIXED_COMM
         ModbusConfig_t next_cfg;
 #endif
         VibConfig_t next_vib_cfg;
@@ -333,7 +402,14 @@ void main_TaskModbus(void *argument)
 #endif
         modbus_task_process_one_frame();
 
-#if !(MODBUS_ENGINE_ACTIVE && MODBUS_ENGINE_FORCE_FIXED_COMM)
+#if MODBUS_ENGINE_ACTIVE
+        /* Communication settings are persisted after the transaction is
+         * accepted, but remain boot-applied.  No UART or slave ID change is
+         * performed in this runtime path. */
+        modbus_task_service_comm_persistence();
+#endif
+
+#if !MODBUS_ENGINE_ACTIVE && !MODBUS_ENGINE_FORCE_FIXED_COMM
         if (ModbusAdapter_CheckConfigUpdate(&modbus_ctx, &cfg, &next_cfg)) {
             cfg = next_cfg;
             if (ModbusModule_UpdateConfig(&cfg)) {
@@ -347,13 +423,30 @@ void main_TaskModbus(void *argument)
 
         if (VibrationAdapter_CheckConfigUpdate(&vibration_ctx, &vib_cfg, &next_vib_cfg)) {
             VibConfig_t old_vib_cfg = vib_cfg;
+            bool persisted;
+#if MODBUS_ENGINE_ACTIVE
+            ModbusConfig_t persist_cfg = cfg;
+            (void)ModbusEngineRuntime_GetConfiguredCommConfig(&persist_cfg);
+            persisted = ModbusPersistence_SaveConfig(&persist_cfg);
+#else
+            persisted = VibrationModule_PersistConfig(&next_vib_cfg);
+#endif
+#if !MODBUS_ENGINE_ACTIVE
+            if (persisted) {
+                persisted = VibrationModule_CommitRuntimeConfig(&next_vib_cfg);
+            }
+#endif
 
-            if (VibrationModule_UpdateConfig(&next_vib_cfg)) {
+            ModbusEngineRuntime_RecordPersistenceResult(persisted);
+            if (persisted) {
                 vib_cfg = next_vib_cfg;
                 notify_vibration_config_changed(&old_vib_cfg, &vib_cfg);
                 VibrationAdapter_InitMap(&vibration_ctx, &vib_cfg);
             } else {
-                VibrationAdapter_InitMap(&vibration_ctx, &vib_cfg);
+                /* The RAM transaction was already accepted and published;
+                 * retain the configured/active value even when NVM fails. */
+                vib_cfg = next_vib_cfg;
+                notify_vibration_config_changed(&old_vib_cfg, &vib_cfg);
             }
         }
 

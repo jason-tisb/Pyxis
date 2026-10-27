@@ -13,6 +13,10 @@ typedef struct {
     uint16_t reg_count;
 } VibrationAdapterContext_t;
 
+typedef bool (*VibrationAdapterRegisterReader_t)(void *user,
+                                                  uint16_t address,
+                                                  uint16_t *value);
+
 typedef enum {
     VIBRATION_ADAPTER_CMD_NONE = 0,
     VIBRATION_ADAPTER_CMD_CAPTURE_BASELINE = 1,
@@ -22,6 +26,9 @@ typedef enum {
 bool VibrationAdapter_IsValidMachineProfile(uint16_t value);
 bool VibrationAdapter_IsValidCommand(uint16_t value);
 bool VibrationAdapter_IsValidRawConfigValue(uint16_t reg_addr, uint16_t value);
+bool VibrationAdapter_BuildConfigFromReader(
+    VibrationAdapterRegisterReader_t reader, void *user,
+    const VibConfig_t *current_cfg, VibConfig_t *out_cfg);
 
 void VibrationAdapter_InitMap(const VibrationAdapterContext_t *ctx, const VibConfig_t *current_cfg);
 bool VibrationAdapter_CheckConfigUpdate(const VibrationAdapterContext_t *ctx,

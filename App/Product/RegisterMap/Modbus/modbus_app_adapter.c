@@ -19,16 +19,10 @@ uint16_t ModbusAdapter_BaudToCode(uint32_t baud_rate)
 
 static bool ModbusAdapter_IsValidCommValue(uint16_t reg_addr, uint16_t value)
 {
-    switch (reg_addr) {
-        case MB_REG_SLAVE_ID:
-            return (value > 0U) && (value <= MB_ADDRESS_MAX);
-        case MB_REG_BAUDRATE:
-            return ModbusAdapter_CodeToBaud(value, NULL);
-        case MB_REG_PARITY:
-            return value <= 3U;
-        default:
-            return true;
-    }
+    const modbus_map_entry_t *entry = ModbusMap_Find(
+        MODBUS_MAP_REGISTER_HOLDING, reg_addr);
+
+    return (entry == NULL) ? false : ModbusMap_ValidateValue(entry, value);
 }
 
 bool ModbusAdapter_CodeToBaud(uint16_t baud_code, uint32_t *baud_rate)
@@ -76,6 +70,32 @@ bool ModbusAdapter_IsValidSlaveId(uint16_t value)
 bool ModbusAdapter_IsValidParityCode(uint16_t value)
 {
     return ModbusAdapter_IsValidCommValue(MB_REG_PARITY, value);
+}
+
+bool ModbusAdapter_BuildConfigFromReader(
+    ModbusAdapterRegisterReader_t reader, void *user,
+    const ModbusConfig_t *current_cfg, ModbusConfig_t *out_cfg)
+{
+    uint16_t slave_id;
+    uint16_t baud_code;
+    uint16_t parity_code;
+    uint32_t baud_rate;
+
+    if ((reader == NULL) || (current_cfg == NULL) || (out_cfg == NULL) ||
+        !reader(user, MB_REG_SLAVE_ID, &slave_id) ||
+        !reader(user, MB_REG_BAUDRATE, &baud_code) ||
+        !reader(user, MB_REG_PARITY, &parity_code) ||
+        !ModbusAdapter_IsValidSlaveId(slave_id) ||
+        !ModbusAdapter_CodeToBaud(baud_code, &baud_rate) ||
+        !ModbusAdapter_IsValidParityCode(parity_code)) {
+        return false;
+    }
+
+    *out_cfg = *current_cfg;
+    out_cfg->slave_id = (uint8_t)slave_id;
+    out_cfg->baud_rate = baud_rate;
+    out_cfg->parity = (uint8_t)parity_code;
+    return ModbusModule_ValidateConfig(out_cfg);
 }
 
 eMBParity ModbusAdapter_ParityFromCode(uint16_t parity_code)

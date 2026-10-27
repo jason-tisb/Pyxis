@@ -1,8 +1,13 @@
 #include "vibration_modbus_adapter.h"
 
+#include <stddef.h>
+
 bool VibrationAdapter_IsValidMachineProfile(uint16_t value)
 {
-    return value <= (uint16_t)VIB_MACHINE_PROFILE_GEARBOX;
+    const modbus_map_entry_t *entry = ModbusMap_Find(
+        MODBUS_MAP_REGISTER_HOLDING, MB_REG_MACHINE_PROFILE);
+
+    return (entry != NULL) && ModbusMap_ValidateValue(entry, value);
 }
 
 static float decode_ratio_x100(uint16_t value)
@@ -37,38 +42,70 @@ static uint16_t encode_deg_x10(float value)
 
 bool VibrationAdapter_IsValidCommand(uint16_t value)
 {
-    return value <= (uint16_t)VIBRATION_ADAPTER_CMD_RESET_BASELINE;
+    const modbus_map_entry_t *entry = ModbusMap_Find(
+        MODBUS_MAP_REGISTER_HOLDING, MB_REG_BASELINE_COMMAND);
+
+    return (entry != NULL) && ModbusMap_ValidateValue(entry, value);
 }
 
 bool VibrationAdapter_IsValidRawConfigValue(uint16_t reg_addr, uint16_t value)
 {
-    switch (reg_addr) {
-        case MB_REG_MACHINE_PROFILE:
-            return VibrationAdapter_IsValidMachineProfile(value);
-        case MB_REG_GEAR_RATIO:
-            return (value >= 1U) && (value <= 5000U);
-        case MB_REG_GEAR_TEETH_NUMBER:
-            return (value > 0U) && (value <= 1024U);
-        case MB_REG_BASE_FREQ_HZ:
-            return (value >= 1U) && (value <= 65535U);
-        case MB_REG_BEARING_BALL_COUNT:
-            return (value >= 3U) && (value <= 32U);
-        case MB_REG_BEARING_BALL_SIZE:
-            return (value >= 1U) && (value <= 5000U);
-        case MB_REG_BEARING_DIAMETER:
-            return (value >= 1U) && (value <= 7200U);
-        case MB_REG_BEARING_ALPHA_ANGLE:
-            return value <= 900U;
-        case MB_REG_FILTER_HIGH_PASS:
-        case MB_REG_FILTER_LOW_PASS:
-            return (value >= 1U) && (value <= 8000U);
-        case MB_REG_REFRESH:
-            return value <= 1U;
-        case MB_REG_BASELINE_COMMAND:
-            return VibrationAdapter_IsValidCommand(value);
-        default:
-            return true;
+    const modbus_map_entry_t *entry = ModbusMap_Find(
+        MODBUS_MAP_REGISTER_HOLDING, reg_addr);
+
+    return (entry == NULL) ? false : ModbusMap_ValidateValue(entry, value);
+}
+
+bool VibrationAdapter_BuildConfigFromReader(
+    VibrationAdapterRegisterReader_t reader, void *user,
+    const VibConfig_t *current_cfg, VibConfig_t *out_cfg)
+{
+    uint16_t machine_profile;
+    uint16_t gear_ratio;
+    uint16_t gear_teeth;
+    uint16_t motor_speed;
+    uint16_t ball_count;
+    uint16_t ball_size;
+    uint16_t bearing_diameter;
+    uint16_t alpha_angle;
+    uint16_t filter_high_pass;
+    uint16_t filter_low_pass;
+    const uint16_t addresses[] = {
+        MB_REG_MACHINE_PROFILE, MB_REG_GEAR_RATIO, MB_REG_GEAR_TEETH_NUMBER,
+        MB_REG_BASE_FREQ_HZ, MB_REG_BEARING_BALL_COUNT,
+        MB_REG_BEARING_BALL_SIZE, MB_REG_BEARING_DIAMETER,
+        MB_REG_BEARING_ALPHA_ANGLE, MB_REG_FILTER_HIGH_PASS,
+        MB_REG_FILTER_LOW_PASS
+    };
+    uint16_t *values[] = {
+        &machine_profile, &gear_ratio, &gear_teeth, &motor_speed,
+        &ball_count, &ball_size, &bearing_diameter, &alpha_angle,
+        &filter_high_pass, &filter_low_pass
+    };
+    size_t i;
+
+    if ((reader == NULL) || (current_cfg == NULL) || (out_cfg == NULL)) {
+        return false;
     }
+    for (i = 0U; i < (sizeof(addresses) / sizeof(addresses[0])); ++i) {
+        if (!reader(user, addresses[i], values[i]) ||
+            !VibrationAdapter_IsValidRawConfigValue(addresses[i], *values[i])) {
+            return false;
+        }
+    }
+
+    *out_cfg = *current_cfg;
+    out_cfg->machine_profile = (uint8_t)machine_profile;
+    out_cfg->gear_ratio = decode_ratio_x100(gear_ratio);
+    out_cfg->gear_teeth_number = gear_teeth;
+    out_cfg->motor_speed_rpm = motor_speed;
+    out_cfg->bearing_ball_count = ball_count;
+    out_cfg->bearing_ball_size_mm = decode_mm_x100(ball_size);
+    out_cfg->bearing_pitch_diameter_mm = decode_mm_x100(bearing_diameter);
+    out_cfg->bearing_alpha_angle_deg = decode_deg_x10(alpha_angle);
+    out_cfg->filter_high_pass_hz = filter_high_pass;
+    out_cfg->filter_low_pass_hz = filter_low_pass;
+    return VibrationModule_ValidateConfig(out_cfg);
 }
 
 void VibrationAdapter_InitMap(const VibrationAdapterContext_t *ctx, const VibConfig_t *current_cfg)

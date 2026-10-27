@@ -142,8 +142,35 @@ bool VibrationModule_UpdateConfig(const VibConfig_t* new_cfg)
         return true;
     }
 
+    if (!VibrationModule_PersistConfig(new_cfg)) {
+        return false;
+    }
+    return VibrationModule_CommitRuntimeConfig(new_cfg);
+}
+
+bool VibrationModule_PersistConfig(const VibConfig_t* new_cfg)
+{
+    if (!VibrationModule_ValidateConfig(new_cfg)) {
+        return false;
+    }
+    return Storage_Write(KV_KEY_VIBRATION_CFG, new_cfg, sizeof(VibConfig_t));
+}
+
+bool VibrationModule_CommitRuntimeConfig(const VibConfig_t* new_cfg)
+{
+    if (!VibrationModule_ValidateConfig(new_cfg)) {
+        return false;
+    }
+    return VibrationModule_CommitValidatedRuntimeConfig(new_cfg);
+}
+
+bool VibrationModule_CommitValidatedRuntimeConfig(const VibConfig_t* new_cfg)
+{
+    if (new_cfg == NULL) {
+        return false;
+    }
     memcpy(&s_vib_cfg, new_cfg, sizeof(VibConfig_t));
-    return Storage_Write(KV_KEY_VIBRATION_CFG, &s_vib_cfg, sizeof(VibConfig_t));
+    return true;
 }
 
 void VibrationModule_ProcessNewSample(float current_g)

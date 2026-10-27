@@ -19,6 +19,11 @@ void ModbusModule_Init(void);
 void ModbusModule_GetConfig(ModbusConfig_t* out_cfg);
 bool ModbusModule_ValidateConfig(const ModbusConfig_t* candidate_cfg);
 bool ModbusModule_UpdateConfig(const ModbusConfig_t* new_cfg);
+/* Milestone F: separate volatile publication from persistence. */
+bool ModbusModule_PersistConfig(const ModbusConfig_t* cfg);
+bool ModbusModule_CommitRuntimeConfig(const ModbusConfig_t* cfg);
+/* Caller must have completed ModbusModule_ValidateConfig(). */
+bool ModbusModule_CommitValidatedRuntimeConfig(const ModbusConfig_t* cfg);
 void ModbusModule_RecordRxOk(void);
 void ModbusModule_RecordCrcError(void);
 void ModbusModule_GetStats(ModbusStats_t* out_stats);

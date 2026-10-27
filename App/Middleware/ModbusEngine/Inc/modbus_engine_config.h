@@ -17,6 +17,12 @@
 #define MODBUS_AUTOBAUD_ENABLE 0
 #endif
 
+/* Software qualification seam.  Keep this disabled for every production
+ * image; enabling it selects the deterministic persistence test backend. */
+#ifndef MODBUS_G_TEST_HOOKS
+#define MODBUS_G_TEST_HOOKS 0
+#endif
+
 /* Pyxis transport selector for the upcoming DMA absolute-position port.
  * 0 keeps the currently verified ring-worker transport.
  * 1 enables the future absolute-position/RTO transport. */
@@ -56,6 +62,10 @@
 
 #if ((MODBUS_AUTOBAUD_ENABLE != 0) && (MODBUS_AUTOBAUD_ENABLE != 1))
 #error "MODBUS_AUTOBAUD_ENABLE must be 0 or 1"
+#endif
+
+#if ((MODBUS_G_TEST_HOOKS != 0) && (MODBUS_G_TEST_HOOKS != 1))
+#error "MODBUS_G_TEST_HOOKS must be 0 or 1"
 #endif
 
 #if (MODBUS_AUTOBAUD_ENABLE && !MODBUS_ENGINE_ACTIVE)

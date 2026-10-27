@@ -1,6 +1,7 @@
 #include "modbus_module.h"
 
 #include <stddef.h>
+#include "modbus_persistence.h"
 #include "storage_kv.h"
 #include "mb.h"
 #include "modbus_engine_config.h"
@@ -13,12 +14,14 @@ static bool s_stats_need_save = false;
 
 void ModbusModule_Init(void)
 {
-    if (!Storage_Read(KV_KEY_MODBUS_CFG, &s_mb_cfg, sizeof(s_mb_cfg)) ||
+    if (!ModbusPersistence_LoadConfig(&s_mb_cfg) ||
         !ModbusModule_ValidateConfig(&s_mb_cfg)) {
         s_mb_cfg.slave_id = 3U;
         s_mb_cfg.baud_rate = 9600U;
         s_mb_cfg.parity = 3U;
-        (void)Storage_Write(KV_KEY_MODBUS_CFG, &s_mb_cfg, sizeof(s_mb_cfg));
+        /* H1 deliberately does not write flash during startup recovery.
+         * The canonical defaults remain dirty until normal persistence
+         * service or a subsequent accepted configuration write. */
     }
 
     if (!Storage_Read(KV_KEY_MODBUS_STATS, &s_mb_stats, sizeof(s_mb_stats))) {
@@ -86,8 +89,35 @@ bool ModbusModule_UpdateConfig(const ModbusConfig_t* new_cfg)
         return true;
     }
 
+    if (!ModbusModule_PersistConfig(new_cfg)) {
+        return false;
+    }
+    return ModbusModule_CommitRuntimeConfig(new_cfg);
+}
+
+bool ModbusModule_PersistConfig(const ModbusConfig_t* new_cfg)
+{
+    if (!ModbusModule_ValidateConfig(new_cfg)) {
+        return false;
+    }
+    return ModbusPersistence_SaveConfig(new_cfg);
+}
+
+bool ModbusModule_CommitRuntimeConfig(const ModbusConfig_t* new_cfg)
+{
+    if (!ModbusModule_ValidateConfig(new_cfg)) {
+        return false;
+    }
+    return ModbusModule_CommitValidatedRuntimeConfig(new_cfg);
+}
+
+bool ModbusModule_CommitValidatedRuntimeConfig(const ModbusConfig_t* new_cfg)
+{
+    if (new_cfg == NULL) {
+        return false;
+    }
     memcpy(&s_mb_cfg, new_cfg, sizeof(ModbusConfig_t));
-    return Storage_Write(KV_KEY_MODBUS_CFG, &s_mb_cfg, sizeof(ModbusConfig_t));
+    return true;
 }
 
 void ModbusModule_RecordRxOk(void)

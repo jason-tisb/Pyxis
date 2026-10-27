@@ -16,6 +16,12 @@ extern "C" {
 typedef enum {
     KV_KEY_MODBUS_CFG    = 0x01,
     KV_KEY_VIBRATION_CFG = 0x02,
+    /* Milestone H1: dual-slot canonical Modbus persistence. */
+    KV_KEY_MODBUS_CFG_SLOT_A = 0x03,
+    KV_KEY_MODBUS_CFG_SLOT_B = 0x04,
+    KV_KEY_MODBUS_CFG_COMMIT_A = 0x05,
+    KV_KEY_MODBUS_CFG_COMMIT_B = 0x06,
+    KV_KEY_MODBUS_CFG_LEGACY_BLOCK = 0x07,
     KV_KEY_MODBUS_STATS  = 0x11,
     KV_KEY_VIB_RECORD    = 0x12,
     KV_KEY_VIB_BASELINE  = 0x13,
