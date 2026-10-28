@@ -58,14 +58,16 @@ static const osThreadAttr_t ledTask_attributes = {
 osThreadId_t vTaskVibrationHandle;
 const osThreadAttr_t vTaskVibration_attributes = {
   .name = "vTaskVibration",
-  .priority = (osPriority_t) osPriorityNormal1,
+  .priority = (osPriority_t) osPriorityAboveNormal2,
   .stack_size = 30000 * 4
 };
 /* Definitions for vTaskModbus */
 osThreadId_t vTaskModbusHandle;
 const osThreadAttr_t vTaskModbus_attributes = {
   .name = "vTaskModbus",
-  .priority = (osPriority_t) osPriorityNormal2,
+  /* RX draining is AboveNormal4.  Keep frame processing/response delivery
+   * above the continuous FIFO-acquisition task, but below that RX worker. */
+  .priority = (osPriority_t) osPriorityAboveNormal3,
   .stack_size = 7000 * 4
 };
 
@@ -104,20 +106,20 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
-  /* USER CODE BEGIN RTOS_EVENTS */
-  /* Create events before tasks that consume them to avoid NULL-handle races. */
-	xSettingsEventGroup = xEventGroupCreate();
-  /* USER CODE END RTOS_EVENTS */
-
   /* creation of vTaskVibration */
   vTaskVibrationHandle = osThreadNew(main_TaskVibration, NULL, &vTaskVibration_attributes);
 
   /* creation of vTaskModbus */
-   vTaskModbusHandle = osThreadNew(main_TaskModbus, NULL, &vTaskModbus_attributes);
+  vTaskModbusHandle = osThreadNew(main_TaskModbus, NULL, &vTaskModbus_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   ledTaskHandle = osThreadNew(LED_ServiceTask, NULL, &ledTask_attributes);
   /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* Create events before tasks that consume them to avoid NULL-handle races. */
+	xSettingsEventGroup = xEventGroupCreate();
+  /* USER CODE END RTOS_EVENTS */
 
 }
 /* USER CODE BEGIN Header_main_TaskVibration */

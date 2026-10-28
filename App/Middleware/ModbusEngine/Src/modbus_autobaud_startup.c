@@ -19,7 +19,7 @@ static uint8_t running;
 static uint32_t started_tick;
 static uint32_t retry_after_tick;
 static uint32_t measured_baud;
-static uint8_t measurement_attempt;
+static uint32_t measurement_attempt_total;
 static uint8_t framing_index;
 static modbus_autobaud_score_result_t score_result;
 static const modbus_autobaud_framing_t framing_order[4] = {
@@ -40,9 +40,7 @@ static uint32_t remaining_for_work(void)
     if (elapsed >= MODBUS_AUTOBAUD_TOTAL_TIMEOUT_MS) {
         return 0U;
     }
-    elapsed = MODBUS_AUTOBAUD_TOTAL_TIMEOUT_MS - elapsed;
-    return (elapsed > MODBUS_AUTOBAUD_RECOVERY_RESERVE_MS) ?
-           elapsed - MODBUS_AUTOBAUD_RECOVERY_RESERVE_MS : 0U;
+    return MODBUS_AUTOBAUD_TOTAL_TIMEOUT_MS - elapsed;
 }
 
 static void update_time(void)
@@ -101,7 +99,8 @@ static bool start_measurement(void)
     if (!ModbusAutobaudCapture_Start()) {
         return false;
     }
-    result.measurement_attempts = (uint32_t)measurement_attempt + 1U;
+    measurement_attempt_total++;
+    result.measurement_attempts = measurement_attempt_total;
     result.state = MODBUS_AUTOBAUD_STATE_MEASURING;
     return true;
 }
@@ -129,13 +128,28 @@ static bool start_validation(void)
 
 static bool start_scanner(void)
 {
-    uint32_t budget = remaining_for_work();
-    if (budget == 0U || !ModbusAutobaudScan_Start(budget)) {
+    /* Profile scanning is a separate fallback phase after dynamic detection. */
+    if (remaining_for_work() != 0U) {
+        return false;
+    }
+    if (ModbusAutobaudCapture_IsActive() &&
+        !ModbusAutobaudCapture_Stop()) {
+        return false;
+    }
+    ModbusAutobaudValidate_Stop();
+    if (!ModbusAutobaudScan_Start(MODBUS_AUTOBAUD_SCAN_ROUND_MS)) {
         return false;
     }
     result.state = MODBUS_AUTOBAUD_STATE_SCANNING;
     ModbusAutobaudDiag_OnScanStart();
     return true;
+}
+
+static void retry_measurement(void)
+{
+    ModbusAutobaudValidate_Stop();
+    retry_after_tick = HAL_GetTick() + 20U;
+    result.state = MODBUS_AUTOBAUD_STATE_SCORING;
 }
 
 bool ModbusAutobaudStartup_Start(void)
@@ -144,18 +158,18 @@ bool ModbusAutobaudStartup_Start(void)
         return false;
     }
     result = (modbus_autobaud_startup_result_t){
-        MODBUS_AUTOBAUD_STARTUP_RUNNING,
-        MODBUS_AUTOBAUD_STATE_IDLE, 0U, 0U,
-        MODBUS_AUTOBAUD_FRAMING_8E1, 0U, 0U, 0U, 0U, 0U, 0U
+        .status = MODBUS_AUTOBAUD_STARTUP_RUNNING,
+        .state = MODBUS_AUTOBAUD_STATE_IDLE,
+        .framing_mode = MODBUS_AUTOBAUD_FRAMING_8E1
     };
     started_tick = HAL_GetTick();
-    measurement_attempt = 0U;
+    measurement_attempt_total = 0U;
     framing_index = 0U;
     retry_after_tick = 0U;
     running = 1U;
     ModbusAutobaudDiag_OnStart();
     if (!start_measurement()) {
-        (void)apply_fallback();
+        retry_measurement();
     }
     return true;
 }
@@ -171,8 +185,11 @@ modbus_autobaud_startup_status_t ModbusAutobaudStartup_Service(void)
         return result.status;
     }
     update_time();
-    if (remaining_for_work() == 0U) {
-        (void)apply_fallback();
+    if (result.state != MODBUS_AUTOBAUD_STATE_SCANNING &&
+        remaining_for_work() == 0U) {
+        if (!start_scanner()) {
+            (void)apply_fallback();
+        }
         return result.status;
     }
 
@@ -229,20 +246,17 @@ modbus_autobaud_startup_status_t ModbusAutobaudStartup_Service(void)
             measured_baud = score_result.baud_rate;
             framing_index = 0U;
             if (!start_validation()) {
-                (void)start_scanner();
+                retry_measurement();
             }
-        } else if (++measurement_attempt < MODBUS_AUTOBAUD_MEASURE_ATTEMPTS) {
-            retry_after_tick = HAL_GetTick() + 20U;
-            result.state = MODBUS_AUTOBAUD_STATE_SCORING;
-        } else if (!start_scanner()) {
-            (void)apply_fallback();
+        } else {
+            retry_measurement();
         }
         break;
 
     case MODBUS_AUTOBAUD_STATE_SCORING:
         if ((int32_t)(HAL_GetTick() - retry_after_tick) >= 0) {
             if (!start_measurement()) {
-                (void)apply_fallback();
+                retry_measurement();
             }
         }
         break;
@@ -261,16 +275,14 @@ modbus_autobaud_startup_status_t ModbusAutobaudStartup_Service(void)
             ModbusAutobaudDiag_RecordValidationTimeout();
             if (++framing_index < 4U) {
                 if (!start_validation()) {
-                    (void)start_scanner();
+                    retry_measurement();
                 }
-            } else if (!start_scanner()) {
-                (void)apply_fallback();
+            } else {
+                retry_measurement();
             }
         } else if (validation == MODBUS_AUTOBAUD_VALIDATE_CONFIG_ERROR ||
                    validation == MODBUS_AUTOBAUD_VALIDATE_RX_ERROR) {
-            if (!start_scanner()) {
-                (void)apply_fallback();
-            }
+            retry_measurement();
         }
         break;
 
@@ -299,9 +311,9 @@ modbus_autobaud_startup_status_t ModbusAutobaudStartup_Service(void)
             (void)apply_fallback();
             break;
         case MODBUS_AUTOBAUD_SCAN_TIMEOUT:
+            result.scan_profiles_attempted = scan_result.profiles_attempted;
             ModbusAutobaudDiag_SetError(
                 MODBUS_AUTOBAUD_ERROR_SCAN_BUDGET_EXHAUSTED);
-            result.scan_profiles_attempted = scan_result.profiles_attempted;
             (void)apply_fallback();
             break;
         default:

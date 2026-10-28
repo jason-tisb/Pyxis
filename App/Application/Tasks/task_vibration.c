@@ -42,6 +42,15 @@ static uint8_t g_spi_sensor_dma_tx_buf[SENSOR_SPI_DMA_BUFFER_SIZE];
 static uint8_t g_spi_sensor_dma_rx_buf[SENSOR_SPI_DMA_BUFFER_SIZE];
 static void refresh_bearing_frequency_if_events_pending(void);
 
+volatile uint32_t g_iis3dwb_temperature_attempts = 0U;
+volatile uint32_t g_iis3dwb_temperature_successes = 0U;
+volatile uint32_t g_iis3dwb_temperature_failures = 0U;
+volatile uint32_t g_iis3dwb_temperature_last_attempt_tick = 0U;
+volatile uint32_t g_iis3dwb_temperature_last_success_tick = 0U;
+volatile int16_t g_iis3dwb_temperature_last_value_x10 = 250;
+volatile bool g_iis3dwb_temperature_valid = false;
+volatile bool g_iis3dwb_sensor_ready = false;
+
 typedef enum {
     VIB_PROCESS_PROGRESS_NONE = 0,
     VIB_PROCESS_PROGRESS_PARTIAL,
@@ -61,7 +70,79 @@ static void sensor_delay_ms(uint32_t ms)
     osDelay(ms);
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+#if (VIBRATION_TEMPERATURE_SERVICE_ENABLE != 0U)
+static uint32_t vibration_temperature_period_ticks(void)
+{
+    uint32_t frequency_hz = osKernelGetTickFreq();
+    uint64_t period_ticks;
+
+    if (frequency_hz == 0U) {
+        frequency_hz = 1000U;
+    }
+
+    period_ticks = ((uint64_t)IIS3DWB_TEMPERATURE_PERIOD_MS * frequency_hz + 999U) / 1000U;
+    return (period_ticks == 0U) ? 1U : (uint32_t)period_ticks;
+}
+
+static void vibration_publish_temperature(int16_t temperature_x10)
+{
+    if (regbuf_mtx == NULL || osMutexAcquire(regbuf_mtx, 5U) != osOK) {
+        return;
+    }
+
+    MODBUS_INPUT_REGS[MB_REG_TEMPERATURE] = (USHORT)temperature_x10;
+    (void)osMutexRelease(regbuf_mtx);
+}
+
+static void vibration_service_temperature(void)
+{
+    static uint32_t last_service_tick = 0U;
+    static uint32_t period_ticks = 0U;
+    static bool schedule_initialized = false;
+    uint32_t now;
+    int16_t temperature_x10;
+
+    if (!g_iis3dwb_sensor_ready) {
+        schedule_initialized = false;
+        return;
+    }
+
+    now = osKernelGetTickCount();
+    if (period_ticks == 0U) {
+        period_ticks = vibration_temperature_period_ticks();
+    }
+
+    /* Make the first read immediately eligible after initialization/recovery. */
+    if (!schedule_initialized) {
+        last_service_tick = now - period_ticks;
+        schedule_initialized = true;
+    }
+
+    if ((uint32_t)(now - last_service_tick) < period_ticks) {
+        return;
+    }
+
+    last_service_tick = now;
+    g_iis3dwb_temperature_last_attempt_tick = now;
+    ++g_iis3dwb_temperature_attempts;
+
+    temperature_x10 = 0;
+    if (!IIS3DWB_Sensor_ReadTemperatureX10(&g_sensor, &temperature_x10)) {
+        ++g_iis3dwb_temperature_failures;
+        return;
+    }
+
+    g_iis3dwb_temperature_last_value_x10 = temperature_x10;
+    g_iis3dwb_temperature_last_success_tick = now;
+    ++g_iis3dwb_temperature_successes;
+    g_iis3dwb_temperature_valid = true;
+    vibration_publish_temperature(temperature_x10);
+}
+#endif /* VIBRATION_TEMPERATURE_SERVICE_ENABLE */
+
+/* STM32H5 HAL dispatches GPIO EXTI events to edge-specific callbacks.
+ * FIFO watermark is configured on PA9 as a rising-edge event. */
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
 {
     if ((GPIO_Pin == VBS_INT_Pin) && (g_fifo_wm_sem != NULL)) {
         (void)osSemaphoreRelease(g_fifo_wm_sem);
@@ -195,8 +276,10 @@ static bool vibration_try_recover_sensor(void)
     }
 
     s_last_recovery_tick = now;
+    g_iis3dwb_sensor_ready = false;
     fft_sample_count = 0U;
-    return IIS3DWB_Sensor_Recover(&g_sensor);
+    g_iis3dwb_sensor_ready = IIS3DWB_Sensor_Recover(&g_sensor);
+    return g_iis3dwb_sensor_ready;
 }
 
 static inline VibrationProcessProgress_t processVibration(void)
@@ -204,7 +287,6 @@ static inline VibrationProcessProgress_t processVibration(void)
     enum { AXIS_RESULT_COUNT = 3 * RESULT_DATA_PER_AXIS };
 
     static uint64_t time_prev = 0U;
-    static int16_t last_temperature_x10 = 250;
     VibConfig_t vib_cfg;
     VibrationBaseline_t baseline;
     VibrationTachState_t tach_state;
@@ -216,9 +298,14 @@ static inline VibrationProcessProgress_t processVibration(void)
     VibrationHealthSnapshot_t snapshot;
     uint16_t captured = 0U;
     uint16_t shadow[AXIS_RESULT_COUNT];
-    int16_t temperature_x10 = last_temperature_x10;
+    int16_t temperature_x10 = g_iis3dwb_temperature_last_value_x10;
     uint64_t time_now;
     uint64_t time_diff;
+
+    if (!g_iis3dwb_sensor_ready) {
+        osDelay(1U);
+        return VIB_PROCESS_PROGRESS_ERROR;
+    }
 
     if (!IIS3DWB_Sensor_FetchSamples(&g_sensor, raw_x, raw_y, raw_z, fft_sample_count, FFT_LENGTH, &captured)) {
         osDelay(1);
@@ -236,10 +323,6 @@ static inline VibrationProcessProgress_t processVibration(void)
     }
 
     fft_sample_count = 0U;
-
-    if (IIS3DWB_Sensor_ReadTemperatureX10(&g_sensor, &temperature_x10)) {
-        last_temperature_x10 = temperature_x10;
-    }
 
     time_now = os_time_us();
     time_diff = time_now - time_prev;
@@ -355,8 +438,16 @@ void main_TaskVibration(void *argument)
         }
     }
 
-    if (!IIS3DWB_Sensor_Init(&g_sensor, FIFO_WATERMARK, IIS3DWB_XL_FS)) {
-        wait_forever_with_delay(1000U);
+    g_iis3dwb_sensor_ready = IIS3DWB_Sensor_Init(&g_sensor, FIFO_WATERMARK, IIS3DWB_XL_FS);
+    if (!g_iis3dwb_sensor_ready) {
+        /* Reuse the normal recovery owner instead of creating a second
+         * initialization path for temperature servicing. */
+        for (;;) {
+            if (vibration_try_recover_sensor()) {
+                break;
+            }
+            osDelay(100U);
+        }
     }
 
     modbusEventHandle = osThreadNew(eventHandlerTask, NULL, NULL);
@@ -374,6 +465,10 @@ void main_TaskVibration(void *argument)
 
         for (;;) {
             VibrationProcessProgress_t progress;
+
+#if (VIBRATION_TEMPERATURE_SERVICE_ENABLE != 0U)
+            vibration_service_temperature();
+#endif
 
             if (!g_use_event_helper_task) {
                 refresh_bearing_frequency_if_events_pending();

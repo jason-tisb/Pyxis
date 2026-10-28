@@ -42,14 +42,18 @@ typedef struct {
     uint32_t last_error;
 } modbus_autobaud_startup_result_t;
 
+/* Dynamic measurement/framing window only. Profile scan follows this window. */
 #ifndef MODBUS_AUTOBAUD_TOTAL_TIMEOUT_MS
-#define MODBUS_AUTOBAUD_TOTAL_TIMEOUT_MS 15000U
+#define MODBUS_AUTOBAUD_TOTAL_TIMEOUT_MS 60000U
 #endif
+
+/* Each dynamic attempt is bounded; there is no attempt-count limit. */
 #ifndef MODBUS_AUTOBAUD_MEASURE_TIMEOUT_MS
 #define MODBUS_AUTOBAUD_MEASURE_TIMEOUT_MS 1500U
 #endif
-#ifndef MODBUS_AUTOBAUD_MEASURE_ATTEMPTS
-#define MODBUS_AUTOBAUD_MEASURE_ATTEMPTS 3U
+/* Separate profile-scan budget, starting only after dynamic timeout. */
+#ifndef MODBUS_AUTOBAUD_SCAN_ROUND_MS
+#define MODBUS_AUTOBAUD_SCAN_ROUND_MS 24000U
 #endif
 #ifndef MODBUS_AUTOBAUD_RECOVERY_RESERVE_MS
 #define MODBUS_AUTOBAUD_RECOVERY_RESERVE_MS 500U

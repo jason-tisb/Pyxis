@@ -10,6 +10,10 @@ extern SPI_HandleTypeDef hspi1;
 #define VB001
 #define BOOT_TIME                          10U
 #define FIFO_WATERMARK                     354U
+#define IIS3DWB_TEMPERATURE_PERIOD_MS      1000U
+/* Temporary FIFO/EXTI diagnostic switch.  Set to 1U to restore periodic
+ * IIS3DWB temperature reads after vibration acquisition is verified. */
+#define VIBRATION_TEMPERATURE_SERVICE_ENABLE 1U
 #define RESULT_DATA_PER_AXIS               50U
 #define QUANTITY_USED_FFT_SAMPLE           200U /* never more than FFT_LENGTH / 2 */
 #define SENSOR_BUS                         hspi1

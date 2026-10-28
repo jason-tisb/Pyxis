@@ -180,14 +180,6 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles FLASH global interrupt.
-  */
-void FLASH_IRQHandler(void)
-{
-  HAL_FLASH_IRQHandler();
-}
-
-/**
  * @brief This function handles EXTI line 9 interrupt.
  */
 void EXTI9_IRQHandler(void)
@@ -216,7 +208,7 @@ void GPDMA1_Channel1_IRQHandler(void)
   */
 void GPDMA1_Channel2_IRQHandler(void)
 {
-	g_gpdma_uart3_irq_count++;
+  g_gpdma_uart3_irq_count++;
   HAL_DMA_IRQHandler(&hdma_usart3_rx);
 }
 
@@ -276,10 +268,6 @@ void USART3_IRQHandler(void)
     if (errorflags != 0U)
     {
         g_usart3_error_count++;
-        /* Let HAL clear FE/PE/NE/ORE (and any non-hardware-RTO timeout
-         * flag included above) before returning.  Leaving an error flag
-         * pending retriggers USART3_IRQHandler continuously and can starve
-         * the RTOS, including the autobaud restore path. */
         HAL_UART_IRQHandler(&huart3);
         return;
     }
@@ -294,10 +282,6 @@ void USART3_IRQHandler(void)
     }
 
 #if MODBUS_ENGINE_ACTIVE && MODBUS_PYXIS_TX_IT
-    /* HAL's interrupt transmitter needs both TXE and TC servicing.  The
-     * legacy path only handled TXE, which can leave HAL_UART_Transmit_IT()
-     * waiting forever for its completion callback (and can release RS485 DE
-     * at the wrong time). */
     if (((isr & USART_ISR_TXE_TXFNF) != 0U) &&
         __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_TXE))
     {
@@ -308,7 +292,7 @@ void USART3_IRQHandler(void)
     if (((isr & USART_ISR_TC) != 0U) &&
         __HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_TC))
     {
-    	g_usart3_tc_count++;
+        g_usart3_tc_count++;
         HAL_UART_IRQHandler(&huart3);
         return;
     }

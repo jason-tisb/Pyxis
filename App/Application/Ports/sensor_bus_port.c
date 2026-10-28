@@ -109,9 +109,8 @@ static int32_t sensor_bus_spi_write_reg(void *user_ctx, uint8_t reg, const uint8
     }
 
     transfer_len = (uint16_t)(len + 1U);
-    if (len > 1U) {
-        reg |= 0x40U;
-    }
+    /* IIS3DWB uses CTRL3_C.IF_INC for multi-byte address increment.
+     * Bit 6 of the SPI command is AD6, not an auto-increment flag. */
 
     if (sensor_bus_spi_dma_ready(spi_ctx, transfer_len)) {
         if (osMutexAcquire(spi_ctx->dma->bus_lock, osWaitForever) != osOK) {
@@ -169,10 +168,9 @@ static int32_t sensor_bus_spi_read_reg(void *user_ctx, uint8_t reg, uint8_t *buf
     }
 
     transfer_len = (uint16_t)(len + 1U);
+    /* IIS3DWB uses CTRL3_C.IF_INC for multi-byte address increment.
+     * Bit 6 of the SPI command is AD6, not an auto-increment flag. */
     reg |= 0x80U;
-    if (len > 1U) {
-        reg |= 0x40U;
-    }
 
     if (sensor_bus_spi_dma_ready(spi_ctx, transfer_len)) {
         if (osMutexAcquire(spi_ctx->dma->bus_lock, osWaitForever) != osOK) {

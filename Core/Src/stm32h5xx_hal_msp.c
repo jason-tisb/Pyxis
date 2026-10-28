@@ -19,8 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <string.h>
 /* USER CODE BEGIN Includes */
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -73,10 +73,6 @@ void HAL_MspInit(void)
   /* USER CODE END MspInit 0 */
 
   /* System interrupt init*/
-  /* FLASH_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(FLASH_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(FLASH_IRQn);
-
   /* PendSV_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
 
@@ -312,7 +308,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 
     /* Peripheral clock enable */
     __HAL_RCC_SPI1_CLK_ENABLE();
-    __HAL_RCC_GPDMA1_CLK_ENABLE();
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**SPI1 GPIO Configuration
@@ -369,10 +364,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 
     __HAL_LINKDMA(hspi, hdmatx, hdma_spi1_tx);
 
-    HAL_NVIC_SetPriority(GPDMA1_Channel0_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(GPDMA1_Channel0_IRQn);
-    HAL_NVIC_SetPriority(GPDMA1_Channel1_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(GPDMA1_Channel1_IRQn);
     HAL_NVIC_SetPriority(SPI1_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(SPI1_IRQn);
 
@@ -407,12 +398,9 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
 
-    HAL_DMA_DeInit(hspi->hdmarx);
+    /* SPI1 DMA DeInit */
     HAL_DMA_DeInit(hspi->hdmatx);
-    HAL_NVIC_DisableIRQ(GPDMA1_Channel0_IRQn);
-    HAL_NVIC_DisableIRQ(GPDMA1_Channel1_IRQn);
-    HAL_NVIC_DisableIRQ(SPI1_IRQn);
-
+    HAL_DMA_DeInit(hspi->hdmarx);
     /* USER CODE BEGIN SPI1_MspDeInit 1 */
 
     /* USER CODE END SPI1_MspDeInit 1 */
@@ -440,7 +428,17 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3;
-    PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+    PeriphClkInitStruct.PLL2.PLL2Source = RCC_PLL2_SOURCE_HSE;
+    PeriphClkInitStruct.PLL2.PLL2M = 9;
+    PeriphClkInitStruct.PLL2.PLL2N = 144;
+    PeriphClkInitStruct.PLL2.PLL2P = 2;
+    PeriphClkInitStruct.PLL2.PLL2Q = 16;
+    PeriphClkInitStruct.PLL2.PLL2R = 2;
+    PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2_VCIRANGE_1;
+    PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2_VCORANGE_WIDE;
+    PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
+    PeriphClkInitStruct.PLL2.PLL2ClockOut = RCC_PLL2_DIVQ;
+    PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PLL2Q;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -450,10 +448,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     __HAL_RCC_USART3_CLK_ENABLE();
     __HAL_RCC_GPDMA1_CLK_ENABLE();
 
-    /* HAL_UART_DeInit releases the DMA handle, but the application-owned
-     * linked-list objects retain their previous node links. Autobaud may
-     * reconfigure USART3 for several framing candidates, so reset them
-     * before rebuilding the RX list. */
+    /* UART reconfiguration can re-enter this MSP path. Rebuild the
+     * application-owned RX linked list from a known empty state. */
     (void)memset(&uart3_rx_dma_queue, 0, sizeof(uart3_rx_dma_queue));
     (void)memset(&uart3_rx_dma_node, 0, sizeof(uart3_rx_dma_node));
 
@@ -538,8 +534,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     /* USART3 interrupt Init */
     HAL_NVIC_SetPriority(USART3_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
-    HAL_NVIC_SetPriority(GPDMA1_Channel2_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(GPDMA1_Channel2_IRQn);
     /* USER CODE BEGIN USART3_MspInit 1 */
 
     /* USER CODE END USART3_MspInit 1 */
@@ -582,7 +576,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 
     /* USART3 interrupt DeInit */
     HAL_NVIC_DisableIRQ(USART3_IRQn);
-    HAL_NVIC_DisableIRQ(GPDMA1_Channel2_IRQn);
     /* USER CODE BEGIN USART3_MspDeInit 1 */
 
     /* USER CODE END USART3_MspDeInit 1 */
@@ -590,9 +583,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 
 }
 
-/* TIM2 is reserved for the optional dynamic-autobaud capture backend.  It is
- * initialized on demand by modbus_autobaud_capture.c, so the clock/IRQ are
- * enabled only while HAL_TIM_IC_Init is active. */
+/* TIM2 is owned by the dynamic-autobaud capture backend. PC4 remains USART3_RX
+ * in the generated pinout and is remapped to TIM2_CH4 only while measuring. */
 void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* htim)
 {
   if (htim->Instance == TIM2)

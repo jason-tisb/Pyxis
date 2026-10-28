@@ -61,12 +61,12 @@ extern DMA_HandleTypeDef hdma_usart3_rx;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define VBS_CS_Pin GPIO_PIN_14
+#define VBS_CS_GPIO_Port GPIOC
 #define LED_PWR_Pin GPIO_PIN_15
 #define LED_PWR_GPIO_Port GPIOB
 #define LED_STAT_Pin GPIO_PIN_6
 #define LED_STAT_GPIO_Port GPIOC
-#define VBS_CS_Pin GPIO_PIN_14
-#define VBS_CS_GPIO_Port GPIOC
 #define VBS_INT_Pin GPIO_PIN_9
 #define VBS_INT_GPIO_Port GPIOA
 #define TMP_CS_Pin GPIO_PIN_10
