@@ -43,9 +43,11 @@ static uint16_t encode_deg_x10(float value)
 bool VibrationAdapter_IsValidCommand(uint16_t value)
 {
     const modbus_map_entry_t *entry = ModbusMap_Find(
-        MODBUS_MAP_REGISTER_HOLDING, MB_REG_BASELINE_COMMAND);
+        MODBUS_MAP_REGISTER_HOLDING, MB_REG_SYSTEM_COMMAND);
 
-    return (entry != NULL) && ModbusMap_ValidateValue(entry, value);
+    return (entry != NULL) &&
+           ((value == VIBRATION_ADAPTER_CMD_CAPTURE_BASELINE) ||
+            (value == VIBRATION_ADAPTER_CMD_RESET_BASELINE));
 }
 
 bool VibrationAdapter_IsValidRawConfigValue(uint16_t reg_addr, uint16_t value)
@@ -124,7 +126,8 @@ void VibrationAdapter_InitMap(const VibrationAdapterContext_t *ctx, const VibCon
     ctx->holding_regs[MB_REG_BEARING_ALPHA_ANGLE] = encode_deg_x10(current_cfg->bearing_alpha_angle_deg);
     ctx->holding_regs[MB_REG_FILTER_HIGH_PASS] = current_cfg->filter_high_pass_hz;
     ctx->holding_regs[MB_REG_FILTER_LOW_PASS] = current_cfg->filter_low_pass_hz;
-    ctx->holding_regs[MB_REG_BASELINE_COMMAND] = (USHORT)VIBRATION_ADAPTER_CMD_NONE;
+    /* System Command is one-shot and is normally cleared by the engine. */
+    ctx->holding_regs[MB_REG_SYSTEM_COMMAND] = (USHORT)VIBRATION_ADAPTER_CMD_NONE;
 }
 
 bool VibrationAdapter_CheckConfigUpdate(const VibrationAdapterContext_t *ctx,
@@ -235,11 +238,11 @@ bool VibrationAdapter_ReadCommand(const VibrationAdapterContext_t *ctx,
 {
     uint16_t raw_cmd;
 
-    if (ctx == 0 || out_cmd == 0 || ctx->holding_regs == 0 || ctx->reg_count <= MB_REG_BASELINE_COMMAND) {
+    if (ctx == 0 || out_cmd == 0 || ctx->holding_regs == 0 || ctx->reg_count <= MB_REG_SYSTEM_COMMAND) {
         return false;
     }
 
-    raw_cmd = ctx->holding_regs[MB_REG_BASELINE_COMMAND];
+    raw_cmd = ctx->holding_regs[MB_REG_SYSTEM_COMMAND];
     if (!VibrationAdapter_IsValidCommand(raw_cmd) || raw_cmd == 0U) {
         return false;
     }
@@ -250,9 +253,9 @@ bool VibrationAdapter_ReadCommand(const VibrationAdapterContext_t *ctx,
 
 void VibrationAdapter_ClearCommand(const VibrationAdapterContext_t *ctx)
 {
-    if (ctx == 0 || ctx->holding_regs == 0 || ctx->reg_count <= MB_REG_BASELINE_COMMAND) {
+    if (ctx == 0 || ctx->holding_regs == 0 || ctx->reg_count <= MB_REG_SYSTEM_COMMAND) {
         return;
     }
 
-    ctx->holding_regs[MB_REG_BASELINE_COMMAND] = (USHORT)VIBRATION_ADAPTER_CMD_NONE;
+    ctx->holding_regs[MB_REG_SYSTEM_COMMAND] = (USHORT)VIBRATION_ADAPTER_CMD_NONE;
 }

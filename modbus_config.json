@@ -157,15 +157,15 @@
         },
         "unit": "code"
     },
-    "baseline_command": {
+    "system_command": {
         "registerType": "holding_register",
-        "name": "Baseline Command",
+        "name": "System Command",
         "address": 5,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",
         "bytes": 2,
-        "description": "Baseline command code: 0=none, 1=capture baseline, 2=reset baseline.",
+        "description": "One-shot command: 0=idle, 1=restart, 2=system reset, 4=capture baseline, 5=reset baseline, 0xDEAD=factory reset.",
         "validation": {
             "type": "specific_number",
             "number": [
@@ -175,11 +175,23 @@
                 },
                 {
                     "value": 1,
-                    "name": "Capture Baseline"
+                    "name": "Restart"
                 },
                 {
                     "value": 2,
+                    "name": "System Reset"
+                },
+                {
+                    "value": 4,
+                    "name": "Capture Baseline"
+                },
+                {
+                    "value": 5,
                     "name": "Reset Baseline"
+                },
+                {
+                    "value": 57005,
+                    "name": "Factory Reset"
                 }
             ]
         },
@@ -212,7 +224,7 @@
     "gear_ratio": {
         "registerType": "holding_register",
         "name": "Gear Ratio",
-        "address": 11520,
+        "address": 12544,
         "offset": 0,
         "multiply": 100,
         "data_type": "uint16",
@@ -228,7 +240,7 @@
     "base_freq_hz": {
         "registerType": "holding_register",
         "name": "Base Frequency",
-        "address": 11521,
+        "address": 12545,
         "offset": 0,
         "multiply": 100,
         "data_type": "uint16",
@@ -244,7 +256,7 @@
     "bearing_ball_count": {
         "registerType": "holding_register",
         "name": "Bearing Ball Count",
-        "address": 11522,
+        "address": 12546,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",
@@ -260,7 +272,7 @@
     "bearing_ball_size": {
         "registerType": "holding_register",
         "name": "Bearing Ball Diameter",
-        "address": 11523,
+        "address": 12547,
         "offset": 0,
         "multiply": 100,
         "data_type": "uint16",
@@ -276,7 +288,7 @@
     "bearing_diameter": {
         "registerType": "holding_register",
         "name": "Bearing Pitch Diameter",
-        "address": 11524,
+        "address": 12548,
         "offset": 0,
         "multiply": 100,
         "data_type": "uint16",
@@ -292,7 +304,7 @@
     "bearing_alpha_angle": {
         "registerType": "holding_register",
         "name": "Bearing Contact Angle",
-        "address": 11525,
+        "address": 12549,
         "offset": 0,
         "multiply": 10,
         "data_type": "uint16",
@@ -308,7 +320,7 @@
     "filter_high_pass": {
         "registerType": "holding_register",
         "name": "High Pass Filter",
-        "address": 11526,
+        "address": 12550,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",
@@ -317,14 +329,14 @@
         "validation": {
             "type": "minmax",
             "min": 1,
-            "max": 8000
+            "max": 65535
         },
         "unit": "Hz"
     },
     "filter_low_pass": {
         "registerType": "holding_register",
         "name": "Low Pass Filter",
-        "address": 11527,
+        "address": 12551,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",
@@ -333,14 +345,14 @@
         "validation": {
             "type": "minmax",
             "min": 1,
-            "max": 8000
+            "max": 65535
         },
         "unit": "Hz"
     },
     "refresh": {
         "registerType": "holding_register",
         "name": "Refresh / Apply Command",
-        "address": 11528,
+        "address": 12552,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",
@@ -364,7 +376,7 @@
     "gear_teeth_number": {
         "registerType": "holding_register",
         "name": "Gear Teeth Number",
-        "address": 11529,
+        "address": 12553,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",
@@ -380,7 +392,7 @@
     "remapping_address_table": {
         "registerType": "holding_register",
         "name": "Remapping Address Table",
-        "address": 11648,
+        "address": 12672,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",
@@ -459,7 +471,7 @@
     "temperature": {
         "registerType": "input_register",
         "name": "Sensor Temperature",
-        "address": 1600,
+        "address": 2624,
         "offset": 0,
         "multiply": 10,
         "data_type": "uint16",
@@ -481,7 +493,7 @@
     "x_acc_rms": {
         "registerType": "input_register",
         "name": "X Acc RMS",
-        "address": 1616,
+        "address": 2640,
         "offset": 0,
         "multiply": 1000,
         "data_type": "uint16",
@@ -1031,7 +1043,7 @@
     "y_acc_rms": {
         "registerType": "input_register",
         "name": "Y Acc RMS",
-        "address": 1712,
+        "address": 2736,
         "offset": 0,
         "multiply": 1000,
         "data_type": "uint16",
@@ -1581,7 +1593,7 @@
     "z_acc_rms": {
         "registerType": "input_register",
         "name": "Z Acc RMS",
-        "address": 1808,
+        "address": 2832,
         "offset": 0,
         "multiply": 1000,
         "data_type": "uint16",
@@ -2131,7 +2143,7 @@
     "time_prev_w0": {
         "registerType": "input_register",
         "name": "Previous Timestamp W0",
-        "address": 1904,
+        "address": 2928,
         "offset": 0,
         "multiply": 1,
         "data_type": "uint16",

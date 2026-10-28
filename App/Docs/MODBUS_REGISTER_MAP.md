@@ -11,7 +11,7 @@ It is based on the active code in:
 
 ## Important Current Behavior
 
-- The firmware allocates `11600` slave input registers and `11600` slave holding registers.
+- The firmware allocates `2958` canonical input registers and `12797` canonical holding registers.
 - Holding registers and input registers use **separate buffers**:
   - holding: `usSRegHoldBuf[]`
   - input: `usSRegInBuf[]`
@@ -28,8 +28,8 @@ Recommended interpretation for documentation:
 
 - Internal index `0` = `40001` or `30001`
 - Internal index `9` = `40010` or `30010`
-- Internal index `1600` = `31601`
-- Internal index `1616` = `31617`
+- Internal index `2624` = `32625`
+- Internal index `2640` = `32641`
 
 ## 1. Holding Register Map
 
@@ -42,21 +42,21 @@ These are the registers currently used as writable configuration fields.
 | `2` | `40003` | Parity / Stop Bit | `UINT16` | Active | `0=Even/1sb, 1=Odd/1sb, 2=None/2sb, 3=None/1sb` |
 | `3` | `40004` | Response Delay | `UINT16` | Reserved | Planned communication timing control |
 | `4` | `40005` | Watchdog | `UINT16` | Declared | Implemented as `MB_REG_MACHINE_PROFILE` in firmware today |
-| `5` | `40006` | System Command | `UINT16` | Declared | Implemented as `MB_REG_BASELINE_COMMAND` in firmware today |
+| `5` | `40006` | System Command | `UINT16` | Implemented | One-shot command word; baseline capture/reset actions are encoded here |
 | `6` | `40007` | Analog Data Format | `UINT16` | Reserved | Implemented as `MB_REG_TACH_ENABLE` in firmware today |
 | `7` | `40008` | Tach Source | `UINT16` | Reserved | Planned timer/capture source select |
 | `8` | `40009` | Reserved | `UINT16` | Unused | Spare |
-| `11520` | `51521` | Gear Ratio (x100) | `UINT16` | Declared | Default `0`; Range `1..5000` (0.01..50.00) |
-| `11521` | `51522` | Base Frequency (Hz x100) | `UINT16` | Declared | Default `5000`; Range `1..65535` (0.01..655.35 Hz); stored as shaft base frequency in Hz x100 |
-| `11522` | `51523` | Bearing Ball Count | `UINT16` | Declared | Default `0`; Range `3..32` |
-| `11523` | `51524` | Bearing Ball Diameter (mm x100) | `UINT16` | Declared | Default `0`; Range `1..5000` (0.01..50.00 mm) |
-| `11524` | `51525` | Bearing Pitch Diameter (mm x100) | `UINT16` | Declared | Default `0`; Range `1..7200` (0.01..72.00 mm); must be > ball diameter |
-| `11525` | `51526` | Bearing Contact Angle (deg x10) | `UINT16` | Declared | Default `0`; Range `0..900` (0.0..90.0°) |
-| `11526` | `51527` | High Pass Filter Cutoff (Hz) | `UINT16` | Declared | Default `0`; Range `1..8000` (firmware also enforces `high_pass < low_pass`) |
-| `11527` | `51528` | Low Pass Filter Cutoff (Hz) | `UINT16` | Declared | Default `0`; Range `1..8000` (firmware also enforces `low_pass <= sample_rate/2`) |
-| `11528` | `51529` | Refresh / Apply Command | `UINT16` | Declared | Default `0`; Range `0..1` (currently not used by firmware logic) |
-| `11529` | `51530` | Gear Teeth Number | `UINT16` | Declared | Default `0`; Range `1..1024`; used for gear-mesh analysis |
-| `11648` - `11772` | `51649` - `51773` | Remapping Address Table | `UINT16[125]` | Declared | 125-word table starting at `MB_REG_REMAPPING_ADDR` |
+| `12544` | `52545` | Gear Ratio (x100) | `UINT16` | Declared | Default `100`; Range `1..5000` (0.01..50.00) |
+| `12545` | `52546` | Base Frequency (Hz x100) | `UINT16` | Declared | Default `5000`; Range `1..65535` (0.01..655.35 Hz); stored as shaft base frequency in Hz x100 |
+| `12546` | `52547` | Bearing Ball Count | `UINT16` | Declared | Default `8`; Range `3..32` |
+| `12547` | `52548` | Bearing Ball Diameter (mm x100) | `UINT16` | Declared | Default `1200`; Range `1..5000` (0.01..50.00 mm) |
+| `12548` | `52549` | Bearing Pitch Diameter (mm x100) | `UINT16` | Declared | Default `7200`; Range `1..7200` (0.01..72.00 mm); must be > ball diameter |
+| `12549` | `52550` | Bearing Contact Angle (deg x10) | `UINT16` | Declared | Default `0`; Range `0..900` (0.0..90.0°) |
+| `12550` | `52551` | High Pass Filter Cutoff (Hz) | `UINT16` | Declared | Default `10`; Range `1..65535` (firmware also enforces `high_pass < low_pass`) |
+| `12551` | `52552` | Low Pass Filter Cutoff (Hz) | `UINT16` | Declared | Default `13333`; Range `1..65535` (firmware also enforces `low_pass <= sample_rate/2`) |
+| `12552` | `52553` | Refresh / Apply Command | `UINT16` | Declared | Default `0`; Range `0..1` (currently not used by firmware logic) |
+| `12553` | `52554` | Gear Teeth Number | `UINT16` | Declared | Default `8`; Range `1..1024`; used for gear-mesh analysis |
+| `12672` - `12796` | `52673` - `52797` | Remapping Address Table | `UINT16[125]` | Declared | 125-word table starting at `MB_REG_REMAPPING_ADDR` |
 | `19` - `29` | `40020` - `40030` | Reserved | `UINT16` | Unused | Available for future config |
 
 ## 2. Current Runtime Input Register Map
@@ -73,20 +73,20 @@ These are the telemetry values currently written by the vibration and Modbus tas
 | `3` | `30004` | Manufacturing Date | `UINT16` | `task_modbus.c` |
 | `4` | `30005` | Serial Number (Upper) W0 | `UINT16` | `task_modbus.c` |
 | `5` | `30006` | Serial Number (Upper) W1 | `UINT16` | `task_modbus.c` |
-| `1600` | `31601` | Sensor Temperature x10 | `INT16/UINT16` | `task_vibration.c` |
+| `2624` | `32625` | Sensor Temperature x10 | `INT16/UINT16` | `task_vibration.c` |
 
 Notes:
 
-- `31601` stores temperature in `x10` scale.
+- `32625` stores temperature in `x10` scale.
 - Example: `253` means `25.3 C`.
 
 ### 2.2 Vibration Analytics Result Blocks
 
 The vibration task writes `3 x 50` words into three separate 50-word blocks:
 
-- X-axis block: internal `1616` to `1665` -> `31617` to `31666`
-- Y-axis block: internal `1712` to `1761` -> `31713` to `31762`
-- Z-axis block: internal `1808` to `1857` -> `31809` to `31858`
+- X-axis block: internal `2640` to `2689` -> `32641` to `32690`
+- Y-axis block: internal `2736` to `2785` -> `32737` to `32786`
+- Z-axis block: internal `2832` to `2881` -> `32833` to `32882`
 
 Each axis block uses the same layout.
 
@@ -94,26 +94,26 @@ Each axis block uses the same layout.
 
 | Offset In Axis Block | Address Example (X-Axis) | Name | Current Meaning |
 | :--- | :--- | :--- | :--- |
-| `0` | `31617` | Acc RMS | `acc_rms_g * 1000` |
-| `1` | `30052` | Acc Peak | `acc_peak_g * 1000` |
-| `2` | `30053` | Acc Peak-to-Peak | `acc_p2p_g * 1000` |
-| `3` | `30054` | Crest Factor | `crest_factor * 1000` |
-| `4` | `30055` | Vel RMS | `mm/s` scaled directly into `UINT16` |
-| `5` | `30056` | Vel Peak | `mm/s` scaled directly into `UINT16` |
-| `6` | `30057` | Disp Peak-to-Peak | `mm` scaled directly into `UINT16` |
-| `7` | `30058` | Envelope Kurtosis | `envelope_kurtosis * 100` |
-| `8` | `30059` | ISO Analysis | `1..4` ISO severity band |
-| `9` | `30060` | Fault Flags | Bitmask |
-| `10` - `29` | `30061` - `30080` | Peak Frequency Bins | Top 20 peak frequencies |
-| `30` - `49` | `30081` - `30100` | Peak Magnitudes | Top 20 peak magnitudes |
+| `0` | `32641` | Acc RMS | `acc_rms_g * 1000` |
+| `1` | `32642` | Acc Peak | `acc_peak_g * 1000` |
+| `2` | `32643` | Acc Peak-to-Peak | `acc_p2p_g * 1000` |
+| `3` | `32644` | Crest Factor | `crest_factor * 1000` |
+| `4` | `32645` | Vel RMS | `mm/s` scaled directly into `UINT16` |
+| `5` | `32646` | Vel Peak | `mm/s` scaled directly into `UINT16` |
+| `6` | `32647` | Disp Peak-to-Peak | `mm` scaled directly into `UINT16` |
+| `7` | `32648` | Envelope Kurtosis | `envelope_kurtosis * 100` |
+| `8` | `32649` | ISO Analysis | `1..4` ISO severity band |
+| `9` | `32650` | Fault Flags | Bitmask |
+| `10` - `29` | `32651` - `32670` | Peak Frequency Bins | Top 20 peak frequencies |
+| `30` - `49` | `32671` - `32690` | Peak Magnitudes | Top 20 peak magnitudes |
 
 #### Axis Address Ranges
 
 | Axis | Internal Index Range | Modbus Address Range |
 | :--- | :--- | :--- |
-| X | `1616` - `1665` | `31617` - `31666` |
-| Y | `1712` - `1761` | `31713` - `31762` |
-| Z | `1808` - `1857` | `31809` - `31858` |
+| X | `2640` - `2689` | `32641` - `32690` |
+| Y | `2736` - `2785` | `32737` - `32786` |
+| Z | `2832` - `2881` | `32833` - `32882` |
 
 ### 2.3 Timestamp / Sampling Timing Block
 
@@ -179,7 +179,7 @@ The following addresses fit your current firmware layout cleanly and are the bes
 | :--- | :--- | :--- |
 | `40004` | Response Delay | Communication timing |
 | `40005` | Machine Type Profile | `0=Generic, 1=Motor, 2=Pump, 3=Fan, 4=Compressor, 5=Gearbox` |
-| `40006` | Baseline Command | `0=Idle, 1=Capture, 2=Reset` |
+| `40006` | System Command | `0=Idle, 1=Restart, 2=System Reset, 4=Capture Baseline, 5=Reset Baseline, 0xDEAD=Factory Reset` |
 | `40007` | Tach Enable | `0=Disable, 1=Enable` |
 | `40008` | Tach Source | Timer/capture channel selection |
 | `40009` | Reserved | Spare |
@@ -241,10 +241,10 @@ Recommended future discrete input map:
 Your **current real Modbus image** is:
 
 - `40001` to `40008` for communication/basic control fields
-- `51521` to `51530` for vibration configuration fields
-- `51649` to `51773` for remapping address table
-- `31601` for temperature
-- `31617` to `31858` for the three axis vibration result blocks
+- `52545` to `52554` for vibration configuration fields
+- `52673` to `52797` for remapping address table
+- `32625` for temperature
+- `32641` to `32882` for the three axis vibration result blocks
 - `30201` to `30212` for processing timestamps
 
 Your **best next expansion area** is:

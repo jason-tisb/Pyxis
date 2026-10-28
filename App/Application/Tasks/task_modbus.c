@@ -396,7 +396,9 @@ void main_TaskModbus(void *argument)
         ModbusConfig_t next_cfg;
 #endif
         VibConfig_t next_vib_cfg;
+#if !MODBUS_ENGINE_ACTIVE
         VibrationAdapterCommand_t vib_cmd;
+#endif
 #if !MODBUS_ENGINE_ACTIVE
         eMBPoll();
 #endif
@@ -450,6 +452,10 @@ void main_TaskModbus(void *argument)
             }
         }
 
+#if !MODBUS_ENGINE_ACTIVE
+        /* FreeModbus compatibility path: custom-engine System Command
+         * actions are serviced after TX by the runtime; legacy mode still
+         * consumes the two vibration actions from the same 40006 word. */
         if (VibrationAdapter_ReadCommand(&vibration_ctx, &vib_cmd)) {
             if (vib_cmd == VIBRATION_ADAPTER_CMD_CAPTURE_BASELINE) {
                 (void)VibrationModule_SaveBaseline();
@@ -458,6 +464,7 @@ void main_TaskModbus(void *argument)
             }
             VibrationAdapter_ClearCommand(&vibration_ctx);
         }
+#endif
 
         osDelay(1U);
     }

@@ -41,7 +41,7 @@ static bool is_vibration_config_reg(USHORT reg_addr)
 
 static bool is_vibration_command_reg(USHORT reg_addr)
 {
-    return (reg_addr == MB_REG_BASELINE_COMMAND) || (reg_addr == MB_REG_REFRESH);
+    return (reg_addr == MB_REG_SYSTEM_COMMAND) || (reg_addr == MB_REG_REFRESH);
 }
 
 static bool is_modbus_comm_reg(USHORT reg_addr)

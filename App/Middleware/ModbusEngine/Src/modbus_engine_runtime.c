@@ -129,6 +129,12 @@ static ModbusSystemAction_t runtime_decode_system_command(uint16_t value)
     switch (value) {
     case PYXIS_SYSTEM_COMMAND_RESTART:
         return MODBUS_SYSTEM_ACTION_RESTART;
+    case PYXIS_SYSTEM_COMMAND_SYSTEM_RESET:
+        return MODBUS_SYSTEM_ACTION_SYSTEM_RESET;
+    case PYXIS_SYSTEM_COMMAND_CAPTURE_BASELINE:
+        return MODBUS_SYSTEM_ACTION_CAPTURE_BASELINE;
+    case PYXIS_SYSTEM_COMMAND_RESET_BASELINE:
+        return MODBUS_SYSTEM_ACTION_RESET_BASELINE;
     case PYXIS_SYSTEM_COMMAND_FACTORY_RESET:
         return MODBUS_SYSTEM_ACTION_FACTORY_RESET;
     default:
@@ -832,6 +838,11 @@ static bool runtime_apply_factory_defaults(void)
         return false;
     }
 
+    /* The vibration baseline is runtime/application state, not a Modbus
+     * register.  Factory reset must return it to its canonical empty state
+     * together with the configuration defaults. */
+    VibrationModule_ResetBaseline();
+
     comm_persistence_pending = false;
     persistence_state = MODBUS_PERSIST_STATE_IDLE;
     diagnostics.persistence_state = (uint32_t)persistence_state;
@@ -857,6 +868,7 @@ static bool runtime_persist_current_configuration(void)
 bool ModbusEngineRuntime_ServiceSystemAction(void)
 {
     ModbusSystemAction_t action = pending_system_action;
+    bool reset_after_action = false;
 
     if (action == MODBUS_SYSTEM_ACTION_NONE) {
         return true;
@@ -870,12 +882,25 @@ bool ModbusEngineRuntime_ServiceSystemAction(void)
             diagnostics.system_command_rejects++;
             return false;
         }
+        reset_after_action = true;
+    } else if (action == MODBUS_SYSTEM_ACTION_SYSTEM_RESET) {
+        VibrationModule_ResetBaseline();
+        reset_after_action = true;
     } else if (action == MODBUS_SYSTEM_ACTION_FACTORY_RESET) {
         if (!runtime_apply_factory_defaults()) {
             diagnostics.factory_reset_failures++;
             return false;
         }
         diagnostics.factory_reset_successes++;
+        reset_after_action = true;
+    } else if (action == MODBUS_SYSTEM_ACTION_CAPTURE_BASELINE) {
+        if (!VibrationModule_SaveBaseline()) {
+            diagnostics.system_command_rejects++;
+            g_modbus_system_command_last_error = 4U;
+            return false;
+        }
+    } else if (action == MODBUS_SYSTEM_ACTION_RESET_BASELINE) {
+        VibrationModule_ResetBaseline();
     }
 
 #if MODBUS_G_TEST_HOOKS
@@ -883,7 +908,9 @@ bool ModbusEngineRuntime_ServiceSystemAction(void)
      * test process. */
     return true;
 #else
-    NVIC_SystemReset();
+    if (reset_after_action) {
+        NVIC_SystemReset();
+    }
     return true;
 #endif
 }

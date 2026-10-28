@@ -143,11 +143,12 @@ bool ModbusMap_ValidateValue(
         return value <= 3U;
     case MODBUS_MAP_DOMAIN_MACHINE_PROFILE:
         return value <= 5U;
-    case MODBUS_MAP_DOMAIN_BASELINE_COMMAND:
-        return value <= 2U;
     case MODBUS_MAP_DOMAIN_SYSTEM_COMMAND:
         return (value == PYXIS_SYSTEM_COMMAND_NONE) ||
                (value == PYXIS_SYSTEM_COMMAND_RESTART) ||
+               (value == PYXIS_SYSTEM_COMMAND_SYSTEM_RESET) ||
+               (value == PYXIS_SYSTEM_COMMAND_CAPTURE_BASELINE) ||
+               (value == PYXIS_SYSTEM_COMMAND_RESET_BASELINE) ||
                (value == PYXIS_SYSTEM_COMMAND_FACTORY_RESET);
     default:
         return false;

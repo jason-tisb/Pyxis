@@ -19,8 +19,9 @@
 #define MB_REG_PARITY                     PYXIS_REG_FRAME_SELECTOR_ADDR
 #define MB_REG_RESPONSE_DELAY             PYXIS_REG_RESPONSE_DELAY_ADDR
 #define MB_REG_MACHINE_PROFILE            PYXIS_REG_MACHINE_PROFILE_ADDR
-#define MB_REG_BASELINE_COMMAND           PYXIS_REG_BASELINE_COMMAND_ADDR
 #define MB_REG_SYSTEM_COMMAND             PYXIS_REG_SYSTEM_COMMAND_ADDR
+/* Deprecated alias: baseline actions are encoded in System Command. */
+#define MB_REG_BASELINE_COMMAND           MB_REG_SYSTEM_COMMAND
 #define MB_REG_TACH_ENABLE                PYXIS_REG_TACH_ENABLE_ADDR
 #define MB_REG_TACH_SOURCE                PYXIS_REG_TACH_SOURCE_ADDR
 
@@ -29,23 +30,23 @@
 #define MB_REG_ANALOG_DATA_FORMAT         MB_REG_TACH_ENABLE
 
 /* Kinematic and bearing configuration */
-/* NOTE: mapped to external holding addresses 51521..51530 (40001-based index). */
-#define MB_REG_GEAR_RATIO                 PYXIS_REG_GEAR_RATIO_ADDR       /* 51521 */
-#define MB_REG_BASE_FREQ_HZ               PYXIS_REG_BASE_FREQ_HZ_ADDR     /* 51522 */
-#define MB_REG_BEARING_BALL_COUNT         PYXIS_REG_BEARING_BALL_COUNT_ADDR /* 51523 */
-#define MB_REG_BEARING_BALL_SIZE          PYXIS_REG_BEARING_BALL_SIZE_ADDR /* 51524 */
-#define MB_REG_BEARING_DIAMETER           PYXIS_REG_BEARING_DIAMETER_ADDR /* 51525 */
-#define MB_REG_BEARING_ALPHA_ANGLE        PYXIS_REG_BEARING_ALPHA_ADDR     /* 51526 */
+/* NOTE: mapped to external holding addresses 52545..52554 (40001-based index). */
+#define MB_REG_GEAR_RATIO                 PYXIS_REG_GEAR_RATIO_ADDR       /* 52545 */
+#define MB_REG_BASE_FREQ_HZ               PYXIS_REG_BASE_FREQ_HZ_ADDR     /* 52546 */
+#define MB_REG_BEARING_BALL_COUNT         PYXIS_REG_BEARING_BALL_COUNT_ADDR /* 52547 */
+#define MB_REG_BEARING_BALL_SIZE          PYXIS_REG_BEARING_BALL_SIZE_ADDR /* 52548 */
+#define MB_REG_BEARING_DIAMETER           PYXIS_REG_BEARING_DIAMETER_ADDR /* 52549 */
+#define MB_REG_BEARING_ALPHA_ANGLE        PYXIS_REG_BEARING_ALPHA_ADDR     /* 52550 */
 /* Optional: gear mesh analysis input */
-#define MB_REG_GEAR_TEETH_NUMBER          PYXIS_REG_GEAR_TEETH_ADDR        /* 51530 */
+#define MB_REG_GEAR_TEETH_NUMBER          PYXIS_REG_GEAR_TEETH_ADDR        /* 52554 */
 
 /* Signal processing configuration */
-#define MB_REG_FILTER_HIGH_PASS           PYXIS_REG_FILTER_HIGH_PASS_ADDR  /* 51527 */
-#define MB_REG_FILTER_LOW_PASS            PYXIS_REG_FILTER_LOW_PASS_ADDR   /* 51528 */
-#define MB_REG_REFRESH                    PYXIS_REG_REFRESH_ADDR            /* 51529 */
+#define MB_REG_FILTER_HIGH_PASS           PYXIS_REG_FILTER_HIGH_PASS_ADDR  /* 52551 */
+#define MB_REG_FILTER_LOW_PASS            PYXIS_REG_FILTER_LOW_PASS_ADDR   /* 52552 */
+#define MB_REG_REFRESH                    PYXIS_REG_REFRESH_ADDR            /* 52553 */
 
-/* Remapping address table (Holding): 51649..51773 (125 words). */
-#define MB_REG_REMAPPING_ADDR_START       PYXIS_REG_REMAPPING_ADDR         /* 51649 */
+/* Remapping address table (Holding): 52673..52797 (125 words). */
+#define MB_REG_REMAPPING_ADDR_START       PYXIS_REG_REMAPPING_ADDR         /* 52673 */
 #define MB_REG_REMAPPING_ADDR_COUNT       PYXIS_REG_REMAPPING_ADDR_COUNT
 #define MB_REG_REMAPPING_ADDR_END         PYXIS_REG_REMAPPING_ADDR_END
 #define MB_REG_REMAPPING_ADDR             MB_REG_REMAPPING_ADDR_START

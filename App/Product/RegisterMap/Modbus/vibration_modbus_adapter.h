@@ -19,8 +19,8 @@ typedef bool (*VibrationAdapterRegisterReader_t)(void *user,
 
 typedef enum {
     VIBRATION_ADAPTER_CMD_NONE = 0,
-    VIBRATION_ADAPTER_CMD_CAPTURE_BASELINE = 1,
-    VIBRATION_ADAPTER_CMD_RESET_BASELINE = 2
+    VIBRATION_ADAPTER_CMD_CAPTURE_BASELINE = 4,
+    VIBRATION_ADAPTER_CMD_RESET_BASELINE = 5
 } VibrationAdapterCommand_t;
 
 bool VibrationAdapter_IsValidMachineProfile(uint16_t value);

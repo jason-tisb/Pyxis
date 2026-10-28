@@ -57,7 +57,10 @@ typedef ModbusPersistenceState_t ModbusEngineCommState_t;
 typedef enum {
     MODBUS_SYSTEM_ACTION_NONE = 0,
     MODBUS_SYSTEM_ACTION_RESTART = 1,
-    MODBUS_SYSTEM_ACTION_FACTORY_RESET = 2
+    MODBUS_SYSTEM_ACTION_SYSTEM_RESET = 2,
+    MODBUS_SYSTEM_ACTION_FACTORY_RESET = 3,
+    MODBUS_SYSTEM_ACTION_CAPTURE_BASELINE = 4,
+    MODBUS_SYSTEM_ACTION_RESET_BASELINE = 5
 } ModbusSystemAction_t;
 
 void ModbusEngineRuntime_Init(void);
