@@ -26,3 +26,17 @@ jobs:
           gcc --version
       - name: Run inherited and M4 native tests
         run: python3 tests/test_pyxis_autobaud_v2_m4.py
+
+  arm-syntax:
+    name: M4 guarded STM32 source compile (no link)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+      - name: Install ARM embedded cross-compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Compile opt-in UART/DMA transport and adapter
+        run: sh tests/autobaud_v2/check_m4_arm_syntax.sh
