@@ -1,0 +1,28 @@
+name: Pyxis Autobaud V2 portable software tests
+
+on:
+  push:
+    branches:
+      - feature/pyxis-autobaud-v2-m2
+  pull_request:
+    branches:
+      - feature/pyxis-autobaud-v2-m1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-host:
+    name: M0-M2 native C and Python regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout candidate branch
+        uses: actions/checkout@v4
+      - name: Confirm host toolchain
+        run: |
+          python3 --version
+          gcc --version
+      - name: Compile and execute portable host tests
+        run: python3 tests/test_pyxis_autobaud_v2_m2.py
