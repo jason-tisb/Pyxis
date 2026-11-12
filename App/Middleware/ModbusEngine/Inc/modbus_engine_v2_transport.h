@@ -23,5 +23,8 @@ bool ModbusEngineV2_IsFatal(void);
 bool ModbusEngineV2_SnapshotSession(uint32_t *session_id,
                                      uint32_t *error_generation);
 bool ModbusEngineV2_IsPassive(void);
+/* Suppress active Modbus TX while the worker/transaction is claimed,
+ * passive framing is in progress, or a fatal communication fault is latched. */
+bool ModbusEngineV2_TxAllowed(void);
 
 #endif
