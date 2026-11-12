@@ -979,6 +979,7 @@ bool ModbusEngineV2_Claim(void)
 {
     uint32_t start;
     if (s_v2_fatal != 0U || s_v2_claimed != 0U ||
+        s_v2_worker_parked != 0U ||
         custom_rx_task == NULL || custom_rx_event == NULL ||
         osThreadGetId() == custom_rx_task ||
         !v2_de_is_receive() ||
@@ -1155,6 +1156,12 @@ bool ModbusEngineV2_IsFatal(void)
 bool ModbusEngineV2_IsPassive(void)
 {
     return s_v2_passive != 0U;
+}
+
+bool ModbusEngineV2_TxAllowed(void)
+{
+    return s_v2_fatal == 0U && s_v2_claimed == 0U &&
+           s_v2_passive == 0U && s_v2_park_requested == 0U;
 }
 
 bool ModbusEngineV2_SnapshotSession(uint32_t *session_id,
