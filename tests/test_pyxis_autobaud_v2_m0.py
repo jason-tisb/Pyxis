@@ -95,12 +95,14 @@ class PyxisAutobaudV2M0(unittest.TestCase):
             source("App/Docs/PYXIS_AUTOBAUD_V2_M0_DEPENDENCIES.md"))
 
     def test_no_new_v2_runtime_wiring(self):
-        self.assertFalse(
-            (ROOT / "App/Middleware/AutobaudV2").exists(),
-            "M0 must not import active or inactive V2 sources")
+        # M1 and later may introduce dormant portable sources. The M0
+        # regression invariant is that the firmware target/task is untouched.
         self.assertNotIn(
             "MODBUS_AUTOBAUD_V2_ENABLE",
             source("CMakeLists.txt"))
+        self.assertNotIn(
+            "PyxisAutobaudPort_",
+            source("App/Application/Tasks/task_modbus.c"))
 
 
 if __name__ == "__main__":
