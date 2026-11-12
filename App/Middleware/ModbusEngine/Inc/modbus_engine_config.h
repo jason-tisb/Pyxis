@@ -17,6 +17,13 @@
 #define MODBUS_AUTOBAUD_ENABLE 0
 #endif
 
+/* M4 compile-only V2 transport adapter. This does NOT activate autobaud.
+ * Production stays on the existing UART/DMA worker unless explicitly opted in.
+ * M7 will add a separate flag to activate on-demand supervisor servicing. */
+#ifndef MODBUS_AUTOBAUD_V2_PORT_ENABLE
+#define MODBUS_AUTOBAUD_V2_PORT_ENABLE 0
+#endif
+
 /* Software qualification seam.  Keep this disabled for every production
  * image; enabling it selects the deterministic persistence test backend. */
 #ifndef MODBUS_G_TEST_HOOKS
@@ -62,6 +69,19 @@
 
 #if ((MODBUS_AUTOBAUD_ENABLE != 0) && (MODBUS_AUTOBAUD_ENABLE != 1))
 #error "MODBUS_AUTOBAUD_ENABLE must be 0 or 1"
+#endif
+
+#if ((MODBUS_AUTOBAUD_V2_PORT_ENABLE != 0) && \
+     (MODBUS_AUTOBAUD_V2_PORT_ENABLE != 1))
+#error "MODBUS_AUTOBAUD_V2_PORT_ENABLE must be 0 or 1"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_PORT_ENABLE && !MODBUS_ENGINE_ACTIVE)
+#error "M4 V2 transport requires custom Modbus engine"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_PORT_ENABLE && MODBUS_AUTOBAUD_ENABLE)
+#error "M4 V2 transport may not be compiled alongside legacy startup autobaud"
 #endif
 
 #if ((MODBUS_G_TEST_HOOKS != 0) && (MODBUS_G_TEST_HOOKS != 1))

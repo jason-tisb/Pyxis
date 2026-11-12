@@ -10,6 +10,10 @@
 #include "modbus_engine_port.h"
 #include "modbus_engine_tx.h"
 
+#if MODBUS_ENGINE_ACTIVE && MODBUS_AUTOBAUD_V2_PORT_ENABLE
+#include "modbus_engine_v2_transport.h"
+#endif
+
 #if MODBUS_ENGINE_ACTIVE
 
 /*
@@ -48,6 +52,23 @@ static volatile uint32_t uart3_rto_pending;
  * blocking UART error, so restarting it directly from the callback can race
  * the HAL state transition back to READY. */
 static volatile uint8_t uart3_rx_recovery_pending;
+
+/* V2 M4 transaction gate. Compiled only when explicitly opted in.
+ * The existing custom RX worker is the ONLY owner of ring/queue mutation;
+ * a claimant must wait for worker_parked before quiescence or reset. */
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+static volatile uint8_t s_v2_claimed;
+static volatile uint8_t s_v2_park_requested;
+static volatile uint8_t s_v2_worker_parked;
+static volatile uint8_t s_v2_passive;
+static volatile uint8_t s_v2_expected_passive;
+static volatile uint8_t s_v2_restart_ready;
+static volatile uint8_t s_v2_fatal;
+static volatile uint32_t s_v2_session_id;
+static volatile uint32_t s_v2_rx_error_generation;
+#define PYXIS_V2_WORKER_PARK_TIMEOUT_MS 20U
+#endif
+
 typedef struct {
     uint8_t data[UART3_FRAME_MAX_SIZE];
     uint16_t length;
@@ -312,10 +333,26 @@ static void custom_rx_task_entry(void *argument)
     (void)argument;
 
     for (;;) {
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+        /* Do not touch rings, queue or error recovery while a UART
+         * transaction claimant is changing peripheral ownership. */
+        if (s_v2_park_requested != 0U) {
+            s_v2_worker_parked = 1U;
+            (void)osDelay(1U);
+            continue;
+        }
+        s_v2_worker_parked = 0U;
+#endif
         /* Use a short timeout so a frame queued while the core is pending is
          * fed promptly after main_TaskModbus clears the previous frame. */
         (void)osEventFlagsWait(custom_rx_event, EVENT_CUSTOM_RX,
                                osFlagsWaitAny, 1U);
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+        /* Claim may have arrived while the worker was waiting. */
+        if (s_v2_park_requested != 0U || s_v2_fatal != 0U) {
+            continue;
+        }
+#endif
 
         if (uart3_rx_recovery_pending != 0U) {
             uart3_rx_recovery_pending = 0U;
@@ -335,7 +372,15 @@ static void custom_rx_task_entry(void *argument)
             uart3_rto_pending = 0U;
             uart3_queue_current_ring_frame();
         }
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+        /* Candidate traffic must NEVER reach the active Modbus engine.
+         * A dedicated passive frame harvester is introduced in M6. */
+        if (s_v2_passive == 0U) {
+            uart3_feed_queued_frames();
+        }
+#else
         uart3_feed_queued_frames();
+#endif
     }
 }
 
@@ -787,6 +832,9 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart_cb)
         return;
     }
 
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+    ++s_v2_rx_error_generation;
+#endif
     uart3_rx_dma_running = 0U;
     __HAL_UART_CLEAR_OREFLAG(&huart3);
     __HAL_UART_CLEAR_FEFLAG(&huart3);
@@ -800,6 +848,336 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart_cb)
         }
     }
 }
+
+/* ---------- M4 opt-in USART3/GPDMA1 transactional board seam ----------
+ * All calls are foreground-only and are invoked via Titania's reusable
+ * autobaud_uart_transaction.c controller. The worker is parked before
+ * changing any ring, UART or DMA ownership.
+ * This seam is not active while MODBUS_AUTOBAUD_V2_PORT_ENABLE=0.
+ */
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+
+static bool v2_pin_uart_verified(void)
+{
+    /* PC4 = USART3_RX alternate function 7. Physical readback matters:
+     * successfully calling HAL_GPIO_Init is not proof of restored mux. */
+    return ((GPIOC->MODER >> (4U * 2U)) & 0x3U) == 0x2U &&
+           ((GPIOC->AFR[0] >> (4U * 4U)) & 0xFU) == 7U;
+}
+
+static bool v2_dma_enabled(void)
+{
+    if (huart3.hdmarx == NULL ||
+        huart3.hdmarx->Instance != MODBUS_PYXIS_DMA_INSTANCE)
+        return false;
+#if defined(DMA_CCR_EN)
+    return (huart3.hdmarx->Instance->CCR & DMA_CCR_EN) != 0U;
+#elif defined(GPDMA_CCR_EN)
+    return (huart3.hdmarx->Instance->CCR & GPDMA_CCR_EN) != 0U;
+#else
+    /* Fail closed rather than misreport a verified RX session when a
+     * future STM32 header changes the physical DMA enable-bit name. */
+    return false;
+#endif
+}
+
+static void v2_drop_stale_rx(void)
+{
+    /* Called with worker parked and RX events disabled. */
+    ModbusEnginePort_ClearFrame();
+    uart3_rx_head = 0U;
+    uart3_rx_tail = 0U;
+    uart3_rx_dma_last_pos = 0U;
+    uart3_rx_dma_harvest_abs = 0U;
+    g_uart3_dma_producer_abs = 0U;
+    g_uart3_dma_wrap_count = 0U;
+    uart3_rx_boundary_head = 0U;
+    uart3_rx_boundary_tail = 0U;
+    uart3_frame_queue_head = 0U;
+    uart3_frame_queue_tail = 0U;
+    uart3_frame_queue_count = 0U;
+    uart3_rto_pending = 0U;
+    uart3_rx_recovery_pending = 0U;
+    g_uart3_transport_flushes++;
+}
+
+static bool v2_profile_from_uart(autobaud_v2_profile_t *out)
+{
+    uint32_t baud = 0U;
+    uint32_t stop = 0U;
+    uint8_t bits = 0U;
+    uint8_t parity = 0U;
+    if (out == NULL ||
+        !ModbusEnginePort_GetUartConfig(&baud, &bits, &parity, &stop) ||
+        bits != 8U) return false;
+    out->baud_rate = baud;
+    if (parity == 0U && stop == UART_STOPBITS_1)
+        out->framing = AUTOBAUD_UART_MODE_8E1;
+    else if (parity == 1U && stop == UART_STOPBITS_1)
+        out->framing = AUTOBAUD_UART_MODE_8O1;
+    else if (parity >= 2U && stop == UART_STOPBITS_2)
+        out->framing = AUTOBAUD_UART_MODE_8N2;
+    else if (parity >= 2U && stop == UART_STOPBITS_1)
+        out->framing = AUTOBAUD_UART_MODE_8N1;
+    else return false;
+    return autobaud_v2_profile_supported(out);
+}
+
+static bool v2_uart_registers_match(const autobaud_v2_profile_t *profile)
+{
+    autobaud_v2_profile_t active = {0};
+    bool parity_present;
+    bool odd;
+    bool nine_bits;
+    uint32_t stop;
+    uint32_t cr1;
+    uint32_t cr2;
+    if (!autobaud_v2_profile_supported(profile) ||
+        !v2_profile_from_uart(&active) ||
+        active.baud_rate != profile->baud_rate ||
+        active.framing != profile->framing ||
+        huart3.Instance != MODBUS_PYXIS_UART_INSTANCE ||
+        !v2_pin_uart_verified()) return false;
+    cr1 = huart3.Instance->CR1;
+    cr2 = huart3.Instance->CR2;
+    parity_present = profile->framing == AUTOBAUD_UART_MODE_8E1 ||
+                     profile->framing == AUTOBAUD_UART_MODE_8O1;
+    odd = profile->framing == AUTOBAUD_UART_MODE_8O1;
+    nine_bits = parity_present;
+    stop = profile->framing == AUTOBAUD_UART_MODE_8N2 ?
+           UART_STOPBITS_2 : UART_STOPBITS_1;
+    if ((cr1 & (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE)) !=
+          (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE) ||
+        ((cr1 & USART_CR1_PCE) != 0U) != parity_present ||
+        ((cr1 & USART_CR1_PS) != 0U) != odd ||
+        ((cr1 & USART_CR1_M0) != 0U) != nine_bits ||
+        (cr1 & USART_CR1_M1) != 0U ||
+        (cr2 & USART_CR2_STOP) != stop ||
+        huart3.Instance->BRR == 0U) return false;
+#if !MODBUS_PYXIS_HW_DE
+#ifdef USART_CR3_DEM
+    if ((huart3.Instance->CR3 & USART_CR3_DEM) != 0U) return false;
+#endif
+#endif
+    return true;
+}
+
+static bool v2_de_is_receive(void)
+{
+    if (ModbusEngineTx_IsBusy() ||
+        __HAL_UART_GET_FLAG(&huart3, UART_FLAG_TC) != SET)
+        return false;
+#if !MODBUS_PYXIS_HW_DE
+    if (HAL_GPIO_ReadPin(MODBUS_PYXIS_DE_GPIO_PORT,
+                         MODBUS_PYXIS_DE_GPIO_PIN) != GPIO_PIN_RESET)
+        return false;
+#endif
+    return true;
+}
+
+bool ModbusEngineV2_Claim(void)
+{
+    uint32_t start;
+    if (s_v2_fatal != 0U || s_v2_claimed != 0U ||
+        s_v2_worker_parked != 0U ||
+        custom_rx_task == NULL || custom_rx_event == NULL ||
+        osThreadGetId() == custom_rx_task ||
+        !v2_de_is_receive() ||
+        huart3.Instance != MODBUS_PYXIS_UART_INSTANCE ||
+        huart3.hdmarx == NULL ||
+        huart3.hdmarx->Instance != MODBUS_PYXIS_DMA_INSTANCE)
+        return false;
+
+    s_v2_claimed = 1U;
+    s_v2_park_requested = 1U;
+    (void)osEventFlagsSet(custom_rx_event, EVENT_CUSTOM_RX);
+    start = HAL_GetTick();
+    while (s_v2_worker_parked == 0U &&
+           (uint32_t)(HAL_GetTick() - start) <
+               PYXIS_V2_WORKER_PARK_TIMEOUT_MS)
+        (void)osDelay(1U);
+
+    if (s_v2_worker_parked == 0U || !v2_de_is_receive()) {
+        s_v2_park_requested = 0U;
+        s_v2_claimed = 0U;
+        return false; /* BUSY: no physical configuration changed. */
+    }
+    s_v2_restart_ready = 0U;
+    return true;
+}
+
+bool ModbusEngineV2_Snapshot(autobaud_v2_profile_t *profile)
+{
+    return s_v2_fatal == 0U &&
+           v2_de_is_receive() &&
+           v2_profile_from_uart(profile) &&
+           v2_uart_registers_match(profile);
+}
+
+bool ModbusEngineV2_PreviousPassive(void)
+{
+    return s_v2_passive != 0U;
+}
+
+bool ModbusEngineV2_Quiesce(void)
+{
+    bool ok = true;
+    if (s_v2_claimed == 0U || s_v2_worker_parked == 0U ||
+        !v2_de_is_receive()) return false;
+    uart3_rx_enabled = 0U;
+    __HAL_UART_DISABLE_IT(&huart3, UART_IT_IDLE | UART_IT_RTO);
+    if (uart3_rx_dma_running != 0U ||
+        (huart3.Instance->CR3 & USART_CR3_DMAR) != 0U) {
+        ok = HAL_UART_AbortReceive(&huart3) == HAL_OK;
+    }
+    uart3_rx_dma_running = 0U;
+    __HAL_UART_CLEAR_OREFLAG(&huart3);
+    __HAL_UART_CLEAR_FEFLAG(&huart3);
+    __HAL_UART_CLEAR_NEFLAG(&huart3);
+    __HAL_UART_CLEAR_PEFLAG(&huart3);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart3);
+    __HAL_UART_CLEAR_FLAG(&huart3, UART_CLEAR_RTOF);
+    __HAL_UART_SEND_REQ(&huart3, UART_RXDATA_FLUSH_REQUEST);
+    v2_drop_stale_rx();
+    s_v2_restart_ready = 0U;
+    return ok && (huart3.Instance->CR3 & USART_CR3_DMAR) == 0U &&
+           !v2_dma_enabled();
+}
+
+bool ModbusEngineV2_Apply(const autobaud_v2_profile_t *profile)
+{
+    UART_InitTypeDef next;
+    uint32_t stop = UART_STOPBITS_1;
+    if (s_v2_claimed == 0U || s_v2_worker_parked == 0U ||
+        s_v2_restart_ready != 0U || !autobaud_v2_profile_supported(profile) ||
+        (huart3.Instance->CR3 & USART_CR3_DMAR) != 0U ||
+        v2_dma_enabled()) return false;
+
+    next = huart3.Init;
+    next.BaudRate = profile->baud_rate;
+    next.WordLength = UART_WORDLENGTH_8B;
+    next.Parity = UART_PARITY_NONE;
+    if (profile->framing == AUTOBAUD_UART_MODE_8E1 ||
+        profile->framing == AUTOBAUD_UART_MODE_8O1) {
+        next.WordLength = UART_WORDLENGTH_9B;
+        next.Parity = profile->framing == AUTOBAUD_UART_MODE_8E1 ?
+                      UART_PARITY_EVEN : UART_PARITY_ODD;
+    }
+    if (profile->framing == AUTOBAUD_UART_MODE_8N2)
+        stop = UART_STOPBITS_2;
+    next.StopBits = stop;
+
+    if (HAL_UART_DeInit(&huart3) != HAL_OK) return false;
+    if (!uart3_apply_config(&next, stop)) return false;
+    return v2_uart_registers_match(profile);
+}
+
+bool ModbusEngineV2_ApplyTiming(const autobaud_v2_profile_t *profile)
+{
+    uint32_t stop;
+    uint8_t parity_code;
+    if (s_v2_claimed == 0U || s_v2_worker_parked == 0U ||
+        !v2_uart_registers_match(profile)) return false;
+    parity_code = profile->framing == AUTOBAUD_UART_MODE_8E1 ? 0U :
+                  profile->framing == AUTOBAUD_UART_MODE_8O1 ? 1U :
+                  profile->framing == AUTOBAUD_UART_MODE_8N2 ? 2U : 3U;
+    stop = profile->framing == AUTOBAUD_UART_MODE_8N2 ?
+           UART_STOPBITS_2 : UART_STOPBITS_1;
+    ModbusEnginePort_SetRtuTiming(profile->baud_rate, 8U, parity_code, stop);
+    return g_modbus_stop_bits == stop;
+}
+
+bool ModbusEngineV2_Restart(bool passive)
+{
+    if (s_v2_claimed == 0U || s_v2_worker_parked == 0U ||
+        (huart3.Instance->CR3 & USART_CR3_DMAR) != 0U ||
+        v2_dma_enabled() || !v2_pin_uart_verified()) return false;
+
+    v2_drop_stale_rx();
+    huart3.ErrorCode = HAL_UART_ERROR_NONE;
+    uart3_rx_enabled = 1U;
+    if (uart3_start_custom_dma() != TRUE) {
+        uart3_rx_enabled = 0U;
+        return false;
+    }
+    s_v2_expected_passive = passive ? 1U : 0U;
+    s_v2_restart_ready = 1U;
+    return true;
+}
+
+bool ModbusEngineV2_Verify(const autobaud_v2_profile_t *profile,
+                            bool passive)
+{
+    return s_v2_claimed != 0U && s_v2_worker_parked != 0U &&
+           s_v2_restart_ready != 0U &&
+           s_v2_expected_passive == (passive ? 1U : 0U) &&
+           uart3_rx_enabled != 0U && uart3_rx_dma_running != 0U &&
+           (huart3.Instance->CR3 & USART_CR3_DMAR) != 0U &&
+           v2_dma_enabled() &&
+           huart3.ErrorCode == HAL_UART_ERROR_NONE &&
+           v2_uart_registers_match(profile) &&
+           v2_de_is_receive();
+}
+
+void ModbusEngineV2_Release(bool fatal, bool passive)
+{
+    if (fatal) {
+        s_v2_fatal = 1U;
+        s_v2_passive = 1U;
+        uart3_rx_enabled = 0U;
+        __HAL_UART_DISABLE_IT(&huart3, UART_IT_IDLE | UART_IT_RTO);
+        uart3_stop_custom_dma();
+        ModbusEngineTx_SetDe(false);
+        /* Retain worker park request while latched; do not deliver frames
+         * through the regular Modbus processing queue. */
+        s_v2_park_requested = 1U;
+    } else if (s_v2_claimed != 0U && s_v2_restart_ready != 0U) {
+        s_v2_passive = passive ? 1U : 0U;
+        ++s_v2_session_id;
+        if (s_v2_session_id == 0U) ++s_v2_session_id;
+        s_v2_park_requested = 0U;
+    } else {
+        /* A claim was released without independently verified restart.
+         * Never reopen normal Modbus RX after an unknown UART state. */
+        s_v2_fatal = 1U;
+        s_v2_passive = 1U;
+        s_v2_park_requested = 1U;
+        uart3_rx_enabled = 0U;
+    }
+    s_v2_restart_ready = 0U;
+    s_v2_claimed = 0U;
+}
+
+bool ModbusEngineV2_IsFatal(void)
+{
+    return s_v2_fatal != 0U;
+}
+
+bool ModbusEngineV2_IsPassive(void)
+{
+    return s_v2_passive != 0U;
+}
+
+bool ModbusEngineV2_TxAllowed(void)
+{
+    return s_v2_fatal == 0U && s_v2_claimed == 0U &&
+           s_v2_passive == 0U && s_v2_park_requested == 0U;
+}
+
+bool ModbusEngineV2_SnapshotSession(uint32_t *session_id,
+                                    uint32_t *error_generation)
+{
+    if (session_id == NULL || error_generation == NULL ||
+        s_v2_fatal != 0U || s_v2_claimed != 0U ||
+        s_v2_passive == 0U || s_v2_session_id == 0U ||
+        uart3_rx_enabled == 0U || uart3_rx_dma_running == 0U ||
+        !v2_dma_enabled()) return false;
+    *session_id = s_v2_session_id;
+    *error_generation = s_v2_rx_error_generation;
+    return true;
+}
+#endif /* MODBUS_AUTOBAUD_V2_PORT_ENABLE */
+
 
 #else /* MODBUS_ENGINE_ACTIVE == 0: FreeModbus transport */
 

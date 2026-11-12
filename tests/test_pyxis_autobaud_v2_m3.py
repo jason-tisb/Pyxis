@@ -41,7 +41,10 @@ def check_m3_scope():
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     task = (ROOT / "App/Application/Tasks/task_modbus.c").read_text(
         encoding="utf-8")
-    assert "App/Middleware/AutobaudV2/" not in cmake
+    # M4 adds a compile-only adapter behind a default-OFF CMake option.
+    # It must not enable on-demand service in the active Modbus task.
+    assert 'set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING' in cmake
+    assert 'if(MODBUS_AUTOBAUD_V2_PORT_ENABLE STREQUAL "1")' in cmake
     assert "MODBUS_AUTOBAUD_V2_ENABLE" not in cmake
     assert "autobaud_od_service(" not in task
     assert "PyxisAutobaudPort_" not in task

@@ -1,4 +1,7 @@
 #include "modbus_engine_tx.h"
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+#include "modbus_engine_v2_transport.h"
+#endif
 
 #include "main.h"
 #include "cmsis_os2.h"
@@ -193,6 +196,11 @@ bool ModbusEngineTx_Send(const uint8_t *frame, uint16_t length)
     if ((frame == NULL) || (length == 0U)) {
         return false;
     }
+#if MODBUS_AUTOBAUD_V2_PORT_ENABLE
+    /* Detection/candidate UART ownership is mutually exclusive with TX.
+     * A passive evidence request is never answered by the normal engine. */
+    if (!ModbusEngineV2_TxAllowed()) return false;
+#endif
     if (tx_busy) {
         g_modbus_tx_busy_rejections++;
         return false;
