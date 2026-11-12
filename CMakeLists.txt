@@ -29,6 +29,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(MODBUS_ENGINE_ACTIVE "1" CACHE STRING "Active Modbus engine (0=FreeModbus, 1=custom)")
 set(MODBUS_ENGINE_FORCE_FIXED_COMM "0" CACHE STRING "Force custom Modbus communication settings (0/1)")
 set(MODBUS_AUTOBAUD_ENABLE "0" CACHE STRING "Enable Milestone E autobaud startup (0/1)")
+set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING "Compile dormant M4 USART3 transaction adapter (0/1)")
 set(MODBUS_G_TEST_HOOKS "0" CACHE STRING "Enable Milestone G software qualification hooks (0/1)")
 set(MODBUS_PYXIS_DMA_ABSOLUTE "0" CACHE STRING "Pyxis absolute-position DMA transport (0=baseline, 1=next milestone)")
 set(MODBUS_PYXIS_HW_RTO "0" CACHE STRING "Pyxis USART receiver-timeout framing (0=off, 1=on)")
@@ -138,6 +139,27 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/ModbusEngine/Src/modbus_autobaud_diag.c
 )
 
+# M4 opt-in: compile and check physical transaction adapter while keeping
+# the on-demand supervisor disconnected from the active Modbus task.
+# DO NOT force this flag on in presets or production builds.
+if(MODBUS_AUTOBAUD_V2_PORT_ENABLE STREQUAL "1")
+    if(NOT MODBUS_ENGINE_ACTIVE STREQUAL "1")
+        message(FATAL_ERROR "V2 UART transaction port requires the custom Modbus engine")
+    endif()
+    if(MODBUS_AUTOBAUD_ENABLE STREQUAL "1")
+        message(FATAL_ERROR "V2 UART transaction port and legacy autobaud cannot be enabled together")
+    endif()
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_v2.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_uart_transaction.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/BSP/Communication/pyxis_autobaud_uart_stm32h563.c
+    )
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+        ${CMAKE_SOURCE_DIR}/App/Middleware/AutobaudV2/Inc
+        ${CMAKE_SOURCE_DIR}/App/BSP/Communication
+    )
+endif()
+
 # Add include paths
 target_include_directories(${PROJECT_NAME} PRIVATE
     # Core & HAL
@@ -212,6 +234,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     MODBUS_ENGINE_ACTIVE=${MODBUS_ENGINE_ACTIVE}
     MODBUS_ENGINE_FORCE_FIXED_COMM=${MODBUS_ENGINE_FORCE_FIXED_COMM}
     MODBUS_AUTOBAUD_ENABLE=${MODBUS_AUTOBAUD_ENABLE}
+    MODBUS_AUTOBAUD_V2_PORT_ENABLE=${MODBUS_AUTOBAUD_V2_PORT_ENABLE}
     MODBUS_G_TEST_HOOKS=${MODBUS_G_TEST_HOOKS}
     MODBUS_PYXIS_DMA_ABSOLUTE=${MODBUS_PYXIS_DMA_ABSOLUTE}
     MODBUS_PYXIS_HW_RTO=${MODBUS_PYXIS_HW_RTO}
