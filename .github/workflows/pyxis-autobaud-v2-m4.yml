@@ -1,0 +1,28 @@
+name: Pyxis Autobaud V2 M4 transaction software checks
+
+on:
+  push:
+    branches:
+      - feature/pyxis-autobaud-v2-m4
+  pull_request:
+    branches:
+      - feature/pyxis-autobaud-v2-m3
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-m4:
+    name: M0-M4 host C11 + Python regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+      - name: Check tools
+        run: |
+          python3 --version
+          gcc --version
+      - name: Run inherited and M4 native tests
+        run: python3 tests/test_pyxis_autobaud_v2_m4.py
