@@ -1,0 +1,28 @@
+name: Pyxis Autobaud V2 M3 portable regression
+
+on:
+  push:
+    branches:
+      - feature/pyxis-autobaud-v2-m3
+  pull_request:
+    branches:
+      - feature/pyxis-autobaud-v2-m2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-m3:
+    name: M0-M3 native C and Python software regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+      - name: Host toolchain
+        run: |
+          python3 --version
+          gcc --version
+      - name: Compile and test portable engines and inherited regressions
+        run: python3 tests/test_pyxis_autobaud_v2_m3.py

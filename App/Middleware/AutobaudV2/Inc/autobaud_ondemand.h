@@ -1,5 +1,5 @@
-/* Titania-compatible M3 on-demand supervisor contract; M1 declarations only.
- * No implementation is linked into the product image at this stage.
+/* Titania-compatible, HAL-independent on-demand supervisor contract.
+ * M3 implementation is host-tested but is not linked into the Pyxis image.
  */
 #ifndef PYXIS_AUTOBAUD_ONDEMAND_H
 #define PYXIS_AUTOBAUD_ONDEMAND_H
@@ -80,7 +80,7 @@ typedef struct {
 #define AUTOBAUD_OD_FRAMING_DWELL_MS (12000U)
 #define AUTOBAUD_OD_COOLDOWN_MS      (1000U)
 
-/* Implementations imported/tested in M3. */
+/* M3 source is portable and dormant until M7 activation. */
 bool autobaud_od_init(autobaud_od_t *ctx, const autobaud_od_ops_t *ops);
 void autobaud_od_service(autobaud_od_t *ctx);
 bool autobaud_od_locked(const autobaud_od_t *ctx);
