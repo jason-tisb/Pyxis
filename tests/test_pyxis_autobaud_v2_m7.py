@@ -85,7 +85,9 @@ def native_coordinator():
             "m7_coordinator.exe" if os.name == "nt" else "m7_coordinator")
         cmd = [
             cc, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
-            "-pedantic", "-I", str(INC), "-I", str(BSP),
+            "-pedantic", "-DMODBUS_AUTOBAUD_V2_FRAMING_ENABLE=1",
+            "-DMODBUS_AUTOBAUD_V2_ENABLE=1",
+            "-I", str(INC), "-I", str(BSP),
             "-I", str(MB_INC),
             str(SRC / "autobaud_v2.c"),
             str(SRC / "autobaud_ondemand.c"),
