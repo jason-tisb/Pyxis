@@ -30,6 +30,7 @@ set(MODBUS_ENGINE_ACTIVE "1" CACHE STRING "Active Modbus engine (0=FreeModbus, 1
 set(MODBUS_ENGINE_FORCE_FIXED_COMM "0" CACHE STRING "Force custom Modbus communication settings (0/1)")
 set(MODBUS_AUTOBAUD_ENABLE "0" CACHE STRING "Enable Milestone E autobaud startup (0/1)")
 set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING "Compile dormant M4 USART3 transaction adapter (0/1)")
+set(MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE "0" CACHE STRING "Compile dormant M5 TIM2 PC4 async capture adapter (0/1)")
 set(MODBUS_G_TEST_HOOKS "0" CACHE STRING "Enable Milestone G software qualification hooks (0/1)")
 set(MODBUS_PYXIS_DMA_ABSOLUTE "0" CACHE STRING "Pyxis absolute-position DMA transport (0=baseline, 1=next milestone)")
 set(MODBUS_PYXIS_HW_RTO "0" CACHE STRING "Pyxis USART receiver-timeout framing (0=off, 1=on)")
@@ -160,6 +161,19 @@ if(MODBUS_AUTOBAUD_V2_PORT_ENABLE STREQUAL "1")
     )
 endif()
 
+# M5 opt-in: compile interrupt-driven TIM2_CH4 capture and reusable scorer.
+# No on-demand coordinator/task wiring is enabled by these build switches.
+if(MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE STREQUAL "1")
+    if(NOT MODBUS_AUTOBAUD_V2_PORT_ENABLE STREQUAL "1")
+        message(FATAL_ERROR "M5 TIM2 capture requires M4 UART port enabled")
+    endif()
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_edge_stream.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_score.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/BSP/Communication/pyxis_autobaud_capture_stm32h563.c
+    )
+endif()
+
 # Add include paths
 target_include_directories(${PROJECT_NAME} PRIVATE
     # Core & HAL
@@ -235,6 +249,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     MODBUS_ENGINE_FORCE_FIXED_COMM=${MODBUS_ENGINE_FORCE_FIXED_COMM}
     MODBUS_AUTOBAUD_ENABLE=${MODBUS_AUTOBAUD_ENABLE}
     MODBUS_AUTOBAUD_V2_PORT_ENABLE=${MODBUS_AUTOBAUD_V2_PORT_ENABLE}
+    MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE=${MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE}
     MODBUS_G_TEST_HOOKS=${MODBUS_G_TEST_HOOKS}
     MODBUS_PYXIS_DMA_ABSOLUTE=${MODBUS_PYXIS_DMA_ABSOLUTE}
     MODBUS_PYXIS_HW_RTO=${MODBUS_PYXIS_HW_RTO}
