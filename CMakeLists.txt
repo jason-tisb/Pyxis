@@ -31,6 +31,7 @@ set(MODBUS_ENGINE_FORCE_FIXED_COMM "0" CACHE STRING "Force custom Modbus communi
 set(MODBUS_AUTOBAUD_ENABLE "0" CACHE STRING "Enable Milestone E autobaud startup (0/1)")
 set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING "Compile dormant M4 USART3 transaction adapter (0/1)")
 set(MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE "0" CACHE STRING "Compile dormant M5 TIM2 PC4 async capture adapter (0/1)")
+set(MODBUS_AUTOBAUD_V2_FRAMING_ENABLE "0" CACHE STRING "Compile dormant M6 passive Modbus RTU evidence and handoff (0/1)")
 set(MODBUS_G_TEST_HOOKS "0" CACHE STRING "Enable Milestone G software qualification hooks (0/1)")
 set(MODBUS_PYXIS_DMA_ABSOLUTE "0" CACHE STRING "Pyxis absolute-position DMA transport (0=baseline, 1=next milestone)")
 set(MODBUS_PYXIS_HW_RTO "0" CACHE STRING "Pyxis USART receiver-timeout framing (0=off, 1=on)")
@@ -174,6 +175,23 @@ if(MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE STREQUAL "1")
     )
 endif()
 
+# M6 opt-in: passive RTU evidence and first-request observation.
+# Detection frames are NEVER sent to the normal Modbus responder.
+if(MODBUS_AUTOBAUD_V2_FRAMING_ENABLE STREQUAL "1")
+    if(NOT MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE STREQUAL "1")
+        message(FATAL_ERROR "M6 passive framing requires M5 capture enabled")
+    endif()
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_activity.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_initial_window.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_validate.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_v2_evidence.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_v2_candidate.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_v2_framing.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/BSP/Communication/pyxis_autobaud_framing_stm32h563.c
+    )
+endif()
+
 # Add include paths
 target_include_directories(${PROJECT_NAME} PRIVATE
     # Core & HAL
@@ -250,6 +268,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     MODBUS_AUTOBAUD_ENABLE=${MODBUS_AUTOBAUD_ENABLE}
     MODBUS_AUTOBAUD_V2_PORT_ENABLE=${MODBUS_AUTOBAUD_V2_PORT_ENABLE}
     MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE=${MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE}
+    MODBUS_AUTOBAUD_V2_FRAMING_ENABLE=${MODBUS_AUTOBAUD_V2_FRAMING_ENABLE}
     MODBUS_G_TEST_HOOKS=${MODBUS_G_TEST_HOOKS}
     MODBUS_PYXIS_DMA_ABSOLUTE=${MODBUS_PYXIS_DMA_ABSOLUTE}
     MODBUS_PYXIS_HW_RTO=${MODBUS_PYXIS_HW_RTO}
