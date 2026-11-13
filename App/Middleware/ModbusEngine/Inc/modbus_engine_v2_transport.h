@@ -31,6 +31,7 @@ bool ModbusEngineV2_TxAllowed(void);
  * framing adapter is compiled; the current production image remains inert. */
 #if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
 #include "autobaud_v2_evidence.h"
+uint32_t ModbusEngineV2_NowMs(void);
 bool ModbusEngineV2_RxActivity(uint32_t *total_bytes, uint32_t *total_errors);
 autobaud_e_poll_t ModbusEngineV2_TakePassiveFrame(
     uint8_t *out, uint16_t capacity, uint16_t *length,
