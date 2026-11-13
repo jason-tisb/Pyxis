@@ -17,6 +17,12 @@
 #define MODBUS_AUTOBAUD_ENABLE 0
 #endif
 
+/* M7: on-demand coordinator. Off by default. Enabled only for custom
+ * Modbus engine and explicitly saved baud selector 0 at boot. */
+#ifndef MODBUS_AUTOBAUD_V2_ENABLE
+#define MODBUS_AUTOBAUD_V2_ENABLE 0
+#endif
+
 /* M6 passive framing, any-ID CRC evidence, atomic RX handoff.
  * M7 alone integrates it into the active Modbus FreeRTOS task. */
 #ifndef MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
@@ -81,6 +87,27 @@
 
 #if ((MODBUS_AUTOBAUD_ENABLE != 0) && (MODBUS_AUTOBAUD_ENABLE != 1))
 #error "MODBUS_AUTOBAUD_ENABLE must be 0 or 1"
+#endif
+
+#if ((MODBUS_AUTOBAUD_V2_ENABLE != 0) && \
+     (MODBUS_AUTOBAUD_V2_ENABLE != 1))
+#error "MODBUS_AUTOBAUD_V2_ENABLE must be 0 or 1"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_ENABLE && !MODBUS_AUTOBAUD_V2_FRAMING_ENABLE)
+#error "M7 V2 coordinator requires M4-M6 transport/capture/framing"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_ENABLE && MODBUS_AUTOBAUD_ENABLE)
+#error "M7 V2 coordinator conflicts with legacy blocking autobaud"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_ENABLE && !MODBUS_ENGINE_ACTIVE)
+#error "M7 V2 coordinator requires custom Modbus engine"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_ENABLE && MODBUS_ENGINE_FORCE_FIXED_COMM)
+#error "M7 V2 coordinator cannot be used with forced fixed mode"
 #endif
 
 #if ((MODBUS_AUTOBAUD_V2_FRAMING_ENABLE != 0) && \
