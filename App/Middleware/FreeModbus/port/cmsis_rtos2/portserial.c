@@ -1259,6 +1259,141 @@ bool ModbusEngineV2_SnapshotSession(uint32_t *session_id,
     *error_generation = s_v2_rx_error_generation;
     return true;
 }
+
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+/* These methods run only from the future M7 Modbus task. The RX worker is
+ * the sole queue producer; this path never calls the Modbus request runtime. */
+bool ModbusEngineV2_RxActivity(uint32_t *total_bytes, uint32_t *total_errors)
+{
+    if (total_bytes == NULL || total_errors == NULL ||
+        s_v2_passive == 0U || s_v2_fatal != 0U ||
+        s_v2_claimed != 0U || s_v2_session_id == 0U)
+        return false;
+    *total_bytes = g_uart3_dma_producer_abs;
+    *total_errors = s_v2_rx_error_generation;
+    return true;
+}
+
+autobaud_e_poll_t ModbusEngineV2_TakePassiveFrame(
+    uint8_t *out, uint16_t capacity, uint16_t *length,
+    autobaud_e_frame_meta_t *meta)
+{
+    uint32_t tail;
+    pyxis_v2_passive_slot_t *slot;
+    if (out == NULL || length == NULL || meta == NULL ||
+        capacity < AUTOBAUD_VALIDATE_MIN_ADU_LENGTH)
+        return AUTOBAUD_E_POLL_RX_FAULT;
+    *length = 0U;
+    *meta = (autobaud_e_frame_meta_t){0};
+    if (s_v2_fatal != 0U || s_v2_passive == 0U ||
+        s_v2_claimed != 0U || s_v2_park_requested != 0U ||
+        s_v2_session_id == 0U || uart3_rx_enabled == 0U ||
+        uart3_rx_dma_running == 0U ||
+        (huart3.Instance->CR3 & USART_CR3_DMAR) == 0U ||
+        !v2_dma_enabled() ||
+        huart3.ErrorCode != HAL_UART_ERROR_NONE ||
+        uart3_rx_recovery_pending != 0U ||
+        s_v2_session_error_baseline != s_v2_rx_error_generation)
+        return AUTOBAUD_E_POLL_RX_FAULT;
+    tail = s_v2_passive_consumed;
+    if (tail == s_v2_passive_produced) return AUTOBAUD_E_POLL_NONE;
+    /* The RTU receiver runs on a FreeRTOS worker. Waiting for 5ms of
+     * observed line silence prevents a UART 1-character IDLE boundary from
+     * immediately being misclassified as a complete RTU frame. */
+    if ((uint32_t)(HAL_GetTick() - g_uart3_rx_callback_tick) <
+        PYXIS_V2_FRAME_QUIET_MS)
+        return AUTOBAUD_E_POLL_NONE;
+    __DMB(); /* Observe payload after the producer cursor. */
+    slot = &s_v2_passive_queue[tail % PYXIS_V2_PASSIVE_SLOTS];
+    if (slot->length > capacity ||
+        slot->length < AUTOBAUD_VALIDATE_MIN_ADU_LENGTH ||
+        slot->length > AUTOBAUD_VALIDATE_MAX_ADU_LENGTH ||
+        slot->session_id != s_v2_session_id ||
+        slot->error_generation != s_v2_rx_error_generation ||
+        slot->frame_id == 0U) {
+        __DMB();
+        s_v2_passive_consumed = tail + 1U;
+        return AUTOBAUD_E_POLL_BAD_FRAME;
+    }
+    memcpy(out, slot->data, slot->length);
+    *length = slot->length;
+    meta->session_id = slot->session_id;
+    meta->frame_id = slot->frame_id;
+    meta->uart_error_generation = slot->error_generation;
+    meta->evidence.complete_rtu_frame = true;
+    meta->evidence.uart_error_free = true;
+    meta->evidence.transport_error_free = true;
+    meta->evidence.fresh_after_profile_apply = true;
+    __DMB();
+    s_v2_passive_consumed = tail + 1U;
+    s_v2_last_consumed_frame = slot->frame_id;
+    return AUTOBAUD_E_POLL_FRAME;
+}
+
+bool ModbusEngineV2_VerifyPassiveFrame(
+    const autobaud_v2_profile_t *profile, uint32_t session_id,
+    uint32_t error_generation)
+{
+    return s_v2_fatal == 0U && s_v2_claimed == 0U &&
+           s_v2_passive != 0U && s_v2_park_requested == 0U &&
+           session_id != 0U && session_id == s_v2_session_id &&
+           s_v2_session_error_baseline == error_generation &&
+           error_generation == s_v2_rx_error_generation &&
+           uart3_rx_recovery_pending == 0U &&
+           uart3_rx_enabled != 0U && uart3_rx_dma_running != 0U &&
+           huart3.ErrorCode == HAL_UART_ERROR_NONE &&
+           (huart3.Instance->CR3 & USART_CR3_DMAR) != 0U &&
+           v2_dma_enabled() && v2_de_is_receive() &&
+           v2_uart_registers_match(profile);
+}
+
+bool ModbusEngineV2_AcceptPassiveFrame(
+    const autobaud_v2_profile_t *profile,
+    const autobaud_e_frame_meta_t *meta)
+{
+    bool valid;
+    if (profile == NULL || meta == NULL ||
+        !autobaud_e_evidence_trustworthy(meta, meta->session_id) ||
+        !ModbusEngineV2_VerifyPassiveFrame(
+            profile, meta->session_id, meta->uart_error_generation) ||
+        meta->frame_id != s_v2_last_consumed_frame)
+        return false;
+    if (!ModbusEngineV2_Claim()) return false; /* Busy, no UART mutation. */
+    /* The worker is now parked: recheck the exact immutable RX token,
+     * error generation and hardware UART profile before committing. */
+    valid = s_v2_passive != 0U &&
+            s_v2_worker_parked != 0U &&
+            meta->session_id == s_v2_session_id &&
+            meta->frame_id == s_v2_last_consumed_frame &&
+            meta->uart_error_generation == s_v2_rx_error_generation &&
+            s_v2_session_error_baseline == s_v2_rx_error_generation &&
+            v2_uart_registers_match(profile) && v2_de_is_receive();
+    if (!valid) {
+        /* No physical UART state changed, release the claim without
+         * restarting or reprocessing any evidence frame. */
+        s_v2_park_requested = 0U;
+        s_v2_claimed = 0U;
+        return false;
+    }
+    /* Fully discard the detection frame and all intervening RX, then
+     * start a NEW normal RX session at the same verified profile.
+     * Even a valid FC06/FC16 detection request cannot be executed. */
+    if (!ModbusEngineV2_Quiesce() ||
+        !ModbusEngineV2_Restart(false) ||
+        !ModbusEngineV2_Verify(profile, false)) {
+        ModbusEngineV2_Release(true, false); /* Unknown RX -> fatal. */
+        return false;
+    }
+    ModbusEngineV2_Release(false, false);
+    return !ModbusEngineV2_IsFatal();
+}
+
+void ModbusEngineV2_LatchFatal(void)
+{
+    ModbusEngineV2_Release(true, false);
+}
+#endif /* MODBUS_AUTOBAUD_V2_FRAMING_ENABLE */
+
 #endif /* MODBUS_AUTOBAUD_V2_PORT_ENABLE */
 
 
