@@ -32,6 +32,19 @@ bool ModbusEngineV2_TxAllowed(void);
 #if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
 #include "autobaud_v2_evidence.h"
 uint32_t ModbusEngineV2_NowMs(void);
+typedef struct {
+    uint32_t uart_idle_fragments;
+    uint32_t rtu_frames_published;
+    uint32_t rtu_assembly_errors;
+    uint32_t mailbox_overflows;
+    uint32_t uart_error_generation;
+    uint32_t rx_session_id;
+    uint32_t pending_passive_frames;
+} pyxis_autobaud_v2_rtu_diagnostics_t;
+/* Debugger-safe task-context snapshot; no register writes or serial TX. */
+bool ModbusEngineV2_GetRtuDiagnostics(
+    pyxis_autobaud_v2_rtu_diagnostics_t *out);
+
 bool ModbusEngineV2_RxActivity(uint32_t *total_bytes, uint32_t *total_errors);
 autobaud_e_poll_t ModbusEngineV2_TakePassiveFrame(
     uint8_t *out, uint16_t capacity, uint16_t *length,
