@@ -64,7 +64,11 @@ static bool od_capture_begin(void *u, uint32_t budget)
 {
   (void)u;
   ++s_diag.capture_attempts;
-  return PyxisAutobaudCapture_Begin(budget);
+  if (PyxisAutobaudCapture_Begin(budget)) return true;
+  /* A BUSY claim or safely rolled-back failed start must not count the
+   * same original RX burst again after the supervisor's cooldown. */
+  if (!od_fatal(NULL) && !reset_default_evidence()) od_latch(NULL);
+  return false;
 }
 
 static autobaud_od_capture_t od_capture_poll(
@@ -80,7 +84,10 @@ static autobaud_od_capture_t od_capture_poll(
   if (poll == HW_AUTOBAUD_ASYNC_FAILED || od_fatal(NULL))
     return AUTOBAUD_OD_CAPTURE_FATAL;
 
-  if (status == HW_AUTOBAUD_MEASURE_VALID)
+  if (status == HW_AUTOBAUD_MEASURE_VALID &&
+      autobaud_v2_baud_supported(measurement->baud_rate) &&
+      measurement->confidence_permille >= 750U &&
+      measurement->sample_count >= HW_AUTOBAUD_MIN_VALID_INTERVALS)
     return AUTOBAUD_OD_CAPTURE_VALID;
 
   /* A rejected measurement has restored the original passive listener.
