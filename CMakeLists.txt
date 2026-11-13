@@ -41,6 +41,11 @@ set(MODBUS_PYXIS_HW_DE "0" CACHE STRING "Pyxis RS485 DE control (0=software, 1=U
 
 # Core project settings
 project(${CMAKE_PROJECT_NAME} LANGUAGES C ASM)
+# GNU Arm versions supplied by STM32CubeIDE and Linux runners differ.
+# Keep cyclomatic complexity output on toolchains that support the option,
+# but allow older compilers to build the identical firmware sources.
+include(CheckCCompilerFlag)
+check_c_compiler_flag("-fcyclomatic-complexity" PYXIS_CC_HAS_CYCLOMATIC_COMPLEXITY)
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Resolve auxiliary GNU Arm tools beside the compiler.  This keeps BIN/HEX
@@ -317,7 +322,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -ffunction-sections
     -fdata-sections
     -fstack-usage
-    -fcyclomatic-complexity
+    $<$<BOOL:${PYXIS_CC_HAS_CYCLOMATIC_COMPLEXITY}>:-fcyclomatic-complexity>
 )
 
 # Linker specs and core flags are already provided by STM32Cube/toolchain settings.
