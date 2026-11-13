@@ -1,0 +1,77 @@
+name: Pyxis Autobaud V2 M7 integration software checks
+
+on:
+  push:
+    branches:
+      - feature/pyxis-autobaud-v2-m7
+  pull_request:
+    branches:
+      - feature/pyxis-autobaud-v2-m6
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-m7:
+    name: M0-M7 native coordinator and legacy regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+      - name: Confirm native toolchain
+        run: |
+          python3 --version
+          gcc --version
+      - name: Compile and execute full M0-M7 regression
+        run: python3 tests/test_pyxis_autobaud_v2_m7.py
+
+  arm-m7:
+    name: M7 STM32H563 guarded task and transport source compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Cross-compile actual M4-M7 sources
+        run: sh tests/autobaud_v2/check_m7_arm_syntax.sh
+
+  linked-build:
+    name: M7 enabled and default firmware link qualification
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Install ARM toolchain and Ninja
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi libnewlib-arm-none-eabi ninja-build cmake
+      - name: Configure V2-enabled firmware
+        run: |
+          cmake -S . -B /tmp/pyxis-m7 -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake \
+            -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
+            -DCMAKE_ASM_COMPILER=arm-none-eabi-gcc \
+            -DMODBUS_ENGINE_ACTIVE=1 -DMODBUS_ENGINE_FORCE_FIXED_COMM=0 \
+            -DMODBUS_AUTOBAUD_ENABLE=0 \
+            -DMODBUS_AUTOBAUD_V2_PORT_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_CAPTURE_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_FRAMING_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_ENABLE=1
+      - name: Full ELF link for M7 opt-in image
+        run: cmake --build /tmp/pyxis-m7 --parallel 4
+      - name: Configure unchanged default-off firmware
+        run: |
+          cmake -S . -B /tmp/pyxis-default -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake \
+            -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
+            -DCMAKE_ASM_COMPILER=arm-none-eabi-gcc \
+            -DMODBUS_AUTOBAUD_V2_ENABLE=0
+      - name: Full ELF link for default-off image
+        run: cmake --build /tmp/pyxis-default --parallel 4
