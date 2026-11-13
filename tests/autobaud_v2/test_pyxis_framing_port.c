@@ -210,11 +210,39 @@ static void test_candidate_lock_without_side_effects(void)
          persistent_writes==0U);
 }
 
+static void test_failed_candidates_reset_activity(void)
+{
+  hw_autobaud_measurement_t measurement={
+      .baud_rate=19200U,.confidence_permille=950U,.sample_count=20U};
+  autobaud_e_status_t result=AUTOBAUD_E_RUNNING;
+  reset_initial();
+  assert(PyxisAutobaudFraming_Start(&measurement,10000U,2000U));
+  for (unsigned i=0U;i<32U && result==AUTOBAUD_E_RUNNING;++i) {
+    result=PyxisAutobaudFraming_Service();
+    const autobaud_e_ctx_t *state=PyxisAutobaudFraming_State();
+    if (result==AUTOBAUD_E_RUNNING && state &&
+        state->state==AUTOBAUD_E_STATE_LISTEN) now+=2100U;
+  }
+  assert(result==AUTOBAUD_E_NO_VALID_REQUEST ||
+         result==AUTOBAUD_E_BUDGET_EXPIRED);
+  assert(active.baud_rate==9600U &&
+         active.framing==AUTOBAUD_UART_MODE_8E1 && passive);
+  assert(!PyxisAutobaudFraming_Activity()); /* No stale auto-retrigger. */
+  ++rx_bytes;
+  ++now;
+  assert(!PyxisAutobaudFraming_Activity());
+  now+=499U;
+  assert(!PyxisAutobaudFraming_Activity());
+  ++now;
+  assert(PyxisAutobaudFraming_Activity());
+}
+
 int main(void)
 {
   test_initial_any_id();
   test_crc_errors_and_grace();
   test_candidate_lock_without_side_effects();
+  test_failed_candidates_reset_activity();
   puts("Pyxis M6 passive framing adapter: PASS");
   return 0;
 }
