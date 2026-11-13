@@ -1,0 +1,42 @@
+name: Pyxis Autobaud V2 M6 passive framing software qualification
+
+on:
+  push:
+    branches:
+      - feature/pyxis-autobaud-v2-m6
+  pull_request:
+    branches:
+      - feature/pyxis-autobaud-v2-m5
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-m6:
+    name: M0-M6 native C11 passive framing and legacy regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout M6 source
+        uses: actions/checkout@v4
+      - name: Native compiler
+        run: |
+          python3 --version
+          gcc --version
+      - name: Test first-request grace, any-ID passive evidence and handoff
+        run: python3 tests/test_pyxis_autobaud_v2_m6.py
+
+  arm-m6:
+    name: M6 STM32H563 guarded passive transport and framing syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout M6 source
+        uses: actions/checkout@v4
+      - name: Install ARM embedded C compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Compile M4-M6 guarded hardware files
+        run: sh tests/autobaud_v2/check_m6_arm_syntax.sh
