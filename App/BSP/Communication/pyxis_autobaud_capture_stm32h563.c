@@ -136,8 +136,11 @@ static bool timer_configure(uint32_t psc)
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.RepetitionCounter = 0U;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_IC_Init(&htim2) != HAL_OK) return false;
+  /* Mark attempted initialization before invoking HAL: an error may
+   * still leave the timer clock/MSP partially configured. Cleanup must
+   * call DeInit and verify a safe state rather than skipping it. */
   s_timer_initialized = 1U;
+  if (HAL_TIM_IC_Init(&htim2) != HAL_OK) return false;
 
   channel.ICPolarity = TIM_INPUTCHANNELPOLARITY_BOTHEDGE;
   channel.ICSelection = TIM_ICSELECTION_DIRECTTI;
