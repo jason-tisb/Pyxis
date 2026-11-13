@@ -39,7 +39,7 @@ def check_portable_includes():
     assert 'set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING' in cmake
     assert 'if(MODBUS_AUTOBAUD_V2_PORT_ENABLE STREQUAL "1")' in cmake
     assert "PyxisAutobaudPort_" not in task
-    assert "MODBUS_AUTOBAUD_V2_ENABLE" not in cmake
+    assert 'set(MODBUS_AUTOBAUD_V2_ENABLE "0" CACHE STRING' in cmake
 
 
 def main():
