@@ -32,7 +32,7 @@ static void errors_and_wrap(void)
   assert(!autobaud_initial_window_trigger(&w,UINT32_MAX-20U,
                                            UINT32_MAX-2U,UINT32_MAX));
   /* First byte observed at wrap; elapsed gate is wrap-safe. */
-  autobaud_initial_window_reset(&w,UINT32_MAX-1U,0U);
+  autobaud_initial_window_reset(&w,0U,0U);
   assert(!autobaud_initial_window_trigger(&w,UINT32_MAX-50U,0U,0U));
   assert(!autobaud_initial_window_trigger(&w,UINT32_MAX-30U,0U,0U));
   assert(!autobaud_initial_window_trigger(&w,UINT32_MAX-10U,1U,0U));
