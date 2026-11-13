@@ -78,7 +78,8 @@ def compile_and_run(cc, directory, name, code_sources, test):
         name + ".exe" if os.name == "nt" else name)
     cmd = [
         cc, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
-        "-pedantic", "-I", str(INC), "-I", str(BSP),
+        "-pedantic", "-DMODBUS_AUTOBAUD_V2_FRAMING_ENABLE=1",
+        "-I", str(INC), "-I", str(BSP),
         "-I", str(MB_INC),
     ]
     cmd += [str(SRC / f) for f in code_sources]
