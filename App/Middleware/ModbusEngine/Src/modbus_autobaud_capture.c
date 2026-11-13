@@ -3,6 +3,10 @@
 #include "main.h"
 #include "cmsis_os2.h"
 #include "modbus_engine_port.h"
+#include "modbus_engine_config.h"
+#if MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE
+#include "pyxis_autobaud_capture_stm32h563.h"
+#endif
 
 TIM_HandleTypeDef htim2;
 
@@ -203,6 +207,12 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
     if ((htim != NULL) && (htim->Instance == TIM2) &&
         (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)) {
+#if MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE
+        if (PyxisAutobaudCapture_IsActive()) {
+            PyxisAutobaudCapture_OnCaptureIrq();
+            return;
+        }
+#endif
         ModbusAutobaudCapture_OnCaptureIrq();
     }
 }
