@@ -11,6 +11,7 @@ incs="
 -I./Drivers/STM32H5xx_HAL_Driver/Inc/Legacy
 -I./Drivers/CMSIS/Device/ST/STM32H5xx/Include
 -I./Drivers/CMSIS/Include
+-I./Drivers/Flash_Storage
 -I./Middlewares/Third_Party/FreeRTOS/Source/include
 -I./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33_NTZ/non_secure
 -I./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
