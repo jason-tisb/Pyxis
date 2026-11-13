@@ -27,4 +27,21 @@ bool ModbusEngineV2_IsPassive(void);
  * passive framing is in progress, or a fatal communication fault is latched. */
 bool ModbusEngineV2_TxAllowed(void);
 
+/* M6 passive frame transport. The source is enabled only when the new
+ * framing adapter is compiled; the current production image remains inert. */
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+#include "autobaud_v2_evidence.h"
+bool ModbusEngineV2_RxActivity(uint32_t *total_bytes, uint32_t *total_errors);
+autobaud_e_poll_t ModbusEngineV2_TakePassiveFrame(
+    uint8_t *out, uint16_t capacity, uint16_t *length,
+    autobaud_e_frame_meta_t *meta);
+bool ModbusEngineV2_VerifyPassiveFrame(
+    const autobaud_v2_profile_t *profile, uint32_t session_id,
+    uint32_t error_generation);
+bool ModbusEngineV2_AcceptPassiveFrame(
+    const autobaud_v2_profile_t *profile,
+    const autobaud_e_frame_meta_t *meta);
+void ModbusEngineV2_LatchFatal(void);
+#endif
+
 #endif
