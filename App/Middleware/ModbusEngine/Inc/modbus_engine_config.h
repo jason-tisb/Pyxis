@@ -17,6 +17,12 @@
 #define MODBUS_AUTOBAUD_ENABLE 0
 #endif
 
+/* M6 passive framing, any-ID CRC evidence, atomic RX handoff.
+ * M7 alone integrates it into the active Modbus FreeRTOS task. */
+#ifndef MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+#define MODBUS_AUTOBAUD_V2_FRAMING_ENABLE 0
+#endif
+
 /* M5 asynchronous edge-capture adapter; requires M4 transaction gate.
  * Separate switch keeps the TIM2/PC4 path compiled out of normal firmware. */
 #ifndef MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE
@@ -75,6 +81,15 @@
 
 #if ((MODBUS_AUTOBAUD_ENABLE != 0) && (MODBUS_AUTOBAUD_ENABLE != 1))
 #error "MODBUS_AUTOBAUD_ENABLE must be 0 or 1"
+#endif
+
+#if ((MODBUS_AUTOBAUD_V2_FRAMING_ENABLE != 0) && \
+     (MODBUS_AUTOBAUD_V2_FRAMING_ENABLE != 1))
+#error "MODBUS_AUTOBAUD_V2_FRAMING_ENABLE must be 0 or 1"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_FRAMING_ENABLE && !MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE)
+#error "M6 framing requires M5 capture and M4 UART transport"
 #endif
 
 #if ((MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE != 0) && \

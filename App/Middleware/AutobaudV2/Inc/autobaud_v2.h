@@ -20,6 +20,9 @@ typedef enum {
 #define AUTOBAUD_V2_BAUD_COUNT         5U
 #define AUTOBAUD_V2_FRAMING_COUNT      4U
 #define AUTOBAUD_V2_SCAN_PROFILE_COUNT 20U
+/* Historical Titania E API compatibility. Actual on-demand policy uses
+ * explicit 12000-ms candidate dwell through autobaud_e_start_dwell(). */
+#define AUTOBAUD_V2_FRAMING_TIMEOUT_MS 2000U
 
 typedef enum {
   AUTOBAUD_V2_STATE_IDLE = 0,
