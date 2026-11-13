@@ -1261,6 +1261,11 @@ bool ModbusEngineV2_SnapshotSession(uint32_t *session_id,
 }
 
 #if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+uint32_t ModbusEngineV2_NowMs(void)
+{
+    return HAL_GetTick();
+}
+
 /* These methods run only from the future M7 Modbus task. The RX worker is
  * the sole queue producer; this path never calls the Modbus request runtime. */
 bool ModbusEngineV2_RxActivity(uint32_t *total_bytes, uint32_t *total_errors)
