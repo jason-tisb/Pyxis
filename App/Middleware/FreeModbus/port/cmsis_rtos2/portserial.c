@@ -13,6 +13,9 @@
 #if MODBUS_ENGINE_ACTIVE && MODBUS_AUTOBAUD_V2_PORT_ENABLE
 #include "modbus_engine_v2_transport.h"
 #endif
+#if MODBUS_ENGINE_ACTIVE && MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+#include <string.h>
+#endif
 
 #if MODBUS_ENGINE_ACTIVE
 
@@ -77,6 +80,26 @@ static uart3_frame_slot_t uart3_frame_queue[UART3_FRAME_QUEUE_DEPTH];
 static uint8_t uart3_frame_queue_head;
 static uint8_t uart3_frame_queue_tail;
 static uint8_t uart3_frame_queue_count;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+/* One worker-producer, one Modbus-task consumer. The producer NEVER
+ * overwrites an unread slot. Overflow invalidates the entire session.
+ * The normal Modbus engine cannot access these buffers. */
+#define PYXIS_V2_PASSIVE_SLOTS 4U
+#define PYXIS_V2_FRAME_QUIET_MS 5U
+typedef struct {
+    uint8_t data[UART3_FRAME_MAX_SIZE];
+    uint16_t length;
+    uint32_t session_id;
+    uint32_t frame_id;
+    uint32_t error_generation;
+} pyxis_v2_passive_slot_t;
+static pyxis_v2_passive_slot_t s_v2_passive_queue[PYXIS_V2_PASSIVE_SLOTS];
+static volatile uint32_t s_v2_passive_produced;
+static volatile uint32_t s_v2_passive_consumed;
+static volatile uint32_t s_v2_frame_sequence;
+static uint32_t s_v2_last_consumed_frame;
+static uint32_t s_v2_session_error_baseline;
+#endif
 static osEventFlagsId_t custom_rx_event;
 static osThreadId_t custom_rx_task;
 static const osThreadAttr_t custom_rx_task_attr = {
@@ -155,6 +178,9 @@ static void uart3_harvest_dma_range(uint32_t start_abs, uint32_t end_abs)
      * complete window if the producer has lapped the foreground harvester. */
     if (distance > UART3_RX_DMA_SIZE) {
         g_uart3_dma_overruns++;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        ++s_v2_rx_error_generation;
+#endif
         start_abs = end_abs - UART3_RX_DMA_SIZE;
         distance = UART3_RX_DMA_SIZE;
     }
@@ -174,6 +200,9 @@ static void uart3_harvest_dma_range(uint32_t start_abs, uint32_t end_abs)
             uart3_rx_tail = (uint16_t)((uart3_rx_tail + 1U) & RB_MASK);
             uart3_rx_overruns++;
             g_uart3_rx_overruns = uart3_rx_overruns;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+            ++s_v2_rx_error_generation;
+#endif
         }
 
         uart3_rx_ring[uart3_rx_head] = uart3_rx_dma_buf[pos];
@@ -195,6 +224,9 @@ static void uart3_queue_boundary(uint32_t end_abs)
         uart3_rx_boundary_tail = (uint8_t)((uart3_rx_boundary_tail + 1U) &
                                            RX_BOUNDARY_QUEUE_MASK);
         g_uart3_dma_overruns++;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        ++s_v2_rx_error_generation;
+#endif
     }
     uart3_rx_boundary_queue[uart3_rx_boundary_head] = end_abs;
     uart3_rx_boundary_head = next;
@@ -212,6 +244,9 @@ static void uart3_queue_current_ring_frame(void)
 
     if (uart3_frame_queue_count >= UART3_FRAME_QUEUE_DEPTH) {
         g_uart3_frame_queue_overruns++;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        ++s_v2_rx_error_generation;
+#endif
         /* Drop the oldest completed frame, preserving the newest request. */
         uart3_frame_queue_tail = (uint8_t)((uart3_frame_queue_tail + 1U) %
                                            UART3_FRAME_QUEUE_DEPTH);
@@ -244,6 +279,40 @@ static void uart3_queue_current_ring_frame(void)
         }
     }
 }
+
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+static void v2_publish_passive_frames(void)
+{
+    /* Worker only: copies completed frame bytes, then publishes metadata.
+     * A backpressure overflow poisons session trust. */
+    while (uart3_frame_queue_count != 0U) {
+        const uart3_frame_slot_t *from =
+            &uart3_frame_queue[uart3_frame_queue_tail];
+        uint32_t produced = s_v2_passive_produced;
+        if ((uint32_t)(produced - s_v2_passive_consumed) >=
+            PYXIS_V2_PASSIVE_SLOTS) {
+            ++s_v2_rx_error_generation;
+        } else {
+            pyxis_v2_passive_slot_t *to =
+                &s_v2_passive_queue[produced % PYXIS_V2_PASSIVE_SLOTS];
+            to->length = from->length;
+            memcpy(to->data, from->data, from->length);
+            to->session_id = s_v2_session_id;
+            to->error_generation = s_v2_rx_error_generation;
+            ++s_v2_frame_sequence;
+            if (s_v2_frame_sequence == 0U) ++s_v2_frame_sequence;
+            to->frame_id = s_v2_frame_sequence;
+            __DMB(); /* Publish data before the new producer cursor. */
+            s_v2_passive_produced = produced + 1U;
+        }
+        uart3_frame_queue_tail =
+            (uint8_t)((uart3_frame_queue_tail + 1U) %
+                      UART3_FRAME_QUEUE_DEPTH);
+        --uart3_frame_queue_count;
+        ++g_uart3_frame_queue_popped;
+    }
+}
+#endif
 
 static void uart3_feed_queued_frames(void)
 {
@@ -378,6 +447,11 @@ static void custom_rx_task_entry(void *argument)
         if (s_v2_passive == 0U) {
             uart3_feed_queued_frames();
         }
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        else {
+            v2_publish_passive_frames();
+        }
+#endif
 #else
         uart3_feed_queued_frames();
 #endif
@@ -898,6 +972,12 @@ static void v2_drop_stale_rx(void)
     uart3_frame_queue_count = 0U;
     uart3_rto_pending = 0U;
     uart3_rx_recovery_pending = 0U;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+    /* Called only with worker fully parked and claimant holding UART. */
+    s_v2_passive_produced = 0U;
+    s_v2_passive_consumed = 0U;
+    s_v2_last_consumed_frame = 0U;
+#endif
     g_uart3_transport_flushes++;
 }
 
@@ -1135,6 +1215,9 @@ void ModbusEngineV2_Release(bool fatal, bool passive)
         s_v2_passive = passive ? 1U : 0U;
         ++s_v2_session_id;
         if (s_v2_session_id == 0U) ++s_v2_session_id;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        s_v2_session_error_baseline = s_v2_rx_error_generation;
+#endif
         s_v2_park_requested = 0U;
     } else {
         /* A claim was released without independently verified restart.
