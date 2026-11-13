@@ -75,3 +75,17 @@ jobs:
             -DMODBUS_AUTOBAUD_V2_ENABLE=0
       - name: Full ELF link for default-off image
         run: cmake --build /tmp/pyxis-default --parallel 4
+      - name: Configure legacy startup-autobaud image (V2 off)
+        run: |
+          cmake -S . -B /tmp/pyxis-legacy -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake \
+            -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
+            -DCMAKE_ASM_COMPILER=arm-none-eabi-gcc \
+            -DMODBUS_ENGINE_ACTIVE=1 \
+            -DMODBUS_AUTOBAUD_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_PORT_ENABLE=0 \
+            -DMODBUS_AUTOBAUD_V2_CAPTURE_ENABLE=0 \
+            -DMODBUS_AUTOBAUD_V2_FRAMING_ENABLE=0 \
+            -DMODBUS_AUTOBAUD_V2_ENABLE=0
+      - name: Full ELF link for legacy-only startup mode
+        run: cmake --build /tmp/pyxis-legacy --parallel 4
