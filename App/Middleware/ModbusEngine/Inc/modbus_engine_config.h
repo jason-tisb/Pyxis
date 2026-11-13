@@ -17,6 +17,12 @@
 #define MODBUS_AUTOBAUD_ENABLE 0
 #endif
 
+/* M5 asynchronous edge-capture adapter; requires M4 transaction gate.
+ * Separate switch keeps the TIM2/PC4 path compiled out of normal firmware. */
+#ifndef MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE
+#define MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE 0
+#endif
+
 /* M4 compile-only V2 transport adapter. This does NOT activate autobaud.
  * Production stays on the existing UART/DMA worker unless explicitly opted in.
  * M7 will add a separate flag to activate on-demand supervisor servicing. */
@@ -69,6 +75,15 @@
 
 #if ((MODBUS_AUTOBAUD_ENABLE != 0) && (MODBUS_AUTOBAUD_ENABLE != 1))
 #error "MODBUS_AUTOBAUD_ENABLE must be 0 or 1"
+#endif
+
+#if ((MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE != 0) && \
+     (MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE != 1))
+#error "MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE must be 0 or 1"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE && !MODBUS_AUTOBAUD_V2_PORT_ENABLE)
+#error "M5 capture requires MODBUS_AUTOBAUD_V2_PORT_ENABLE=1"
 #endif
 
 #if ((MODBUS_AUTOBAUD_V2_PORT_ENABLE != 0) && \
