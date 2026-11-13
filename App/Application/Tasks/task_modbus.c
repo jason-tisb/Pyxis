@@ -23,6 +23,10 @@
 #include "modbus_persistence.h"
 #include "modbus_autobaud_startup.h"
 #include "modbus_autobaud_diag.h"
+#if MODBUS_AUTOBAUD_V2_ENABLE
+#include "pyxis_autobaud_v2_stm32h563.h"
+#include "modbus_engine_v2_transport.h"
+#endif
 
 #if !MODBUS_ENGINE_ACTIVE
 extern USHORT usSRegInBuf[S_REG_INPUT_NREGS];
@@ -35,7 +39,7 @@ uint32_t g_modbus_stop_bits = UART_STOPBITS_1;
 volatile uint32_t g_custom_uart_init_ok = 0U;
 volatile uint32_t g_custom_uart_enable_ok = 0U;
 
-#if !MODBUS_AUTOBAUD_ENABLE
+#if !MODBUS_AUTOBAUD_ENABLE && !MODBUS_AUTOBAUD_V2_ENABLE
 static uint32_t uart3_autobaud_lock(uint32_t timeout_ms);
 static uint32_t snap_modbus_rate(uint32_t measured);
 #endif
@@ -48,7 +52,7 @@ static void modbus_task_process_one_frame(void);
 static void modbus_task_service_comm_persistence(void);
 #endif
 
-#if !MODBUS_AUTOBAUD_ENABLE
+#if !MODBUS_AUTOBAUD_ENABLE && !MODBUS_AUTOBAUD_V2_ENABLE
 static uint32_t uart3_autobaud_lock(uint32_t timeout_ms)
 {
 #ifdef USART_CR2_ABRMODE
@@ -233,6 +237,9 @@ void main_TaskModbus(void *argument)
     uint32_t uart_startup_baud;
     uint8_t uart_startup_parity;
 #endif
+#if MODBUS_AUTOBAUD_V2_ENABLE
+    bool v2_auto_selected = false;
+#endif
     uint8_t baud_display;
     uint8_t parity_display;
 #if !MODBUS_ENGINE_ACTIVE
@@ -306,26 +313,44 @@ void main_TaskModbus(void *argument)
     parity = ModbusAdapter_ParityFromCode(cfg.parity);
 #endif
     baud_rate = cfg.baud_rate;
+#if MODBUS_AUTOBAUD_V2_ENABLE
+    /* Apply-on-boot only: fixed saved rates do not enter the V2 state
+     * machine, and an invalid configuration must never arm UART capture. */
+    v2_auto_selected = config_valid && (cfg.baud_rate == 0U);
+#endif
 #if MODBUS_ENGINE_ACTIVE
     /* A zero baud selector means Auto.  The capture coordinator owns the
      * actual UART candidate selection, but HAL still needs a valid provisional
      * baud/framing while the transport is brought up.  Keep that provisional
      * setup separate from the configured and active snapshots. */
+#if MODBUS_AUTOBAUD_V2_ENABLE
+    /* Titania V2 uses a receive-ready 9600 8E1 initial listener. V2 is
+     * selected exclusively by saved baud selector 0 at this boot. */
+    uart_startup_baud = v2_auto_selected ?
+                        PYXIS_AUTOBAUD_V2_INITIAL_BAUD : baud_rate;
+    uart_startup_parity = v2_auto_selected ? 0U : cfg.parity;
+#else
     uart_startup_baud = (baud_rate == 0U) ? MODBUS_ENGINE_FIXED_BAUD_RATE :
                         baud_rate;
     uart_startup_parity = (baud_rate == 0U) ? MODBUS_ENGINE_FIXED_PARITY :
                           cfg.parity;
 #endif
+#endif
     baud_display = (uint8_t)ModbusAdapter_BaudToCode(cfg.baud_rate);
     parity_display = (uint8_t)(cfg.parity + 1U);
+#if MODBUS_AUTOBAUD_V2_ENABLE
+    g_modbus_stop_bits = v2_auto_selected ? UART_STOPBITS_1 :
+                          modbus_stop_bits_from_code(cfg.parity);
+#else
     g_modbus_stop_bits = modbus_stop_bits_from_code(cfg.parity);
+#endif
     LED_SetBaseState(LED_STATE_NO_POLLING_YET);
 
     if (config_valid) {
         LED_RequestStartupDisplay(slave_addr, baud_display, parity_display, 1U);
     }
 
-#if !MODBUS_AUTOBAUD_ENABLE
+#if !MODBUS_AUTOBAUD_ENABLE && !MODBUS_AUTOBAUD_V2_ENABLE
     if (baud_rate == 0U) {
         uint32_t detected = 0U;
 
@@ -368,6 +393,16 @@ void main_TaskModbus(void *argument)
         ModbusEngineRuntime_SetSlaveId(cfg.slave_id);
     }
 #endif
+#if MODBUS_AUTOBAUD_V2_ENABLE
+    if (transport_ready && v2_auto_selected) {
+        /* Arm only: the first transaction is attempted in the main loop.
+         * No foreground frame processing occurs until a trusted passive
+         * request has been consumed and normal RX handoff verified. */
+        if (!PyxisAutobaudV2_Start()) {
+            ModbusEngineV2_LatchFatal();
+        }
+    }
+#endif
 #else
     status = eMBInit(MB_RTU, slave_addr, 2U, baud_rate, parity);
     if (status == MB_ENOERR) {
@@ -402,7 +437,18 @@ void main_TaskModbus(void *argument)
 #if !MODBUS_ENGINE_ACTIVE
         eMBPoll();
 #endif
+#if MODBUS_AUTOBAUD_V2_ENABLE
+        if (v2_auto_selected && transport_ready) {
+            /* One cooperative tick. No legacy startup while-loop and
+             * no reacquisition on Modbus silence after a verified lock. */
+            PyxisAutobaudV2_Service();
+        }
+        if (!v2_auto_selected || PyxisAutobaudV2_Locked()) {
+            modbus_task_process_one_frame();
+        }
+#else
         modbus_task_process_one_frame();
+#endif
 
 #if MODBUS_ENGINE_ACTIVE
         /* Communication settings are persisted after the transaction is

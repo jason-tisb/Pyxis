@@ -41,7 +41,7 @@ static bool is_allowed_baud_rate(uint32_t baud_rate)
     /* Baud code 0 is reserved for autobaud and is rejected while the
      * autobaud coordinator is disabled. */
     switch (baud_rate) {
-#if MODBUS_AUTOBAUD_ENABLE
+#if MODBUS_AUTOBAUD_ENABLE || MODBUS_AUTOBAUD_V2_ENABLE
         case 0U:
 #endif
         case 9600U:

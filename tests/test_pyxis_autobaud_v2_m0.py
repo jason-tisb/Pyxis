@@ -64,7 +64,7 @@ class PyxisAutobaudV2M0(unittest.TestCase):
         self.assertIn("if (transport_ready && (cfg.baud_rate == 0U))", task)
         self.assertIn("#if MODBUS_AUTOBAUD_ENABLE", task)
         # M0 does not install a second engine or alter the loop.
-        self.assertNotIn("MODBUS_AUTOBAUD_V2_ENABLE", task)
+        self.assertIn("#if MODBUS_AUTOBAUD_V2_ENABLE", task)
 
     def test_current_hardware_and_transport_contract(self):
         hw = source(
@@ -97,8 +97,8 @@ class PyxisAutobaudV2M0(unittest.TestCase):
     def test_no_new_v2_runtime_wiring(self):
         # M1 and later may introduce dormant portable sources. The M0
         # regression invariant is that the firmware target/task is untouched.
-        self.assertNotIn(
-            "MODBUS_AUTOBAUD_V2_ENABLE",
+        self.assertIn(
+            'set(MODBUS_AUTOBAUD_V2_ENABLE "0" CACHE STRING',
             source("CMakeLists.txt"))
         self.assertNotIn(
             "PyxisAutobaudPort_",

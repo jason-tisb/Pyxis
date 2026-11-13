@@ -41,7 +41,7 @@ def check_source_separation():
     # It must not enable on-demand service in the active Modbus task.
     assert 'set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING' in cmake
     assert 'if(MODBUS_AUTOBAUD_V2_PORT_ENABLE STREQUAL "1")' in cmake
-    assert "MODBUS_AUTOBAUD_V2_ENABLE" not in cmake
+    assert 'set(MODBUS_AUTOBAUD_V2_ENABLE "0" CACHE STRING' in cmake
     assert "PyxisAutobaudPort_" not in task
 
     for source in sorted(V2_INC.glob("*.h")) + sorted(V2_SRC.glob("*.c")):

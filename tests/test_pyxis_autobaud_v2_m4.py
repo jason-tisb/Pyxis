@@ -46,9 +46,9 @@ def audit_m4_opt_in():
     assert "ModbusEngineV2_SnapshotSession(uint32_t *session_id," in serial
     assert "s_v2_passive == 0U" in serial
     assert "++s_v2_rx_error_generation" in serial
-    assert "AutobaudV2" not in task
+    assert "#if MODBUS_AUTOBAUD_V2_ENABLE" in task
     assert "PyxisAutobaudUart_" not in task
-    assert "MODBUS_AUTOBAUD_V2_ENABLE" not in task
+    assert "if (v2_auto_selected && transport_ready)" in task
     assert (
         "MODBUS_AUTOBAUD_V2_PORT_ENABLE" not in
         (ROOT / "CMakePresets.json").read_text(encoding="utf-8")

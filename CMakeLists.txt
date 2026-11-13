@@ -32,6 +32,7 @@ set(MODBUS_AUTOBAUD_ENABLE "0" CACHE STRING "Enable Milestone E autobaud startup
 set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING "Compile dormant M4 USART3 transaction adapter (0/1)")
 set(MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE "0" CACHE STRING "Compile dormant M5 TIM2 PC4 async capture adapter (0/1)")
 set(MODBUS_AUTOBAUD_V2_FRAMING_ENABLE "0" CACHE STRING "Compile dormant M6 passive Modbus RTU evidence and handoff (0/1)")
+set(MODBUS_AUTOBAUD_V2_ENABLE "0" CACHE STRING "Enable nonblocking Titania-like on-demand V2 for baud selector 0 (0/1)")
 set(MODBUS_G_TEST_HOOKS "0" CACHE STRING "Enable Milestone G software qualification hooks (0/1)")
 set(MODBUS_PYXIS_DMA_ABSOLUTE "0" CACHE STRING "Pyxis absolute-position DMA transport (0=baseline, 1=next milestone)")
 set(MODBUS_PYXIS_HW_RTO "0" CACHE STRING "Pyxis USART receiver-timeout framing (0=off, 1=on)")
@@ -40,6 +41,11 @@ set(MODBUS_PYXIS_HW_DE "0" CACHE STRING "Pyxis RS485 DE control (0=software, 1=U
 
 # Core project settings
 project(${CMAKE_PROJECT_NAME} LANGUAGES C ASM)
+# GNU Arm versions supplied by STM32CubeIDE and Linux runners differ.
+# Keep cyclomatic complexity output on toolchains that support the option,
+# but allow older compilers to build the identical firmware sources.
+include(CheckCCompilerFlag)
+check_c_compiler_flag("-fcyclomatic-complexity" PYXIS_CC_HAS_CYCLOMATIC_COMPLEXITY)
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Resolve auxiliary GNU Arm tools beside the compiler.  This keeps BIN/HEX
@@ -192,6 +198,23 @@ if(MODBUS_AUTOBAUD_V2_FRAMING_ENABLE STREQUAL "1")
     )
 endif()
 
+# M7 opt-in: connect the cooperative M3 supervisor to M4-M6 from the
+# existing FreeRTOS Modbus task. No legacy scanner or startup wait.
+if(MODBUS_AUTOBAUD_V2_ENABLE STREQUAL "1")
+    if(NOT MODBUS_AUTOBAUD_V2_FRAMING_ENABLE STREQUAL "1")
+        message(FATAL_ERROR "M7 V2 coordinator requires M4-M6 enabled")
+    endif()
+    if(NOT MODBUS_ENGINE_ACTIVE STREQUAL "1" OR
+       NOT MODBUS_AUTOBAUD_ENABLE STREQUAL "0" OR
+       NOT MODBUS_ENGINE_FORCE_FIXED_COMM STREQUAL "0")
+        message(FATAL_ERROR "M7 requires custom Modbus, no legacy autobaud and no force-fixed mode")
+    endif()
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_ondemand.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/BSP/Communication/pyxis_autobaud_v2_stm32h563.c
+    )
+endif()
+
 # Add include paths
 target_include_directories(${PROJECT_NAME} PRIVATE
     # Core & HAL
@@ -269,6 +292,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     MODBUS_AUTOBAUD_V2_PORT_ENABLE=${MODBUS_AUTOBAUD_V2_PORT_ENABLE}
     MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE=${MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE}
     MODBUS_AUTOBAUD_V2_FRAMING_ENABLE=${MODBUS_AUTOBAUD_V2_FRAMING_ENABLE}
+    MODBUS_AUTOBAUD_V2_ENABLE=${MODBUS_AUTOBAUD_V2_ENABLE}
     MODBUS_G_TEST_HOOKS=${MODBUS_G_TEST_HOOKS}
     MODBUS_PYXIS_DMA_ABSOLUTE=${MODBUS_PYXIS_DMA_ABSOLUTE}
     MODBUS_PYXIS_HW_RTO=${MODBUS_PYXIS_HW_RTO}
@@ -298,7 +322,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -ffunction-sections
     -fdata-sections
     -fstack-usage
-    -fcyclomatic-complexity
+    $<$<BOOL:${PYXIS_CC_HAS_CYCLOMATIC_COMPLEXITY}>:-fcyclomatic-complexity>
 )
 
 # Linker specs and core flags are already provided by STM32Cube/toolchain settings.

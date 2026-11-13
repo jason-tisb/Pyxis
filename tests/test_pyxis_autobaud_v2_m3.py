@@ -45,7 +45,7 @@ def check_m3_scope():
     # It must not enable on-demand service in the active Modbus task.
     assert 'set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING' in cmake
     assert 'if(MODBUS_AUTOBAUD_V2_PORT_ENABLE STREQUAL "1")' in cmake
-    assert "MODBUS_AUTOBAUD_V2_ENABLE" not in cmake
+    assert 'set(MODBUS_AUTOBAUD_V2_ENABLE "0" CACHE STRING' in cmake
     assert "autobaud_od_service(" not in task
     assert "PyxisAutobaudPort_" not in task
 
