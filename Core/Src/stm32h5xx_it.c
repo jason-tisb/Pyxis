@@ -25,6 +25,9 @@
 #include "mbport.h"
 #include "modbus_engine_config.h"
 #include "modbus_engine_port.h"
+#if MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE
+#include "pyxis_autobaud_capture_stm32h563.h"
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -309,6 +312,10 @@ void USART3_IRQHandler(void)
 
 void TIM2_IRQHandler(void)
 {
+#if MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE
+  /* Inspect CC4 overcapture/UIF before HAL consumes interrupt flags. */
+  PyxisAutobaudCapture_OnIrqBeforeHal();
+#endif
   HAL_TIM_IRQHandler(&htim2);
 }
 
