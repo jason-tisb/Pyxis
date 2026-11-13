@@ -34,6 +34,7 @@ Import Titania's **passive CRC-validated, any-ID Modbus RTU evidence** logic, ad
   - `Activity` waits 500ms from first received byte while allowing a complete initial request to finish; duplicated qualifying UART errors or a definitively invalid frame can trigger measurement earlier.
   - `Start/Service/State` run the unchanged Titania framing controller with the measured baud, 52s framing window and 12s candidate dwell (caller-supplied).
   - `IsFaulted` reflects the UART transport fatal latch and framing restoration error.
+  - On a failed framing search that successfully restores the default receive profile, reset initial RX byte/error baselines **once** so counter resets and old session traffic cannot immediately cause another capture without fresh RX activity.
 
 ## Source/default build settings
 
@@ -55,7 +56,7 @@ No changes to `task_modbus.c`, `task_vibration.c`, Modbus application register h
 
 1. `tests/autobaud_v2/test_framing.c` — upstream Titania native framing tests for 20 baud/mode combinations, any-ID/broadcast, invalid frames, stale sessions, deadlines, RX faults, restore and randomized untrusted evidence.
 2. `tests/autobaud_v2/test_initial_window.c` — 500ms grace, invalid frame, UART error qualification, tick wrap and indefinite idle.
-3. `tests/autobaud_v2/test_pyxis_framing_port.c` — real Pyxis board framing bridge linked with a mock UART/transport: direct 9600/8E1 any-ID/broadcast fast-lock, CRC rejection, 500ms grace, measured candidate acceptance, zero application/TX/persistence side effects.
+3. `tests/autobaud_v2/test_pyxis_framing_port.c` — real Pyxis board framing bridge linked with a mock UART/transport: direct 9600/8E1 any-ID/broadcast fast-lock, CRC rejection, 500ms grace, measured candidate acceptance, zero application/TX/persistence side effects, and fresh-activity rearming after an unsuccessful framing search.
 4. `tests/test_pyxis_autobaud_v2_m6.py` — M0–M5 regressions, strict portable interface checks and native M6 C11 tests.
 5. `tests/autobaud_v2/check_m6_arm_syntax.sh` — actual guarded STM32 portserial, TIM2, UART transaction and passive framing source syntax check with all M4/M5/M6 flags enabled.
 6. `.github/workflows/pyxis-autobaud-v2-m6.yml` — separate native and cross-compiler CI jobs.
