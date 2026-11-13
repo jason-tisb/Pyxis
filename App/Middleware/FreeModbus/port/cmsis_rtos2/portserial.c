@@ -94,6 +94,10 @@ static uint8_t uart3_frame_queue_count;
  * The normal Modbus engine cannot access these buffers. */
 #define PYXIS_V2_PASSIVE_SLOTS 4U
 static autobaud_rtu_assembly_t s_v2_assembly;
+static volatile uint32_t s_v2_rtu_fragments;
+static volatile uint32_t s_v2_rtu_published;
+static volatile uint32_t s_v2_rtu_assembly_errors;
+static volatile uint32_t s_v2_rtu_mailbox_overflows;
 typedef struct {
     uint8_t data[UART3_FRAME_MAX_SIZE];
     uint16_t length;
@@ -315,6 +319,7 @@ static void v2_publish_assembled_frame(void)
     if (s_v2_assembly.length == 0U) return;
     if ((uint32_t)(produced - s_v2_passive_consumed) >=
         PYXIS_V2_PASSIVE_SLOTS) {
+        ++s_v2_rtu_mailbox_overflows;
         ++s_v2_rx_error_generation;
         autobaud_rtu_assembly_reset(&s_v2_assembly);
         return;
@@ -324,6 +329,7 @@ static void v2_publish_assembled_frame(void)
     if (!autobaud_rtu_assembly_take(
             &s_v2_assembly, to->data, (uint16_t)sizeof(to->data),
             &to->length)) {
+        ++s_v2_rtu_assembly_errors;
         ++s_v2_rx_error_generation;
         autobaud_rtu_assembly_reset(&s_v2_assembly);
         return;
@@ -335,12 +341,14 @@ static void v2_publish_assembled_frame(void)
     to->frame_id = s_v2_frame_sequence;
     __DMB();
     s_v2_passive_produced = produced + 1U;
+    ++s_v2_rtu_published;
 }
 
 static void v2_publish_passive_frames(void)
 {
     uint32_t quiet_ms = v2_rtu_quiet_ms();
     if (quiet_ms == 0U) {
+        ++s_v2_rtu_assembly_errors;
         ++s_v2_rx_error_generation;
         autobaud_rtu_assembly_reset(&s_v2_assembly);
         return;
@@ -349,6 +357,7 @@ static void v2_publish_passive_frames(void)
         const uart3_frame_slot_t *from =
             &uart3_frame_queue[uart3_frame_queue_tail];
         autobaud_rtu_append_result_t outcome;
+        ++s_v2_rtu_fragments;
         /* ISR-based timestamps preserve gaps during worker backlog. */
         if (autobaud_rtu_assembly_ready(
                 &s_v2_assembly, from->ended_ms, quiet_ms))
@@ -363,6 +372,7 @@ static void v2_publish_passive_frames(void)
                 from->ended_ms, quiet_ms);
         }
         if (outcome != AUTOBAUD_RTU_APPEND_OK) {
+            ++s_v2_rtu_assembly_errors;
             ++s_v2_rx_error_generation;
             autobaud_rtu_assembly_reset(&s_v2_assembly);
         }
@@ -1341,6 +1351,21 @@ bool ModbusEngineV2_SnapshotSession(uint32_t *session_id,
 uint32_t ModbusEngineV2_NowMs(void)
 {
     return HAL_GetTick();
+}
+
+bool ModbusEngineV2_GetRtuDiagnostics(
+    pyxis_autobaud_v2_rtu_diagnostics_t *out)
+{
+    if (out == NULL) return false;
+    out->uart_idle_fragments = s_v2_rtu_fragments;
+    out->rtu_frames_published = s_v2_rtu_published;
+    out->rtu_assembly_errors = s_v2_rtu_assembly_errors;
+    out->mailbox_overflows = s_v2_rtu_mailbox_overflows;
+    out->uart_error_generation = s_v2_rx_error_generation;
+    out->rx_session_id = s_v2_session_id;
+    out->pending_passive_frames =
+        (uint32_t)(s_v2_passive_produced - s_v2_passive_consumed);
+    return true;
 }
 
 /* These methods run only from the future M7 Modbus task. The RX worker is
