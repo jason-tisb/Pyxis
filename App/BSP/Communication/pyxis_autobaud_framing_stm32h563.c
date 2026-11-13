@@ -15,6 +15,7 @@ static autobaud_initial_window_t s_initial;
 static bool s_ready;
 static bool s_initial_ready;
 static bool s_started;
+static bool s_terminal_observed;
 
 static uint32_t e_now(void *user)
 {
@@ -98,6 +99,7 @@ bool PyxisAutobaudFraming_Init(void)
   s_ready = true;
   s_initial_ready = false;
   s_started = false;
+  s_terminal_observed = false;
   return true;
 }
 
@@ -176,13 +178,24 @@ bool PyxisAutobaudFraming_Start(
   s_started = autobaud_e_start_dwell(
       &s_e, &k_e_ops, measurement, HW_AUTOBAUD_MEASURE_VALID,
       budget_ms, dwell_ms);
+  if (s_started) s_terminal_observed = false;
   return s_started;
 }
 
 autobaud_e_status_t PyxisAutobaudFraming_Service(void)
 {
+  autobaud_e_status_t result;
   if (!s_ready || !s_started) return AUTOBAUD_E_INVALID_MEASUREMENT;
-  return autobaud_e_service(&s_e);
+  result = autobaud_e_service(&s_e);
+  if (result != AUTOBAUD_E_RUNNING && !s_terminal_observed) {
+    s_terminal_observed = true;
+    /* A failed candidate search has restored the prior receive session.
+     * Rebase activity counters exactly once: no capture is permitted solely
+     * because the UART/DMA counters were reset by intermediate profiles. */
+    if (result != AUTOBAUD_E_LOCKED && !e_fatal(NULL))
+      (void)PyxisAutobaudFraming_ResetInitial();
+  }
+  return result;
 }
 
 const autobaud_e_ctx_t *PyxisAutobaudFraming_State(void)
