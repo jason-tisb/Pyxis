@@ -162,7 +162,7 @@ static void test_initial_any_id(void)
   push_request(0U,0x03U,true);
   assert(PyxisAutobaudFraming_ProbeInitial(&locked)==
          AUTOBAUD_OD_PROBE_WAITING);
-  assert(PyxisAutobaudFraming_Activity());
+  assert(!PyxisAutobaudFraming_Activity()); /* First bad frame only arms. */
   reset_initial();
   push_request(0U,0x06U,true);
   assert(PyxisAutobaudFraming_ProbeInitial(&locked)==
@@ -177,7 +177,7 @@ static void test_crc_errors_and_grace(void)
   push_request(3U,0x06U,false);
   assert(PyxisAutobaudFraming_ProbeInitial(&locked)==
          AUTOBAUD_OD_PROBE_WAITING);
-  assert(PyxisAutobaudFraming_Activity());
+  assert(!PyxisAutobaudFraming_Activity());
   assert(accepted==2U && normal_modbus_calls==0U);
   reset_initial();
   now=100U;
@@ -186,6 +186,12 @@ static void test_crc_errors_and_grace(void)
   now=599U;
   assert(!PyxisAutobaudFraming_Activity());
   now=600U;
+  assert(!PyxisAutobaudFraming_Activity()); /* Grace alone is not RX. */
+  rx_bytes+=8U;
+  ++now;
+  assert(!PyxisAutobaudFraming_Activity());
+  rx_bytes+=8U;
+  ++now;
   assert(PyxisAutobaudFraming_Activity());
 }
 
