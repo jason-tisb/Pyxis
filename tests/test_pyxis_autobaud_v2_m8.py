@@ -41,6 +41,20 @@ def audit_m8_source():
     assert "autobaud_rtu_assembly_append(" in serial
     assert "autobaud_rtu_assembly_ready(" in serial
     assert "autobaud_rtu_assembly_reset(&s_v2_assembly);" in serial
+    # CubeMX starts USART3 with hardware DE; software-DE mode must clear
+    # DEM with UE=0 BEFORE UART initialization enables the peripheral.
+    # Enforce the ordering in both the startup and profile-switch paths.
+    for start, end in (
+        ("bool ModbusEnginePort_UartInit(", "bool ModbusEnginePort_UartEnable("),
+        ("static bool uart3_apply_config(", "bool ModbusEnginePort_GetUartConfig("),
+    ):
+        section = serial.split(start, 1)[1].split(end, 1)[0]
+        disable = section.find("__HAL_UART_DISABLE(&huart3);")
+        clear_dem = section.find("CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);")
+        uart_init = section.find("HAL_UART_Init(&huart3)")
+        assert -1 not in (disable, clear_dem, uart_init), start
+        assert disable < clear_dem < uart_init, (
+            "Must clear DEM while USART is disabled, before HAL_UART_Init", start)
     assert "MODBUS_AUTOBAUD_V2_FRAMING_ENABLE" in serial
     assert "PYXIS_V2_FRAME_QUIET_MS" not in serial
     assert "autobaud_rtu_assembly.c" in cmake
