@@ -57,7 +57,7 @@ Software tests do **not** establish live STM32 USART errors, DMA ownership, Modb
 4. Wrong-baud first request then silence: **no capture** after 500ms, 12s or 2min. Fresh follow-up master traffic starts capture; a legal CRC-valid any-ID frame establishes profile with no response.
 5. Repeat all 20 profiles at 100ms, 1s and 10s polls; verify end-to-end response only to configured slave ID and report 8N1/8N2 ambiguity.
 6. Locked master disconnected and reconnected unchanged: no reacquisition on silence or single FE/PE disturbance.
-7. Change master from locked 9600 8E1 to 115200 8O1 and verify repeated FE/PE qualification, nonblocking rearm, restored PC4 USART3 AF7 and GPDMA2 ownership, followed by CRC lock; repeat at different poll periods. **If the physical UART produces too few FE/PE callback events at slow polls, the opt-in recovery may stay locked: adjust based on measurements, not guesses.**
+7. Change master from locked 9600 8E1 to 115200 8O1 and verify repeated FE/PE qualification, nonblocking rearm, restored PC4 USART3 AF7 and GPDMA1 Channel2 receive ownership, followed by CRC lock; repeat at different poll periods. **If the physical UART produces too few FE/PE callback events at slow polls, the opt-in recovery may stay locked: adjust based on measurements, not guesses.**
 8. Force UART claim BUSY, verified rollback, unverified restart and injected IRQ/overflow faults. Only verified old/new UART state may respond.
 9. Run vibration FIFO/FFT stress alongside RS-485 at all phases; record sampling overruns and max rearm latency.
 10. Power cycle with stored Auto and fixed modes; fixed settings never rearm or alter persisted communication.
