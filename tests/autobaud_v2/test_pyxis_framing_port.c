@@ -189,9 +189,6 @@ static void test_crc_errors_and_grace(void)
   assert(!PyxisAutobaudFraming_Activity()); /* Grace alone is not RX. */
   rx_bytes+=8U;
   ++now;
-  assert(!PyxisAutobaudFraming_Activity());
-  rx_bytes+=8U;
-  ++now;
   assert(PyxisAutobaudFraming_Activity());
 }
 
@@ -239,6 +236,9 @@ static void test_failed_candidates_reset_activity(void)
   assert(!PyxisAutobaudFraming_Activity());
   now+=499U;
   assert(!PyxisAutobaudFraming_Activity());
+  ++now;
+  assert(!PyxisAutobaudFraming_Activity()); /* No new RX. */
+  rx_bytes+=8U;
   ++now;
   assert(PyxisAutobaudFraming_Activity());
 }
