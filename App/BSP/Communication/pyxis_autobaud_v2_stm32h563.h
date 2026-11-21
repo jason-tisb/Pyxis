@@ -34,6 +34,7 @@ typedef struct {
   uint32_t rearm_requests;
   uint32_t rearm_successes;
   uint32_t rearm_busy_timeouts;
+  uint32_t rearm_rollbacks;
 } pyxis_autobaud_v2_diagnostics_t;
 
 /* Arm only when configured baud selector is 0 and V2 is compiled.
