@@ -30,20 +30,30 @@ bool autobaud_initial_window_trigger(autobaud_initial_window_t *window,
   errors = total_errors - window->baseline_errors;
   window->baseline_bytes = total_bytes;
   window->baseline_errors = total_errors;
-  if (window->invalid_frame_seen) {
+  /*
+   * M9 on-demand contract:
+   * - First activity (bytes, UART errors or an invalid complete request)
+   *   ARMS the detector; it never starts capture by itself.
+   * - Allow 500 ms for an initial CRC-valid 9600/8E1 request to lock.
+   * - After grace, require NEW qualifying RX activity to start capture.
+   *   An elapsed timer or a stale invalid-frame flag is not evidence.
+   *
+   * The first frame is at most 256 bytes on the initial 9600-baud
+   * listener, below the 500-ms grace. A later RX burst is thus distinct
+   * from that initial request at the supported line rates.
+   */
+  if (!window->first_rx_seen) {
+    if (bytes != 0U || errors != 0U || window->invalid_frame_seen) {
+      window->first_rx_seen = true;
+      window->first_rx_ms = now_ms;
+    }
     window->invalid_frame_seen = false;
-    return true;
+    return false;
   }
-  /* Titania's initial grace intentionally counts UART errors before
-   * expiry, but defers a pure byte trigger to allow the first CRC-correct
-   * request to finish and lock at the default listener. */
-  if (autobaud_activity_observe(&window->error_activity, now_ms,
-                                0U, errors)) return true;
-  if (bytes != 0U && !window->first_rx_seen) {
-    window->first_rx_seen = true;
-    window->first_rx_ms = now_ms;
-  }
-  return window->first_rx_seen &&
-         (uint32_t)(now_ms - window->first_rx_ms) >=
-             AUTOBAUD_INITIAL_GRACE_MS;
+  window->invalid_frame_seen = false;
+  if ((uint32_t)(now_ms - window->first_rx_ms) <
+      AUTOBAUD_INITIAL_GRACE_MS)
+    return false;
+  return autobaud_activity_observe(&window->error_activity, now_ms,
+                                   bytes, errors);
 }
