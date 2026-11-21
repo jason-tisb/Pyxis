@@ -77,6 +77,9 @@ static volatile uint8_t s_v2_restart_ready;
 static volatile uint8_t s_v2_fatal;
 static volatile uint32_t s_v2_session_id;
 static volatile uint32_t s_v2_rx_error_generation;
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+static volatile uint32_t s_v2_uart_framing_error_count;
+#endif
 #define PYXIS_V2_WORKER_PARK_TIMEOUT_MS 20U
 #endif
 
@@ -1020,6 +1023,10 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart_cb)
 
 #if MODBUS_AUTOBAUD_V2_PORT_ENABLE
     ++s_v2_rx_error_generation;
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+    if ((huart_cb->ErrorCode & (HAL_UART_ERROR_FE | HAL_UART_ERROR_PE)) != 0U)
+        ++s_v2_uart_framing_error_count;
+#endif
 #endif
     uart3_rx_dma_running = 0U;
     __HAL_UART_CLEAR_OREFLAG(&huart3);
@@ -1366,6 +1373,17 @@ bool ModbusEngineV2_TxAllowed(void)
     return s_v2_fatal == 0U && s_v2_claimed == 0U &&
            s_v2_passive == 0U && s_v2_park_requested == 0U;
 }
+
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+bool ModbusEngineV2_GetFramingErrorCount(uint32_t *out)
+{
+    if (out == NULL || s_v2_fatal != 0U || s_v2_claimed != 0U ||
+        s_v2_passive != 0U || s_v2_park_requested != 0U)
+        return false;
+    *out = s_v2_uart_framing_error_count;
+    return true;
+}
+#endif
 
 bool ModbusEngineV2_SnapshotSession(uint32_t *session_id,
                                     uint32_t *error_generation)
