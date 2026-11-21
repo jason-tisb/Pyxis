@@ -46,6 +46,9 @@ static uint8_t uart3_rx_dma_buf[UART3_RX_DMA_SIZE];
 static volatile uint8_t uart3_rx_enabled;
 static volatile uint8_t uart3_rx_dma_running;
 static volatile uint16_t uart3_rx_dma_last_pos;
+/* An IDLE at DMA_SIZE is ambiguous in linked-list circular mode. Only
+ * treat it as a full wrap if a real DMA TC callback preceded the IDLE. */
+static volatile uint8_t uart3_rx_tc_since_idle;
 static volatile uint32_t uart3_rx_dma_harvest_abs;
 static volatile uint32_t uart3_rx_boundary_queue[RX_BOUNDARY_QUEUE_SIZE];
 #if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
@@ -163,6 +166,7 @@ static BOOL uart3_start_custom_dma(void)
     if (uart3_rx_dma_running != 0U) {
         return TRUE;
     }
+    uart3_rx_tc_since_idle = 0U;
     if (HAL_UARTEx_ReceiveToIdle_DMA(&huart3, uart3_rx_dma_buf,
                                      UART3_RX_DMA_SIZE) != HAL_OK) {
         return FALSE;
@@ -939,6 +943,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
         pos = Size;
     }
     g_uart3_last_event_type = (uint32_t)event_type;
+    if (event_type == HAL_UART_RXEVENT_TC) {
+        /* TC is evidence of a completed DMA buffer pass, but not an RTU
+         * boundary. Keep harvesting only on the subsequent IDLE event. */
+        uart3_rx_tc_since_idle = 1U;
+        return;
+    }
 
     /*
      * In circular DMA mode HT/TC are transfer events, not evidence of a
@@ -949,6 +959,16 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
     if (event_type != HAL_UART_RXEVENT_IDLE) {
         return;
     }
+
+    /* The STM32H5 HAL reports IDLE with Size == DMA_SIZE when the circular
+     * DMA remaining count equals its programmed size. At startup this can
+     * represent ZERO received bytes, not a full buffer of data. */
+    if (pos == UART3_RX_DMA_SIZE && uart3_rx_dma_last_pos == 0U &&
+        uart3_rx_tc_since_idle == 0U) {
+        g_uart3_zero_length_events++;
+        return;
+    }
+    uart3_rx_tc_since_idle = 0U;
 
     start = (uart3_rx_dma_last_pos == UART3_RX_DMA_SIZE) ?
         0U : uart3_rx_dma_last_pos;
@@ -1054,6 +1074,7 @@ static void v2_drop_stale_rx(void)
     uart3_rx_head = 0U;
     uart3_rx_tail = 0U;
     uart3_rx_dma_last_pos = 0U;
+    uart3_rx_tc_since_idle = 0U;
     uart3_rx_dma_harvest_abs = 0U;
     g_uart3_dma_producer_abs = 0U;
     g_uart3_dma_wrap_count = 0U;
