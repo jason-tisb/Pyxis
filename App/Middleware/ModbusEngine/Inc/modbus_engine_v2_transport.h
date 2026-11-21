@@ -26,6 +26,11 @@ bool ModbusEngineV2_IsPassive(void);
 /* Suppress active Modbus TX while the worker/transaction is claimed,
  * passive framing is in progress, or a fatal communication fault is latched. */
 bool ModbusEngineV2_TxAllowed(void);
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+/* Monotonic count of UART framing/parity error callbacks only, excluding
+ * Modbus CRC rejection, RX silence and unrelated DMA queue events. */
+bool ModbusEngineV2_GetFramingErrorCount(uint32_t *out);
+#endif
 
 /* M6 passive frame transport. The source is enabled only when the new
  * framing adapter is compiled; the current production image remains inert. */

@@ -17,6 +17,12 @@ static bool fatal;
 static bool activity;
 static bool direct_valid;
 static bool passive;
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+static uint32_t framing_error_callbacks;
+static bool rearm_busy;
+static bool rearm_fatal;
+static bool rearm_rollback;
+#endif
 static unsigned uart_applies;
 static unsigned uart_begins;
 static unsigned capture_calls;
@@ -32,6 +38,14 @@ static autobaud_v2_profile_t active_uart = {
 
 uint32_t ModbusEngineV2_NowMs(void) { return clock_ms; }
 bool ModbusEngineV2_IsFatal(void) { return fatal; }
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+bool ModbusEngineV2_GetFramingErrorCount(uint32_t *out)
+{
+  if (out == NULL || passive || fatal) return false;
+  *out = framing_error_callbacks;
+  return true;
+}
+#endif
 void ModbusEngineV2_LatchFatal(void)
 {
   fatal = true;
@@ -44,6 +58,11 @@ autobaud_uart_txn_result_t PyxisAutobaudUart_Apply(
 {
   ++uart_applies;
   if (scenario == 4U) return AUTOBAUD_UART_TXN_BUSY;
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+  if (rearm_busy) return AUTOBAUD_UART_TXN_BUSY;
+  if (rearm_fatal) return AUTOBAUD_UART_TXN_FATAL_RECOVERY;
+  if (rearm_rollback) return AUTOBAUD_UART_TXN_ROLLED_BACK_VERIFIED;
+#endif
   assert(p && psv && p->baud_rate == PYXIS_AUTOBAUD_V2_INITIAL_BAUD);
   assert(p->framing == AUTOBAUD_UART_MODE_8E1);
   active_uart = *p;
@@ -136,7 +155,11 @@ int main(int argc, char **argv)
   pyxis_autobaud_v2_diagnostics_t d;
   assert(argc == 2);
   scenario = (unsigned)strtoul(argv[1], NULL, 10);
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+  assert(scenario <= 10U);
+#else
   assert(scenario <= 5U);
+#endif
   assert(!PyxisAutobaudV2_Locked());
   assert(PyxisAutobaudV2_Start());
   assert(!PyxisAutobaudV2_Start());
@@ -176,6 +199,60 @@ int main(int argc, char **argv)
       PyxisAutobaudV2_Service();
     }
     assert(capture_calls == 0U && d.locks == 1U);
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+  } else if (scenario >= 6U) {
+    direct_valid = true;
+    PyxisAutobaudV2_Service();
+    assert(PyxisAutobaudV2_Locked() && !passive);
+    assert(diag().locks == 1U);
+    PyxisAutobaudV2_Service(); /* Initialize locked FE/PE baseline. */
+    framing_error_callbacks += 7U;
+    clock_ms = 1000U;
+    PyxisAutobaudV2_Service();
+    assert(PyxisAutobaudV2_Locked()); /* One corrupted burst is not enough. */
+    if (scenario == 7U) {
+      PyxisAutobaudV2_NotifyHealthyExchange();
+      clock_ms = 1100U;
+      ++framing_error_callbacks;
+      PyxisAutobaudV2_Service();
+      assert(PyxisAutobaudV2_Locked() && diag().rearm_requests == 0U);
+    } else {
+      clock_ms = 1100U;
+      ++framing_error_callbacks;
+      PyxisAutobaudV2_Service();
+      assert(!PyxisAutobaudV2_Locked());
+      assert(diag().state == PYXIS_AUTOBAUD_V2_REARMING);
+      assert(diag().rearm_requests == 1U);
+      if (scenario == 8U) rearm_busy = true;
+      if (scenario == 9U) rearm_fatal = true;
+      if (scenario == 10U) rearm_rollback = true;
+      PyxisAutobaudV2_Service();
+      if (scenario == 8U) {
+        assert(diag().state == PYXIS_AUTOBAUD_V2_REARMING);
+        clock_ms += PYXIS_AUTOBAUD_V2_START_BUDGET_MS;
+        PyxisAutobaudV2_Service();
+        assert(PyxisAutobaudV2_Locked());
+        assert(diag().rearm_busy_timeouts == 1U);
+        assert(diag().rearm_successes == 0U);
+      } else if (scenario == 9U) {
+        assert(PyxisAutobaudV2_IsFatal() && latch_count == 1U);
+        assert(!PyxisAutobaudV2_Locked());
+      } else if (scenario == 10U) {
+        assert(PyxisAutobaudV2_Locked());
+        assert(diag().rearm_rollbacks == 1U);
+        assert(!PyxisAutobaudV2_IsFatal() && !passive);
+      } else {
+        assert(diag().state == PYXIS_AUTOBAUD_V2_LISTENING);
+        assert(diag().rearm_successes == 1U);
+        assert(passive && !PyxisAutobaudV2_Locked());
+        assert(capture_calls == 0U);
+        direct_valid = true;
+        PyxisAutobaudV2_Service();
+        assert(PyxisAutobaudV2_Locked() && !passive);
+        assert(diag().locks == 2U);
+      }
+    }
+#endif
   } else {
     activity = true;
     PyxisAutobaudV2_Service();

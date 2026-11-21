@@ -23,6 +23,12 @@
 #define MODBUS_AUTOBAUD_V2_ENABLE 0
 #endif
 
+/* M9: opt-in, post-lock FE/PE-qualified profile reacquisition.
+ * Disabled until hardware qualification. Never driven by silence. */
+#ifndef MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+#define MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE 0
+#endif
+
 /* M6 passive framing, any-ID CRC evidence, atomic RX handoff.
  * M7 alone integrates it into the active Modbus FreeRTOS task. */
 #ifndef MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
@@ -92,6 +98,15 @@
 #if ((MODBUS_AUTOBAUD_V2_ENABLE != 0) && \
      (MODBUS_AUTOBAUD_V2_ENABLE != 1))
 #error "MODBUS_AUTOBAUD_V2_ENABLE must be 0 or 1"
+#endif
+
+#if ((MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE != 0) && \
+     (MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE != 1))
+#error "MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE must be 0 or 1"
+#endif
+
+#if (MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE && !MODBUS_AUTOBAUD_V2_ENABLE)
+#error "M9 reacquisition requires full on-demand V2"
 #endif
 
 #if (MODBUS_AUTOBAUD_V2_ENABLE && !MODBUS_AUTOBAUD_V2_FRAMING_ENABLE)

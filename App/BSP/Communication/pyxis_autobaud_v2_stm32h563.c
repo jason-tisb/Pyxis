@@ -10,6 +10,9 @@
 #include "pyxis_autobaud_capture_stm32h563.h"
 #include "pyxis_autobaud_framing_stm32h563.h"
 #include "modbus_engine_v2_transport.h"
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+#include "autobaud_reacquire.h"
+#endif
 #include <stddef.h>
 
 static autobaud_od_t s_supervisor;
@@ -17,6 +20,13 @@ static pyxis_autobaud_v2_diagnostics_t s_diag;
 static uint32_t s_start_ms;
 static uint8_t s_armed;
 static uint8_t s_started;
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+static autobaud_reacquire_t s_rearm_guard;
+static uint8_t s_rearm_guard_ready;
+static uint32_t s_rearm_start_ms;
+static uint32_t s_completed_attempts;
+static uint32_t s_completed_failures;
+#endif
 
 static uint32_t od_now(void *u)
 {
@@ -154,6 +164,11 @@ bool PyxisAutobaudV2_Start(void)
   s_diag = (pyxis_autobaud_v2_diagnostics_t){0};
   s_diag.state = PYXIS_AUTOBAUD_V2_STARTING;
   s_start_ms = ModbusEngineV2_NowMs();
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+  s_rearm_guard_ready = 0U;
+  s_completed_attempts = 0U;
+  s_completed_failures = 0U;
+#endif
   s_armed = 1U;
   return true; /* Never blocks the Modbus task's regular startup. */
 }
@@ -164,15 +179,84 @@ void PyxisAutobaudV2_Service(void)
     PYXIS_AUTOBAUD_V2_INITIAL_BAUD, AUTOBAUD_UART_MODE_8E1
   };
   autobaud_uart_txn_result_t result;
-  if (s_armed == 0U ||
-      s_diag.state == PYXIS_AUTOBAUD_V2_LOCKED ||
-      s_diag.state == PYXIS_AUTOBAUD_V2_FAULT)
+  if (s_armed == 0U || s_diag.state == PYXIS_AUTOBAUD_V2_FAULT)
     return;
 
   if (od_fatal(NULL)) {
     od_latch(NULL);
     return;
   }
+
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+  if (s_diag.state == PYXIS_AUTOBAUD_V2_LOCKED) {
+    uint32_t framing_errors;
+    if (!ModbusEngineV2_GetFramingErrorCount(&framing_errors)) {
+      od_latch(NULL);
+      return;
+    }
+    if (s_rearm_guard_ready == 0U) {
+      autobaud_reacquire_reset(&s_rearm_guard, framing_errors);
+      s_rearm_guard_ready = 1U;
+      return;
+    }
+    if (!autobaud_reacquire_observe(
+            &s_rearm_guard, od_now(NULL), framing_errors))
+      return; /* Master silence, CRC errors and isolated noise are inert. */
+    ++s_diag.rearm_requests;
+    s_rearm_start_ms = od_now(NULL);
+    s_diag.state = PYXIS_AUTOBAUD_V2_REARMING;
+    return; /* No normal Modbus request processing in the next task tick. */
+  }
+  if (s_diag.state == PYXIS_AUTOBAUD_V2_REARMING) {
+    uint32_t framing_errors;
+    /* BUSY means the UART transaction did not mutate hardware. A bounded
+     * claim timeout preserves the previous validated lock, not a fault. */
+    if ((uint32_t)(od_now(NULL) - s_rearm_start_ms) >=
+        PYXIS_AUTOBAUD_V2_START_BUDGET_MS) {
+      if (!ModbusEngineV2_GetFramingErrorCount(&framing_errors)) {
+        od_latch(NULL);
+        return;
+      }
+      autobaud_reacquire_reset(&s_rearm_guard, framing_errors);
+      ++s_diag.rearm_busy_timeouts;
+      s_diag.state = PYXIS_AUTOBAUD_V2_LOCKED;
+      return;
+    }
+    result = PyxisAutobaudUart_Apply(&initial, true);
+    if (result == AUTOBAUD_UART_TXN_BUSY) return;
+    if (result == AUTOBAUD_UART_TXN_ROLLED_BACK_VERIFIED) {
+      /* M4 transaction proved that the previous normal RX profile was
+       * restored; preserve it rather than latching a needless fault. */
+      if (!ModbusEngineV2_GetFramingErrorCount(&framing_errors)) {
+        od_latch(NULL);
+        return;
+      }
+      autobaud_reacquire_reset(&s_rearm_guard, framing_errors);
+      ++s_diag.rearm_rollbacks;
+      s_diag.state = PYXIS_AUTOBAUD_V2_LOCKED;
+      return;
+    }
+    if (result != AUTOBAUD_UART_TXN_APPLIED_VERIFIED ||
+        !reset_default_evidence()) {
+      od_latch(NULL); /* Unverified RX state: fail closed. */
+      return;
+    }
+    s_completed_attempts += s_supervisor.attempts;
+    s_completed_failures += s_supervisor.failures;
+    if (!autobaud_od_init(&s_supervisor, &k_ops)) {
+      od_latch(NULL);
+      return;
+    }
+    s_rearm_guard_ready = 0U;
+    s_diag.active = (autobaud_v2_profile_t){0};
+    s_diag.engine_state = AUTOBAUD_OD_WAIT_ACTIVITY;
+    ++s_diag.rearm_successes;
+    s_diag.state = PYXIS_AUTOBAUD_V2_LISTENING;
+    return;
+  }
+#else
+  if (s_diag.state == PYXIS_AUTOBAUD_V2_LOCKED) return;
+#endif
 
   if (s_started == 0U) {
     /* The high-priority RX worker may not have completed its first
@@ -208,10 +292,15 @@ void PyxisAutobaudV2_Service(void)
   autobaud_od_service(&s_supervisor);
   s_diag.engine_state = s_supervisor.state;
   s_diag.active = s_supervisor.active;
-  s_diag.locks = s_supervisor.locks;
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+  s_diag.failures = s_completed_failures + s_supervisor.failures;
+  s_diag.recovery_attempts = s_completed_attempts + s_supervisor.attempts;
+#else
   s_diag.failures = s_supervisor.failures;
   s_diag.recovery_attempts = s_supervisor.attempts;
+#endif
   if (s_supervisor.state == AUTOBAUD_OD_LOCKED) {
+    if (s_diag.state != PYXIS_AUTOBAUD_V2_LOCKED) ++s_diag.locks;
     s_diag.state = PYXIS_AUTOBAUD_V2_LOCKED;
   } else if (s_supervisor.state == AUTOBAUD_OD_FAULT) {
     od_latch(NULL);
@@ -224,6 +313,18 @@ bool PyxisAutobaudV2_Locked(void)
          s_diag.state == PYXIS_AUTOBAUD_V2_LOCKED &&
          autobaud_od_locked(&s_supervisor) &&
          !od_fatal(NULL);
+}
+
+void PyxisAutobaudV2_NotifyHealthyExchange(void)
+{
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+  uint32_t framing_errors;
+  if (s_diag.state == PYXIS_AUTOBAUD_V2_LOCKED &&
+      ModbusEngineV2_GetFramingErrorCount(&framing_errors)) {
+    autobaud_reacquire_reset(&s_rearm_guard, framing_errors);
+    s_rearm_guard_ready = 1U;
+  }
+#endif
 }
 
 bool PyxisAutobaudV2_IsFatal(void)
