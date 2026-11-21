@@ -17,7 +17,8 @@ typedef enum {
   PYXIS_AUTOBAUD_V2_STARTING,
   PYXIS_AUTOBAUD_V2_LISTENING,
   PYXIS_AUTOBAUD_V2_LOCKED,
-  PYXIS_AUTOBAUD_V2_FAULT
+  PYXIS_AUTOBAUD_V2_FAULT,
+  PYXIS_AUTOBAUD_V2_REARMING /* M9 opt-in: suppress application RX while switching */
 } pyxis_autobaud_v2_run_state_t;
 
 typedef struct {
@@ -30,6 +31,9 @@ typedef struct {
   uint32_t recovery_attempts;
   uint32_t locks;
   uint32_t failures;
+  uint32_t rearm_requests;
+  uint32_t rearm_successes;
+  uint32_t rearm_busy_timeouts;
 } pyxis_autobaud_v2_diagnostics_t;
 
 /* Arm only when configured baud selector is 0 and V2 is compiled.
@@ -42,6 +46,9 @@ void PyxisAutobaudV2_Service(void);
 
 bool PyxisAutobaudV2_Locked(void);
 bool PyxisAutobaudV2_IsFatal(void);
+/* A verified normal Modbus TX confirms the active profile is healthy;
+ * M9 discards any accumulated FE/PE suspicion. No persistence mutation. */
+void PyxisAutobaudV2_NotifyHealthyExchange(void);
 void PyxisAutobaudV2_GetDiagnostics(
     pyxis_autobaud_v2_diagnostics_t *out);
 
