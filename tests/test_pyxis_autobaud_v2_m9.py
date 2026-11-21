@@ -67,6 +67,8 @@ def native_test(cc, src, label):
         args = [cc, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
                 "-pedantic", "-I", str(INC), "-I", str(BSP),
                 "-I", str(MB)] + [str(x) for x in src] + ["-o", str(binary)]
+        if label == "coordinator":
+            args.insert(1, "-DMODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE=1")
         subprocess.run(args, check=True, cwd=ROOT)
         if label == "coordinator":
             for scenario in range(11):
