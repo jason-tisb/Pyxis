@@ -69,6 +69,22 @@ def audit_m8_source():
         "return ok && (huart3.Instance->CR3 & USART_CR3_DMAR) == 0U"
     )
     assert abort < gate < clear < verify
+    # STM32H5 linked-list circular DMA can deliver an IDLE callback with
+    # Size == buffer length even if NO bytes were received. Only a prior
+    # transfer-complete event can authorize accepting a full-buffer wrap.
+    callback = serial.split("void HAL_UARTEx_RxEventCallback(", 1)[1].split(
+        "void ModbusEnginePort_RxTimeoutIsr(", 1)[0]
+    tc = callback.index("if (event_type == HAL_UART_RXEVENT_TC)")
+    tc_mark = callback.index("uart3_rx_tc_since_idle = 1U;")
+    idle = callback.index("if (event_type != HAL_UART_RXEVENT_IDLE)")
+    guard = callback.index("if (pos == UART3_RX_DMA_SIZE &&")
+    zero_event = callback.index("g_uart3_zero_length_events++;", guard)
+    clear = callback.index("uart3_rx_tc_since_idle = 0U;", guard)
+    increment = callback.index("g_uart3_dma_producer_abs += delta;")
+    assert tc < tc_mark < idle < guard < zero_event < clear < increment
+    assert "uart3_rx_tc_since_idle = 0U;" in serial.split(
+        "static BOOL uart3_start_custom_dma(", 1)[1].split(
+        "static void uart3_stop_custom_dma(", 1)[0]
     assert "MODBUS_AUTOBAUD_V2_FRAMING_ENABLE" in serial
     assert "PYXIS_V2_FRAME_QUIET_MS" not in serial
     assert "autobaud_rtu_assembly.c" in cmake
