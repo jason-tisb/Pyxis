@@ -224,9 +224,21 @@ void PyxisAutobaudV2_Service(void)
     }
     result = PyxisAutobaudUart_Apply(&initial, true);
     if (result == AUTOBAUD_UART_TXN_BUSY) return;
+    if (result == AUTOBAUD_UART_TXN_ROLLED_BACK_VERIFIED) {
+      /* M4 transaction proved that the previous normal RX profile was
+       * restored; preserve it rather than latching a needless fault. */
+      if (!ModbusEngineV2_GetFramingErrorCount(&framing_errors)) {
+        od_latch(NULL);
+        return;
+      }
+      autobaud_reacquire_reset(&s_rearm_guard, framing_errors);
+      ++s_diag.rearm_rollbacks;
+      s_diag.state = PYXIS_AUTOBAUD_V2_LOCKED;
+      return;
+    }
     if (result != AUTOBAUD_UART_TXN_APPLIED_VERIFIED ||
         !reset_default_evidence()) {
-      od_latch(NULL); /* Unknown or rolled-back RX: fail closed. */
+      od_latch(NULL); /* Unverified RX state: fail closed. */
       return;
     }
     s_completed_attempts += s_supervisor.attempts;
