@@ -1204,6 +1204,12 @@ bool ModbusEngineV2_Quiesce(void)
         ok = HAL_UART_AbortReceive(&huart3) == HAL_OK;
     }
     uart3_rx_dma_running = 0U;
+    /* On STM32H5 the HAL abort may complete with USART CR3.DMAR still set.
+     * Only clear the UART DMA request after a verified successful abort and
+     * a physically disabled GPDMA channel. Keep fail-closed otherwise. */
+    if (ok && !v2_dma_enabled()) {
+        ATOMIC_CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DMAR);
+    }
     __HAL_UART_CLEAR_OREFLAG(&huart3);
     __HAL_UART_CLEAR_FEFLAG(&huart3);
     __HAL_UART_CLEAR_NEFLAG(&huart3);
