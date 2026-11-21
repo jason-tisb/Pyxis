@@ -33,6 +33,7 @@ set(MODBUS_AUTOBAUD_V2_PORT_ENABLE "0" CACHE STRING "Compile dormant M4 USART3 t
 set(MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE "0" CACHE STRING "Compile dormant M5 TIM2 PC4 async capture adapter (0/1)")
 set(MODBUS_AUTOBAUD_V2_FRAMING_ENABLE "0" CACHE STRING "Compile dormant M6 passive Modbus RTU evidence and handoff (0/1)")
 set(MODBUS_AUTOBAUD_V2_ENABLE "0" CACHE STRING "Enable nonblocking Titania-like on-demand V2 for baud selector 0 (0/1)")
+set(MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE "0" CACHE STRING "M9 opt-in recovery on repeated UART FE/PE; requires V2 (0/1)")
 set(MODBUS_G_TEST_HOOKS "0" CACHE STRING "Enable Milestone G software qualification hooks (0/1)")
 set(MODBUS_PYXIS_DMA_ABSOLUTE "0" CACHE STRING "Pyxis absolute-position DMA transport (0=baseline, 1=next milestone)")
 set(MODBUS_PYXIS_HW_RTO "0" CACHE STRING "Pyxis USART receiver-timeout framing (0=off, 1=on)")
@@ -216,6 +217,16 @@ if(MODBUS_AUTOBAUD_V2_ENABLE STREQUAL "1")
     )
 endif()
 
+# M9 opt-in post-lock reacquisition. Never enabled in presets/default builds.
+if(MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE STREQUAL "1")
+    if(NOT MODBUS_AUTOBAUD_V2_ENABLE STREQUAL "1")
+        message(FATAL_ERROR "M9 reacquisition requires full V2 on-demand enabled")
+    endif()
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_reacquire.c
+    )
+endif()
+
 # Add include paths
 target_include_directories(${PROJECT_NAME} PRIVATE
     # Core & HAL
@@ -294,6 +305,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE=${MODBUS_AUTOBAUD_V2_CAPTURE_ENABLE}
     MODBUS_AUTOBAUD_V2_FRAMING_ENABLE=${MODBUS_AUTOBAUD_V2_FRAMING_ENABLE}
     MODBUS_AUTOBAUD_V2_ENABLE=${MODBUS_AUTOBAUD_V2_ENABLE}
+    MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE=${MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE}
     MODBUS_G_TEST_HOOKS=${MODBUS_G_TEST_HOOKS}
     MODBUS_PYXIS_DMA_ABSOLUTE=${MODBUS_PYXIS_DMA_ABSOLUTE}
     MODBUS_PYXIS_HW_RTO=${MODBUS_PYXIS_HW_RTO}
