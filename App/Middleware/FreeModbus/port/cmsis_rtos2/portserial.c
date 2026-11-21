@@ -14,6 +14,7 @@
 #include "modbus_engine_v2_transport.h"
 #endif
 #if MODBUS_ENGINE_ACTIVE && MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+#include "autobaud_rtu_assembly.h"
 #include <string.h>
 #endif
 
@@ -45,8 +46,15 @@ static uint8_t uart3_rx_dma_buf[UART3_RX_DMA_SIZE];
 static volatile uint8_t uart3_rx_enabled;
 static volatile uint8_t uart3_rx_dma_running;
 static volatile uint16_t uart3_rx_dma_last_pos;
+/* An IDLE at DMA_SIZE is ambiguous in linked-list circular mode. Only
+ * treat it as a full wrap if a real DMA TC callback preceded the IDLE. */
+static volatile uint8_t uart3_rx_tc_since_idle;
 static volatile uint32_t uart3_rx_dma_harvest_abs;
 static volatile uint32_t uart3_rx_boundary_queue[RX_BOUNDARY_QUEUE_SIZE];
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+/* ISR timestamp, never delayed worker timestamp. */
+static volatile uint32_t uart3_rx_boundary_tick[RX_BOUNDARY_QUEUE_SIZE];
+#endif
 static volatile uint8_t uart3_rx_boundary_head;
 static volatile uint8_t uart3_rx_boundary_tail;
 static volatile uint32_t uart3_rto_pending;
@@ -75,6 +83,9 @@ static volatile uint32_t s_v2_rx_error_generation;
 typedef struct {
     uint8_t data[UART3_FRAME_MAX_SIZE];
     uint16_t length;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+    uint32_t ended_ms;
+#endif
 } uart3_frame_slot_t;
 static uart3_frame_slot_t uart3_frame_queue[UART3_FRAME_QUEUE_DEPTH];
 static uint8_t uart3_frame_queue_head;
@@ -85,7 +96,11 @@ static uint8_t uart3_frame_queue_count;
  * overwrites an unread slot. Overflow invalidates the entire session.
  * The normal Modbus engine cannot access these buffers. */
 #define PYXIS_V2_PASSIVE_SLOTS 4U
-#define PYXIS_V2_FRAME_QUIET_MS 5U
+static autobaud_rtu_assembly_t s_v2_assembly;
+static volatile uint32_t s_v2_rtu_fragments;
+static volatile uint32_t s_v2_rtu_published;
+static volatile uint32_t s_v2_rtu_assembly_errors;
+static volatile uint32_t s_v2_rtu_mailbox_overflows;
 typedef struct {
     uint8_t data[UART3_FRAME_MAX_SIZE];
     uint16_t length;
@@ -151,6 +166,7 @@ static BOOL uart3_start_custom_dma(void)
     if (uart3_rx_dma_running != 0U) {
         return TRUE;
     }
+    uart3_rx_tc_since_idle = 0U;
     if (HAL_UARTEx_ReceiveToIdle_DMA(&huart3, uart3_rx_dma_buf,
                                      UART3_RX_DMA_SIZE) != HAL_OK) {
         return FALSE;
@@ -229,13 +245,19 @@ static void uart3_queue_boundary(uint32_t end_abs)
 #endif
     }
     uart3_rx_boundary_queue[uart3_rx_boundary_head] = end_abs;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+    uart3_rx_boundary_tick[uart3_rx_boundary_head] = HAL_GetTick();
+#endif
     uart3_rx_boundary_head = next;
     g_uart3_boundaries_queued++;
 }
 
-static void uart3_queue_current_ring_frame(void)
+static void uart3_queue_current_ring_frame(uint32_t ended_ms)
 {
     uart3_frame_slot_t *slot;
+#if !MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+    (void)ended_ms;
+#endif
     uint16_t length = 0U;
 
     if (uart3_rx_tail == uart3_rx_head) {
@@ -266,10 +288,16 @@ static void uart3_queue_current_ring_frame(void)
     while (uart3_rx_tail != uart3_rx_head) {
         uart3_rx_tail = (uint16_t)((uart3_rx_tail + 1U) & RB_MASK);
         g_uart3_rx_overruns++;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        ++s_v2_rx_error_generation;
+#endif
     }
 
     if (length != 0U) {
         slot->length = length;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        slot->ended_ms = ended_ms;
+#endif
         uart3_frame_queue_head = (uint8_t)((uart3_frame_queue_head + 1U) %
                                            UART3_FRAME_QUEUE_DEPTH);
         uart3_frame_queue_count++;
@@ -281,29 +309,76 @@ static void uart3_queue_current_ring_frame(void)
 }
 
 #if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+static uint32_t v2_rtu_quiet_ms(void)
+{
+    return autobaud_rtu_quiet_ms(
+        huart3.Init.BaudRate, huart3.Init.Parity != UART_PARITY_NONE,
+        huart3.Init.StopBits == UART_STOPBITS_2);
+}
+
+/* Worker-only: mailbox receives full RTU frames, not IDLE fragments. */
+static void v2_publish_assembled_frame(void)
+{
+    uint32_t produced = s_v2_passive_produced;
+    if (s_v2_assembly.length == 0U) return;
+    if ((uint32_t)(produced - s_v2_passive_consumed) >=
+        PYXIS_V2_PASSIVE_SLOTS) {
+        ++s_v2_rtu_mailbox_overflows;
+        ++s_v2_rx_error_generation;
+        autobaud_rtu_assembly_reset(&s_v2_assembly);
+        return;
+    }
+    pyxis_v2_passive_slot_t *to =
+        &s_v2_passive_queue[produced % PYXIS_V2_PASSIVE_SLOTS];
+    if (!autobaud_rtu_assembly_take(
+            &s_v2_assembly, to->data, (uint16_t)sizeof(to->data),
+            &to->length)) {
+        ++s_v2_rtu_assembly_errors;
+        ++s_v2_rx_error_generation;
+        autobaud_rtu_assembly_reset(&s_v2_assembly);
+        return;
+    }
+    to->session_id = s_v2_session_id;
+    to->error_generation = s_v2_rx_error_generation;
+    ++s_v2_frame_sequence;
+    if (s_v2_frame_sequence == 0U) ++s_v2_frame_sequence;
+    to->frame_id = s_v2_frame_sequence;
+    __DMB();
+    s_v2_passive_produced = produced + 1U;
+    ++s_v2_rtu_published;
+}
+
 static void v2_publish_passive_frames(void)
 {
-    /* Worker only: copies completed frame bytes, then publishes metadata.
-     * A backpressure overflow poisons session trust. */
+    uint32_t quiet_ms = v2_rtu_quiet_ms();
+    if (quiet_ms == 0U) {
+        ++s_v2_rtu_assembly_errors;
+        ++s_v2_rx_error_generation;
+        autobaud_rtu_assembly_reset(&s_v2_assembly);
+        return;
+    }
     while (uart3_frame_queue_count != 0U) {
         const uart3_frame_slot_t *from =
             &uart3_frame_queue[uart3_frame_queue_tail];
-        uint32_t produced = s_v2_passive_produced;
-        if ((uint32_t)(produced - s_v2_passive_consumed) >=
-            PYXIS_V2_PASSIVE_SLOTS) {
+        autobaud_rtu_append_result_t outcome;
+        ++s_v2_rtu_fragments;
+        /* ISR-based timestamps preserve gaps during worker backlog. */
+        if (autobaud_rtu_assembly_ready(
+                &s_v2_assembly, from->ended_ms, quiet_ms))
+            v2_publish_assembled_frame();
+        outcome = autobaud_rtu_assembly_append(
+            &s_v2_assembly, from->data, from->length,
+            from->ended_ms, quiet_ms);
+        if (outcome == AUTOBAUD_RTU_APPEND_NEEDS_FLUSH) {
+            v2_publish_assembled_frame();
+            outcome = autobaud_rtu_assembly_append(
+                &s_v2_assembly, from->data, from->length,
+                from->ended_ms, quiet_ms);
+        }
+        if (outcome != AUTOBAUD_RTU_APPEND_OK) {
+            ++s_v2_rtu_assembly_errors;
             ++s_v2_rx_error_generation;
-        } else {
-            pyxis_v2_passive_slot_t *to =
-                &s_v2_passive_queue[produced % PYXIS_V2_PASSIVE_SLOTS];
-            to->length = from->length;
-            memcpy(to->data, from->data, from->length);
-            to->session_id = s_v2_session_id;
-            to->error_generation = s_v2_rx_error_generation;
-            ++s_v2_frame_sequence;
-            if (s_v2_frame_sequence == 0U) ++s_v2_frame_sequence;
-            to->frame_id = s_v2_frame_sequence;
-            __DMB(); /* Publish data before the new producer cursor. */
-            s_v2_passive_produced = produced + 1U;
+            autobaud_rtu_assembly_reset(&s_v2_assembly);
         }
         uart3_frame_queue_tail =
             (uint8_t)((uart3_frame_queue_tail + 1U) %
@@ -311,6 +386,9 @@ static void v2_publish_passive_frames(void)
         --uart3_frame_queue_count;
         ++g_uart3_frame_queue_popped;
     }
+    if (autobaud_rtu_assembly_ready(
+            &s_v2_assembly, HAL_GetTick(), quiet_ms))
+        v2_publish_assembled_frame();
 }
 #endif
 
@@ -372,6 +450,9 @@ static BOOL uart3_recover_after_error(void)
     uart3_frame_queue_tail = 0U;
     uart3_frame_queue_count = 0U;
     uart3_rto_pending = 0U;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+    autobaud_rtu_assembly_reset(&s_v2_assembly);
+#endif
     g_uart3_transport_flushes++;
 
     __HAL_UART_CLEAR_OREFLAG(&huart3);
@@ -430,16 +511,22 @@ static void custom_rx_task_entry(void *argument)
 
         while (uart3_rx_boundary_tail != uart3_rx_boundary_head) {
             uint32_t end_abs = uart3_rx_boundary_queue[uart3_rx_boundary_tail];
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+            uint32_t boundary_ms =
+                uart3_rx_boundary_tick[uart3_rx_boundary_tail];
+#else
+            uint32_t boundary_ms = 0U;
+#endif
             uart3_rx_boundary_tail = (uint8_t)((uart3_rx_boundary_tail + 1U) &
                                                RX_BOUNDARY_QUEUE_MASK);
             uart3_harvest_dma_range(uart3_rx_dma_harvest_abs, end_abs);
             uart3_rx_dma_harvest_abs = end_abs;
             g_uart3_boundaries_harvested++;
-            uart3_queue_current_ring_frame();
+            uart3_queue_current_ring_frame(boundary_ms);
         }
         if (uart3_rto_pending != 0U) {
             uart3_rto_pending = 0U;
-            uart3_queue_current_ring_frame();
+            uart3_queue_current_ring_frame(HAL_GetTick());
         }
 #if MODBUS_AUTOBAUD_V2_PORT_ENABLE
         /* Candidate traffic must NEVER reach the active Modbus engine.
@@ -496,6 +583,13 @@ bool ModbusEnginePort_UartInit(uint32_t baud_rate, uint8_t data_bits,
                                     1U,
                                     1U);
     #else
+        /* CubeMX initializes USART3 with hardware DE. The DEM bit is
+         * writable only while UE=0; clear it before HAL_UART_Init
+         * re-enables USART3 for the software-controlled PB14 DE path. */
+        __HAL_UART_DISABLE(&huart3);
+#if defined(USART_CR3_DEM)
+        CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
+#endif
         g_custom_uart_hal_status =
             (uint32_t)HAL_UART_Init(&huart3);
     #endif
@@ -504,9 +598,6 @@ bool ModbusEnginePort_UartInit(uint32_t baud_rate, uint8_t data_bits,
         return false;
     }
 #if !MODBUS_PYXIS_HW_DE
-#if defined(USART_CR3_DEM)
-    CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
-#endif
     {
         GPIO_InitTypeDef de_gpio = {0};
         __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -673,12 +764,14 @@ static bool uart3_apply_config(const UART_InitTypeDef *init,
         return false;
     }
 #else
-    if (HAL_UART_Init(&huart3) != HAL_OK) {
-        return false;
-    }
+    /* A later profile change must also clear hardware-DE while UE=0. */
+    __HAL_UART_DISABLE(&huart3);
 #if defined(USART_CR3_DEM)
     CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
 #endif
+    if (HAL_UART_Init(&huart3) != HAL_OK) {
+        return false;
+    }
     {
         GPIO_InitTypeDef de_gpio = {0};
         __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -842,11 +935,20 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
     event_type = HAL_UARTEx_GetRxEventType(huart_cb);
     if (Size > UART3_RX_DMA_SIZE) {
         g_uart3_dma_position_errors++;
+#if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+        ++s_v2_rx_error_generation;
+#endif
         pos = UART3_RX_DMA_SIZE;
     } else {
         pos = Size;
     }
     g_uart3_last_event_type = (uint32_t)event_type;
+    if (event_type == HAL_UART_RXEVENT_TC) {
+        /* TC is evidence of a completed DMA buffer pass, but not an RTU
+         * boundary. Keep harvesting only on the subsequent IDLE event. */
+        uart3_rx_tc_since_idle = 1U;
+        return;
+    }
 
     /*
      * In circular DMA mode HT/TC are transfer events, not evidence of a
@@ -857,6 +959,16 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart_cb, uint16_t Size)
     if (event_type != HAL_UART_RXEVENT_IDLE) {
         return;
     }
+
+    /* The STM32H5 HAL reports IDLE with Size == DMA_SIZE when the circular
+     * DMA remaining count equals its programmed size. At startup this can
+     * represent ZERO received bytes, not a full buffer of data. */
+    if (pos == UART3_RX_DMA_SIZE && uart3_rx_dma_last_pos == 0U &&
+        uart3_rx_tc_since_idle == 0U) {
+        g_uart3_zero_length_events++;
+        return;
+    }
+    uart3_rx_tc_since_idle = 0U;
 
     start = (uart3_rx_dma_last_pos == UART3_RX_DMA_SIZE) ?
         0U : uart3_rx_dma_last_pos;
@@ -962,6 +1074,7 @@ static void v2_drop_stale_rx(void)
     uart3_rx_head = 0U;
     uart3_rx_tail = 0U;
     uart3_rx_dma_last_pos = 0U;
+    uart3_rx_tc_since_idle = 0U;
     uart3_rx_dma_harvest_abs = 0U;
     g_uart3_dma_producer_abs = 0U;
     g_uart3_dma_wrap_count = 0U;
@@ -973,6 +1086,7 @@ static void v2_drop_stale_rx(void)
     uart3_rto_pending = 0U;
     uart3_rx_recovery_pending = 0U;
 #if MODBUS_AUTOBAUD_V2_FRAMING_ENABLE
+    autobaud_rtu_assembly_reset(&s_v2_assembly);
     /* Called only with worker fully parked and claimant holding UART. */
     s_v2_passive_produced = 0U;
     s_v2_passive_consumed = 0U;
@@ -1111,6 +1225,12 @@ bool ModbusEngineV2_Quiesce(void)
         ok = HAL_UART_AbortReceive(&huart3) == HAL_OK;
     }
     uart3_rx_dma_running = 0U;
+    /* On STM32H5 the HAL abort may complete with USART CR3.DMAR still set.
+     * Only clear the UART DMA request after a verified successful abort and
+     * a physically disabled GPDMA channel. Keep fail-closed otherwise. */
+    if (ok && !v2_dma_enabled()) {
+        ATOMIC_CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DMAR);
+    }
     __HAL_UART_CLEAR_OREFLAG(&huart3);
     __HAL_UART_CLEAR_FEFLAG(&huart3);
     __HAL_UART_CLEAR_NEFLAG(&huart3);
@@ -1266,6 +1386,21 @@ uint32_t ModbusEngineV2_NowMs(void)
     return HAL_GetTick();
 }
 
+bool ModbusEngineV2_GetRtuDiagnostics(
+    pyxis_autobaud_v2_rtu_diagnostics_t *out)
+{
+    if (out == NULL) return false;
+    out->uart_idle_fragments = s_v2_rtu_fragments;
+    out->rtu_frames_published = s_v2_rtu_published;
+    out->rtu_assembly_errors = s_v2_rtu_assembly_errors;
+    out->mailbox_overflows = s_v2_rtu_mailbox_overflows;
+    out->uart_error_generation = s_v2_rx_error_generation;
+    out->rx_session_id = s_v2_session_id;
+    out->pending_passive_frames =
+        (uint32_t)(s_v2_passive_produced - s_v2_passive_consumed);
+    return true;
+}
+
 /* These methods run only from the future M7 Modbus task. The RX worker is
  * the sole queue producer; this path never calls the Modbus request runtime. */
 bool ModbusEngineV2_RxActivity(uint32_t *total_bytes, uint32_t *total_errors)
@@ -1302,12 +1437,8 @@ autobaud_e_poll_t ModbusEngineV2_TakePassiveFrame(
         return AUTOBAUD_E_POLL_RX_FAULT;
     tail = s_v2_passive_consumed;
     if (tail == s_v2_passive_produced) return AUTOBAUD_E_POLL_NONE;
-    /* The RTU receiver runs on a FreeRTOS worker. Waiting for 5ms of
-     * observed line silence prevents a UART 1-character IDLE boundary from
-     * immediately being misclassified as a complete RTU frame. */
-    if ((uint32_t)(HAL_GetTick() - g_uart3_rx_callback_tick) <
-        PYXIS_V2_FRAME_QUIET_MS)
-        return AUTOBAUD_E_POLL_NONE;
+    /* The worker publishes only baud-aware T3.5-delimited RTU frames;
+     * a completed slot is never an unfinished one-character IDLE burst. */
     __DMB(); /* Observe payload after the producer cursor. */
     slot = &s_v2_passive_queue[tail % PYXIS_V2_PASSIVE_SLOTS];
     if (slot->length > capacity ||

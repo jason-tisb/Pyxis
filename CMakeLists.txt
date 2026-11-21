@@ -192,6 +192,7 @@ if(MODBUS_AUTOBAUD_V2_FRAMING_ENABLE STREQUAL "1")
         ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_initial_window.c
         ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_validate.c
         ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_v2_evidence.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_rtu_assembly.c
         ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_v2_candidate.c
         ${CMAKE_CURRENT_SOURCE_DIR}/App/Middleware/AutobaudV2/Src/autobaud_v2_framing.c
         ${CMAKE_CURRENT_SOURCE_DIR}/App/BSP/Communication/pyxis_autobaud_framing_stm32h563.c
