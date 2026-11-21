@@ -1,0 +1,71 @@
+name: Pyxis Autobaud V2 M9 on-demand recovery qualification
+
+on:
+  push:
+    branches:
+      - feature/pyxis-autobaud-v2-m9
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-m9:
+    name: M0-M9 native regression and recovery guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute full software suite
+        run: python3 tests/test_pyxis_autobaud_v2_m9.py
+
+  arm-m9:
+    name: Actual STM32H563 M8 transport ARM syntax regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Cross-compile guarded UART/DMA/capture modules
+        run: sh tests/autobaud_v2/check_m8_arm_syntax.sh
+
+  linked-m9:
+    name: M9 recovery opt-in and unchanged default full firmware link
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM compiler and Ninja
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi libnewlib-arm-none-eabi ninja-build cmake
+      - name: Configure M9 opt-in
+        run: |
+          cmake -S . -B /tmp/pyxis-m9 -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake \
+            -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
+            -DCMAKE_ASM_COMPILER=arm-none-eabi-gcc \
+            -DMODBUS_ENGINE_ACTIVE=1 -DMODBUS_ENGINE_FORCE_FIXED_COMM=0 \
+            -DMODBUS_AUTOBAUD_ENABLE=0 \
+            -DMODBUS_AUTOBAUD_V2_PORT_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_CAPTURE_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_FRAMING_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_ENABLE=1 \
+            -DMODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE=1
+      - name: Link M9 and assert application flash origin
+        run: |
+          cmake --build /tmp/pyxis-m9 --parallel 4
+          arm-none-eabi-objdump -h /tmp/pyxis-m9/Vimot_H563RITX_Professional.elf | grep -Eq '^ *0 \.isr_vector +[0-9a-f]+ +08020000 +08020000'
+      - name: Configure default-off build
+        run: |
+          cmake -S . -B /tmp/pyxis-m9-default -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake \
+            -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
+            -DCMAKE_ASM_COMPILER=arm-none-eabi-gcc \
+            -DMODBUS_AUTOBAUD_V2_ENABLE=0 \
+            -DMODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE=0
+      - name: Link unchanged default firmware
+        run: cmake --build /tmp/pyxis-m9-default --parallel 4
