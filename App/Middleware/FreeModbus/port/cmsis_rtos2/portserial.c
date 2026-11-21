@@ -579,6 +579,13 @@ bool ModbusEnginePort_UartInit(uint32_t baud_rate, uint8_t data_bits,
                                     1U,
                                     1U);
     #else
+        /* CubeMX initializes USART3 with hardware DE. The DEM bit is
+         * writable only while UE=0; clear it before HAL_UART_Init
+         * re-enables USART3 for the software-controlled PB14 DE path. */
+        __HAL_UART_DISABLE(&huart3);
+#if defined(USART_CR3_DEM)
+        CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
+#endif
         g_custom_uart_hal_status =
             (uint32_t)HAL_UART_Init(&huart3);
     #endif
@@ -587,9 +594,6 @@ bool ModbusEnginePort_UartInit(uint32_t baud_rate, uint8_t data_bits,
         return false;
     }
 #if !MODBUS_PYXIS_HW_DE
-#if defined(USART_CR3_DEM)
-    CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
-#endif
     {
         GPIO_InitTypeDef de_gpio = {0};
         __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -756,12 +760,14 @@ static bool uart3_apply_config(const UART_InitTypeDef *init,
         return false;
     }
 #else
-    if (HAL_UART_Init(&huart3) != HAL_OK) {
-        return false;
-    }
+    /* A later profile change must also clear hardware-DE while UE=0. */
+    __HAL_UART_DISABLE(&huart3);
 #if defined(USART_CR3_DEM)
     CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DEM);
 #endif
+    if (HAL_UART_Init(&huart3) != HAL_OK) {
+        return false;
+    }
     {
         GPIO_InitTypeDef de_gpio = {0};
         __HAL_RCC_GPIOB_CLK_ENABLE();
