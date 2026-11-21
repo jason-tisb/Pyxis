@@ -69,7 +69,7 @@ def native_test(cc, src, label):
                 "-I", str(MB)] + [str(x) for x in src] + ["-o", str(binary)]
         subprocess.run(args, check=True, cwd=ROOT)
         if label == "coordinator":
-            for scenario in range(10):
+            for scenario in range(11):
                 subprocess.run([str(binary), str(scenario)], check=True,
                                cwd=ROOT)
         else:
