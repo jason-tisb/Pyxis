@@ -21,6 +21,7 @@ static bool passive;
 static uint32_t framing_error_callbacks;
 static bool rearm_busy;
 static bool rearm_fatal;
+static bool rearm_rollback;
 #endif
 static unsigned uart_applies;
 static unsigned uart_begins;
@@ -60,6 +61,7 @@ autobaud_uart_txn_result_t PyxisAutobaudUart_Apply(
 #if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
   if (rearm_busy) return AUTOBAUD_UART_TXN_BUSY;
   if (rearm_fatal) return AUTOBAUD_UART_TXN_FATAL_RECOVERY;
+  if (rearm_rollback) return AUTOBAUD_UART_TXN_ROLLED_BACK_VERIFIED;
 #endif
   assert(p && psv && p->baud_rate == PYXIS_AUTOBAUD_V2_INITIAL_BAUD);
   assert(p->framing == AUTOBAUD_UART_MODE_8E1);
@@ -154,7 +156,7 @@ int main(int argc, char **argv)
   assert(argc == 2);
   scenario = (unsigned)strtoul(argv[1], NULL, 10);
 #if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
-  assert(scenario <= 9U);
+  assert(scenario <= 10U);
 #else
   assert(scenario <= 5U);
 #endif
@@ -223,6 +225,7 @@ int main(int argc, char **argv)
       assert(diag().rearm_requests == 1U);
       if (scenario == 8U) rearm_busy = true;
       if (scenario == 9U) rearm_fatal = true;
+      if (scenario == 10U) rearm_rollback = true;
       PyxisAutobaudV2_Service();
       if (scenario == 8U) {
         assert(diag().state == PYXIS_AUTOBAUD_V2_REARMING);
@@ -234,6 +237,10 @@ int main(int argc, char **argv)
       } else if (scenario == 9U) {
         assert(PyxisAutobaudV2_IsFatal() && latch_count == 1U);
         assert(!PyxisAutobaudV2_Locked());
+      } else if (scenario == 10U) {
+        assert(PyxisAutobaudV2_Locked());
+        assert(diag().rearm_rollbacks == 1U);
+        assert(!PyxisAutobaudV2_IsFatal() && !passive);
       } else {
         assert(diag().state == PYXIS_AUTOBAUD_V2_LISTENING);
         assert(diag().rearm_successes == 1U);
