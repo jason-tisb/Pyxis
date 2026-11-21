@@ -190,6 +190,9 @@ static void modbus_task_process_one_frame(void)
             (void)ModbusEnginePort_UartEnable(false);
             bool tx_complete = ModbusEngineTx_Send(response, response_length);
             (void)ModbusEnginePort_UartEnable(true);
+#if MODBUS_AUTOBAUD_V2_REACQUIRE_ENABLE
+            if (tx_complete) PyxisAutobaudV2_NotifyHealthyExchange();
+#endif
             /* Destructive system commands are deliberately serviced only
              * after ModbusEngineTx_Send() has waited for UART TC and DE has
              * been returned to receive mode. */
