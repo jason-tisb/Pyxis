@@ -55,6 +55,20 @@ def audit_m8_source():
         assert -1 not in (disable, clear_dem, uart_init), start
         assert disable < clear_dem < uart_init, (
             "Must clear DEM while USART is disabled, before HAL_UART_Init", start)
+    # After HAL_UART_AbortReceive, HAL may leave CR3.DMAR set on STM32H5.
+    # Quiescence must explicitly clear it only following successful abort
+    # and confirmation that the GPDMA channel is physically disabled.
+    quiesce = serial.split("bool ModbusEngineV2_Quiesce(", 1)[1].split(
+        "bool ModbusEngineV2_Apply(", 1)[0]
+    abort = quiesce.index("ok = HAL_UART_AbortReceive(&huart3) == HAL_OK;")
+    gate = quiesce.index("if (ok && !v2_dma_enabled())")
+    clear = quiesce.index(
+        "ATOMIC_CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DMAR);"
+    )
+    verify = quiesce.index(
+        "return ok && (huart3.Instance->CR3 & USART_CR3_DMAR) == 0U"
+    )
+    assert abort < gate < clear < verify
     assert "MODBUS_AUTOBAUD_V2_FRAMING_ENABLE" in serial
     assert "PYXIS_V2_FRAME_QUIET_MS" not in serial
     assert "autobaud_rtu_assembly.c" in cmake
